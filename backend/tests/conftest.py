@@ -62,12 +62,6 @@ from app.main import app
 import asyncio
 import pytest
 
-@pytest.fixture(scope="session")
-def event_loop():
-    loop = asyncio.new_event_loop()
-    yield loop
-    loop.close()
-
 
 # Determine test database URL
 TEST_DB_URL = os.environ.get("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
@@ -87,6 +81,9 @@ async def init_test_db():
     yield
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
+    await test_engine.dispose()
+    from app.core.db import engine as app_engine
+    await app_engine.dispose()
 
 
 @pytest_asyncio.fixture

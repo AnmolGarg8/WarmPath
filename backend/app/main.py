@@ -67,12 +67,28 @@ app.add_exception_handler(RequestValidationError, validation_error_handler)
 app.include_router(health_router)
 
 # Module Auto-Discovery
+DEFAULT_MODULES = [
+    "auth",
+    "availability",
+    "credits",
+    "institution",
+    "matching",
+    "payments",
+    "ratings",
+    "resume",
+    "sessions",
+    "trust",
+]
+
 modules_dir = Path(__file__).resolve().parent / "modules"
 module_names = []
 if modules_dir.exists():
     for p in sorted(modules_dir.iterdir()):
         if p.is_dir() and not p.name.startswith(("_", ".")):
             module_names.append(p.name)
+
+if not module_names:
+    module_names = DEFAULT_MODULES
 
 for mod_name in module_names:
     try:
