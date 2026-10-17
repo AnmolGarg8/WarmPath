@@ -17,7 +17,7 @@ from sqlalchemy.orm import joinedload
 
 import app.core.redis as core_redis
 from app.core.config import settings
-from app.core.db import User, async_session_maker
+from app.core.db import ApprovedMember, User, VerificationRequest, async_session_maker
 from app.core.errors import AppError
 from app.core.events import (
     ReportFiledPayload,
@@ -26,7 +26,6 @@ from app.core.events import (
     event_bus,
 )
 from app.core.ports import SafetyPort, TrustPort
-from app.modules.auth.models import ApprovedMember, VerificationRequest
 from app.modules.trust.models import AuditLog, Block, FlaggedItem, Report
 from app.modules.trust.schemas import (
     ApprovedMembersUploadResponse,

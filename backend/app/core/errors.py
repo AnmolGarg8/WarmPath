@@ -56,10 +56,24 @@ def error_response(code: str, message: str, status_code: int, details: Optional[
     )
 
 
+from fastapi.exceptions import RequestValidationError
+
+
 async def app_error_handler(request: Request, exc: AppError) -> JSONResponse:
     return error_response(
         code=exc.code,
         message=exc.message,
         status_code=exc.status_code,
         details=exc.details,
+    )
+
+
+async def validation_error_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
+    errors = exc.errors()
+    msg = errors[0].get("msg", "Invalid request parameters") if errors else "Validation error"
+    return error_response(
+        code="validation_error",
+        message=msg,
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        details={"validation_errors": errors},
     )

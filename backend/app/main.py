@@ -46,7 +46,11 @@ app.add_middleware(
 )
 
 # Exception Handlers
+from fastapi.exceptions import RequestValidationError
+from app.core.errors import validation_error_handler
+
 app.add_exception_handler(AppError, app_error_handler)
+app.add_exception_handler(RequestValidationError, validation_error_handler)
 
 # Health & Readiness
 app.include_router(health_router)

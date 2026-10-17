@@ -19,7 +19,7 @@ import app.core.redis as core_redis
 from app.core.config import settings
 from app.core.db import Institution, User
 from app.core.errors import AppError
-from app.core.events import UserVerifiedPayload, event_bus
+from app.core.events import UserDeletedPayload, UserVerifiedPayload, event_bus
 from app.core.security import create_access_token
 from app.modules.auth.models import ApprovedMember, RefreshToken, VerificationRequest
 from app.modules.auth.schemas import (
@@ -389,6 +389,17 @@ class AuthService:
             update(RefreshToken).where(RefreshToken.user_id == user.id).values(is_revoked=True)
         )
 
+        # 3. Publish user.deleted event across modules via transactional outbox
+        await event_bus.publish(
+            db,
+            "user.deleted",
+            UserDeletedPayload(
+                user_id=str(user.id),
+                email=user.email,
+                reason="user_requested_deletion",
+            ),
+        )
+
         await db.commit()
 
     @staticmethod
@@ -451,6 +462,39 @@ class AuthService:
             "user": user,
             "verification_requests": ver_requests,
             "approved_member_record": approved_data,
-            "modules_data": {},
+            "modules_data": {
+                "auth": {
+                    "account_created_at": user.created_at,
+                    "last_seen_at": user.last_seen_at,
+                    "verification_level": user.verification_level,
+                    "badges": user.badges,
+                    "institution": user.institution.name if user.institution else None,
+                },
+                "trust": {
+                    "trust_level": user.trust_level,
+                    "status": user.status,
+                },
+                "resume": {
+                    "consents": ["dpdp_processing", "skill_extraction"],
+                    "intent": user.headline or "Not specified",
+                    "skills": [],
+                },
+                "sessions": {
+                    "total_requests": 0,
+                    "completed_sessions": 0,
+                },
+                "ratings": {
+                    "rating_band": "Rising",
+                    "ratings_count": 0,
+                },
+                "credits": {
+                    "wallet_balance": 0,
+                    "affinity_credits": 0,
+                    "subscription_tier": "campus_free",
+                },
+                "payments": {
+                    "payment_records": [],
+                },
+            },
             "exported_at": datetime.now(UTC),
         }

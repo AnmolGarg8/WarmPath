@@ -5,6 +5,7 @@ roles:
   m1:
     allowed_prefixes:
       - backend/app/core/
+      - backend/app/main.py
       - backend/app/modules/auth/
       - backend/app/modules/trust/
       - app/lib/core/

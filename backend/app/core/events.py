@@ -23,6 +23,12 @@ class UserVerifiedPayload(BaseEventPayload):
     role: str
 
 
+class UserDeletedPayload(BaseEventPayload):
+    user_id: str
+    email: str
+    reason: str = "user_requested_deletion"
+
+
 class TrustLevelChangedPayload(BaseEventPayload):
     user_id: str
     old_level: str

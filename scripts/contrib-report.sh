@@ -14,8 +14,8 @@ echo ""
 echo "--- 2. Lines Added and Removed by Author ---"
 git log --no-merges --pretty="%aN" --numstat | awk '
 NF==3 {
-    plus[$0]+=$1
-    minus[$0]+=$2
+    plus[author]+=$1
+    minus[author]+=$2
 }
 NF==1 {
     author=$0
@@ -29,7 +29,7 @@ END {
 echo ""
 echo "--- 3. Commits by Role Tag ---"
 for role in "m1" "m2" "m3" "m4"; do
-    count=$(git log --no-merges --grep="^.*($role" --oneline | wc -l || echo 0)
+    count=$(git log --no-merges -i --grep="($role" --grep="\[$role\]" --grep="$role/" --grep="$role:" --oneline | wc -l || echo 0)
     printf "Role %-4s commits: %d\n" "$role" "$count"
 done
 

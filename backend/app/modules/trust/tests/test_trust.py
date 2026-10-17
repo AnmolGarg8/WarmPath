@@ -11,9 +11,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import uuid4
 
 import app.core.redis as core_redis
-from app.core.db import Institution, OutboxEvent, User
+from app.core.db import ApprovedMember, Institution, OutboxEvent, User, VerificationRequest
 from app.core.security import create_access_token
-from app.modules.auth.models import ApprovedMember, VerificationRequest
 from app.modules.trust.models import AuditLog, Block, FlaggedItem, Report
 from app.modules.trust.service import (
     SafetyServiceImpl,
