@@ -415,7 +415,7 @@ Built by **Team Unsolved Loop** from **VIPS-TC**:
 
 - **ANMOL GARG** <!-- TODO: add role & GitHub handle -->
 - **TANUSH YADAV** <!-- TODO: add role & GitHub handle -->
-- **Ayush Ghanshala** <!-- TODO: add role & GitHub handle -->
+- **AYUSH GHANSHALA** <!-- TODO: add role & GitHub handle -->
 - **Sneha Sinha** <!-- TODO: add role & GitHub handle -->
 
 ---
