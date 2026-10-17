@@ -1,51 +1,200 @@
+openapi: 3.0.3
+info:
+  title: WarmPath Availability Module
+  version: 1.0.0
 paths:
   /me/availability:
-    put:
-      summary: "Set weekly schedule and session capacity limit"
-      responses:
-        "501":
-          description: Module not implemented
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-  /me/availability:
     get:
-      summary: "Retrieve current availability schedule"
+      summary: Retrieve current availability schedule
+      security:
+        - BearerAuth: []
       responses:
-        "501":
-          description: Module not implemented
+        '200':
+          description: Availability schedule retrieved
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/AvailabilityResponse'
+    put:
+      summary: Set weekly schedule and session capacity limit
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AvailabilityUpdate'
+      responses:
+        '200':
+          description: Availability updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AvailabilityResponse'
   /me/online:
     post:
-      summary: "Open 30-minute instant connect window"
+      summary: Open instant connect window
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OnlineRequest'
       responses:
-        "501":
-          description: Module not implemented
+        '200':
+          description: Giver marked online
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-  /me/online:
+                $ref: '#/components/schemas/OnlineResponse'
     delete:
-      summary: "Close instant connect window"
+      summary: Close instant connect window
+      security:
+        - BearerAuth: []
       responses:
-        "501":
-          description: Module not implemented
+        '200':
+          description: Giver marked offline
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/OnlineResponse'
   /presence:
     get:
-      summary: "Check online and capacity status for givers"
+      summary: Check online and capacity status for givers
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_ids
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Comma-separated user IDs (max 100)
       responses:
-        "501":
-          description: Module not implemented
+        '200':
+          description: Presence list
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                type: array
+                items:
+                  $ref: '#/components/schemas/PresenceStatus'
+  /ws:
+    get:
+      summary: WebSocket for presence and realtime inbox events
+      parameters:
+        - name: token
+          in: query
+          required: false
+          schema:
+            type: string
+          description: JWT Access token
+      responses:
+        '101':
+          description: Switching protocols to WebSocket
+
+components:
+  schemas:
+    TimeWindow:
+      type: object
+      required:
+        - weekday
+        - start_time
+        - end_time
+      properties:
+        weekday:
+          type: integer
+          minimum: 0
+          maximum: 6
+        start_time:
+          type: string
+          example: "09:00"
+        end_time:
+          type: string
+          example: "17:00"
+    AvailabilityUpdate:
+      type: object
+      required:
+        - weekly_capacity
+        - timezone
+        - windows
+      properties:
+        weekly_capacity:
+          type: integer
+          minimum: 0
+        timezone:
+          type: string
+          example: "Asia/Kolkata"
+        windows:
+          type: array
+          items:
+            $ref: '#/components/schemas/TimeWindow'
+    AvailabilityResponse:
+      type: object
+      required:
+        - user_id
+        - weekly_capacity
+        - timezone
+        - windows
+        - used_this_week
+        - capacity_left
+      properties:
+        user_id:
+          type: string
+        weekly_capacity:
+          type: integer
+        timezone:
+          type: string
+        windows:
+          type: array
+          items:
+            $ref: '#/components/schemas/TimeWindow'
+        used_this_week:
+          type: integer
+        capacity_left:
+          type: integer
+        updated_at:
+          type: string
+          format: date-time
+    OnlineRequest:
+      type: object
+      required:
+        - minutes
+      properties:
+        minutes:
+          type: integer
+          minimum: 5
+          maximum: 120
+    OnlineResponse:
+      type: object
+      required:
+        - user_id
+        - online_now
+      properties:
+        user_id:
+          type: string
+        online_now:
+          type: boolean
+        expires_at:
+          type: string
+          format: date-time
+        remaining_seconds:
+          type: integer
+    PresenceStatus:
+      type: object
+      required:
+        - user_id
+        - online_now
+        - capacity_left
+      properties:
+        user_id:
+          type: string
+        online_now:
+          type: boolean
+        capacity_left:
+          type: integer
+        next_window_start:
+          type: string
