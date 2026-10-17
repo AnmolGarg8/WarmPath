@@ -6,24 +6,24 @@
 # TODO: Replace @GITHUB_M4 with M4's GitHub handle (Sneha Sinha)
 
 # M1 Ownership
-backend/app/core/                     @GITHUB_M1
-backend/app/modules/auth/             @GITHUB_M1
-backend/app/modules/trust/            @GITHUB_M1
-app/lib/core/                         @GITHUB_M1
-app/lib/features/auth/                @GITHUB_M1
-app/lib/features/safety/              @GITHUB_M1
-admin/src/core/                       @GITHUB_M1
-admin/src/pages/moderation/           @GITHUB_M1
-admin/src/pages/verification/         @GITHUB_M1
-scripts/                              @GITHUB_M1
-.github/                              @GITHUB_M1
-PROJECT_CONTEXT.md                    @GITHUB_M1
+backend/app/core/                     @AnmolGarg8
+backend/app/modules/auth/             @AnmolGarg8
+backend/app/modules/trust/            @AnmolGarg8
+app/lib/core/                         @AnmolGarg8
+app/lib/features/auth/                @AnmolGarg8
+app/lib/features/safety/              @AnmolGarg8
+admin/src/core/                       @AnmolGarg8
+admin/src/pages/moderation/           @AnmolGarg8
+admin/src/pages/verification/         @AnmolGarg8
+scripts/                              @AnmolGarg8
+.github/                              @AnmolGarg8
+PROJECT_CONTEXT.md                    @AnmolGarg8
 
 # M2 Ownership
-backend/app/modules/resume/           @GITHUB_M2
-backend/app/modules/matching/         @GITHUB_M2
-app/lib/features/onboarding/          @GITHUB_M2
-app/lib/features/discover/            @GITHUB_M2
+backend/app/modules/resume/           @Tanushyadav9
+backend/app/modules/matching/         @Tanushyadav9
+app/lib/features/onboarding/          @Tanushyadav9
+app/lib/features/discover/            @Tanushyadav9
 
 # M3 Ownership
 backend/app/modules/availability/     @GITHUB_M3
