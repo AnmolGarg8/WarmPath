@@ -23,6 +23,27 @@ jobs:
         run: |
           python scripts/check_scope.py --ci --pr-base origin/main
 
+  no-mock:
+    name: Check No Mock Data
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run scanner unit tests
+        run: python -m unittest discover scripts/tests
+      - name: Run no-mock scanner
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            python scripts/check_no_mock.py --ci --pr-base origin/main
+          else
+            python scripts/check_no_mock.py
+          fi
+
   backend:
     name: Backend Lint & Test
     runs-on: ubuntu-latest
