@@ -20,9 +20,9 @@ class TrustNotice extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
-        color: AppColors.teal.withOpacity(0.08),
+        color: AppColors.teal.withValues(alpha: 0.08),
         borderRadius: AppRadii.card,
-        border: Border.all(color: AppColors.teal.withOpacity(0.25)),
+        border: Border.all(color: AppColors.teal.withValues(alpha: 0.25)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

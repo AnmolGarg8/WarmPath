@@ -57,6 +57,7 @@ class GiverCardData {
   final RatingSummaryData ratingSummary;
   final AvailabilitySummaryData availabilitySummary;
   final List<String> whyLines;
+  bool get isOwnCollege => !badges.contains('Cross-College');
 
   GiverCardData({
     required this.id,

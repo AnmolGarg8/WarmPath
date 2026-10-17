@@ -29,32 +29,36 @@ class GiverCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Top Row: Online dot, Badges, Capacity
-            Row(
+            Wrap(
+              spacing: 8,
+              runSpacing: 6,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                if (giver.availabilitySummary.online) ...[
-                  Container(
-                    width: 8,
-                    height: 8,
-                    decoration: const BoxDecoration(
-                      color: AppColors.successGreen,
-                      shape: BoxShape.circle,
-                    ),
+                if (giver.availabilitySummary.online)
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: const BoxDecoration(
+                          color: AppColors.successGreen,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 5),
+                      const Text(
+                        'Online now',
+                        style: TextStyle(
+                          color: AppColors.successGreen,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 6),
-                  const Text(
-                    'Online now',
-                    style: TextStyle(
-                      color: AppColors.successGreen,
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                ],
                 const VerifiedBadge(role: 'Alumnus'),
-                const SizedBox(width: 8),
                 BandBadge(band: giver.band),
-                const Spacer(),
                 if (!isLocked)
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),

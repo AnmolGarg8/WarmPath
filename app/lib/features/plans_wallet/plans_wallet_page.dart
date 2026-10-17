@@ -4,6 +4,7 @@ library;
 
 import 'package:flutter/material.dart';
 import '../../core/theme/tokens.dart';
+import '../../core/widgets/main_bottom_nav.dart';
 import 'pages/plans_page.dart';
 import 'pages/wallet_page.dart';
 import 'pages/earnings_page.dart';
@@ -99,6 +100,7 @@ class _PlansWalletPageState extends State<PlansWalletPage>
           const EarningsPage(),
         ],
       ),
+      bottomNavigationBar: const MainBottomNav(currentIndex: 2),
     );
   }
 }

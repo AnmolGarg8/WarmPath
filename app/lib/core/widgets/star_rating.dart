@@ -33,7 +33,7 @@ class StarRating extends StatelessWidget {
             } else if (rating > index && rating < starIndex) {
               return Icon(Icons.star_half, size: size, color: color);
             } else {
-              return Icon(Icons.star_border, size: size, color: color.withOpacity(0.5));
+              return Icon(Icons.star_border, size: size, color: color.withValues(alpha: 0.5));
             }
           }),
         ),

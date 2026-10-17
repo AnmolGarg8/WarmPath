@@ -7,6 +7,7 @@ import '../../core/widgets/w_card.dart';
 import '../../core/widgets/w_button.dart';
 import '../../core/widgets/empty_state.dart';
 import '../../core/widgets/error_state.dart';
+import '../../core/widgets/main_bottom_nav.dart';
 import 'session_models.dart';
 import 'sessions_controller.dart';
 import 'request_detail_page.dart';
@@ -68,6 +69,7 @@ class _InboxPageState extends ConsumerState<InboxPage> with SingleTickerProvider
                     _buildRequestList(state.outgoing, isIncoming: false),
                   ],
                 ),
+      bottomNavigationBar: const MainBottomNav(currentIndex: 1),
     );
   }
 

@@ -111,7 +111,7 @@ class _ConnectPageState extends ConsumerState<ConnectPage> {
         kind: _isInstant ? 'instant' : 'booked',
         intentText: intent,
         slotStart: _isInstant ? null : _selectedSlot,
-        idempotencyKey: 'req_\${DateTime.now().millisecondsSinceEpoch}',
+        idempotencyKey: 'req_${DateTime.now().millisecondsSinceEpoch}',
       );
 
       if (!mounted) return;
@@ -142,7 +142,7 @@ class _ConnectPageState extends ConsumerState<ConnectPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Connect with \${widget.giverName}'),
+        title: Text('Connect with ${widget.giverName}'),
         backgroundColor: AppColors.white,
         foregroundColor: AppColors.textDark,
         elevation: 0,

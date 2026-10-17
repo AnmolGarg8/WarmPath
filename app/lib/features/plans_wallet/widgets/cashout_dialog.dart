@@ -90,9 +90,10 @@ class _CashoutDialogState extends State<CashoutDialog> {
           ),
         ],
       ),
-      content: Single crude = Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             padding: const EdgeInsets.all(10),
@@ -158,6 +159,7 @@ class _CashoutDialogState extends State<CashoutDialog> {
             ],
           ),
         ],
+      ),
       ),
       actions: [
         TextButton(

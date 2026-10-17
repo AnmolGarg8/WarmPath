@@ -42,7 +42,7 @@ class BandPage extends ConsumerWidget {
                                 BandBadge(band: state.bandInfo!.currentBand),
                                 const SizedBox(height: 12),
                                 Text(
-                                  '\${state.bandInfo!.smoothedAverage.toStringAsFixed(2)} ★',
+                                  '${state.bandInfo!.smoothedAverage.toStringAsFixed(2)} ★',
                                   style: const TextStyle(
                                     fontSize: 32,
                                     fontWeight: FontWeight.bold,
@@ -60,15 +60,15 @@ class BandPage extends ConsumerWidget {
                                   children: [
                                     _buildStat(
                                       label: 'Rated Sessions',
-                                      value: '\${state.bandInfo!.ratedSessionsCount}',
+                                      value: '${state.bandInfo!.ratedSessionsCount}',
                                     ),
                                     _buildStat(
                                       label: 'Completion',
-                                      value: '\${(state.bandInfo!.completionRate * 100).toInt()}%',
+                                      value: '${(state.bandInfo!.completionRate * 100).toInt()}%',
                                     ),
                                     _buildStat(
                                       label: 'Payout Share',
-                                      value: '\${(state.bandInfo!.payoutShare * 100).toInt()}%',
+                                      value: '${(state.bandInfo!.payoutShare * 100).toInt()}%',
                                       color: AppColors.teal,
                                     ),
                                   ],
@@ -89,7 +89,7 @@ class BandPage extends ConsumerWidget {
                                     const SizedBox(width: 8),
                                     Text(
                                       state.bandInfo!.nextBand != null
-                                          ? 'Next Tier: \${state.bandInfo!.nextBand}'
+                                          ? 'Next Tier: ${state.bandInfo!.nextBand}'
                                           : 'Highest Tier Achieved',
                                       style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textDark),
                                     ),

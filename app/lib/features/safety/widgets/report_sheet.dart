@@ -163,7 +163,7 @@ class _ReportSheetState extends ConsumerState<ReportSheet> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: AppColors.slate.withOpacity(0.3),
+                    color: AppColors.slate.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -206,7 +206,7 @@ class _ReportSheetState extends ConsumerState<ReportSheet> {
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? AppColors.primaryAction.withOpacity(0.08)
+                          ? AppColors.primaryAction.withValues(alpha: 0.08)
                           : AppColors.surface,
                       borderRadius: AppRadii.button,
                       border: Border.all(

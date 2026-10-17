@@ -54,7 +54,7 @@ class WhyLimitedPage extends ConsumerWidget {
                           Container(
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: _getLevelColor(trustLevel).withOpacity(0.12),
+                              color: _getLevelColor(trustLevel).withValues(alpha: 0.12),
                               shape: BoxShape.circle,
                             ),
                             child: Icon(

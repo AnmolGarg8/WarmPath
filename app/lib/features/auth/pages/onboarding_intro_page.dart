@@ -92,7 +92,7 @@ class _OnboardingIntroPageState extends State<OnboardingIntroPage> {
                           width: 120,
                           height: 120,
                           decoration: BoxDecoration(
-                            color: (slide['color'] as Color).withOpacity(0.12),
+                            color: (slide['color'] as Color).withValues(alpha: 0.12),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
@@ -140,7 +140,7 @@ class _OnboardingIntroPageState extends State<OnboardingIntroPage> {
                   decoration: BoxDecoration(
                     color: _currentIndex == index
                         ? AppColors.primaryAction
-                        : AppColors.slate.withOpacity(0.3),
+                        : AppColors.slate.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),

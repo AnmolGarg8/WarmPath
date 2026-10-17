@@ -68,7 +68,7 @@ class _RatingPageState extends ConsumerState<RatingPage> {
       setState(() => _isSubmitting = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Submission failed: \$e')),
+          SnackBar(content: Text('Submission failed: $e')),
         );
       }
     }
@@ -115,7 +115,7 @@ class _RatingPageState extends ConsumerState<RatingPage> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  '\$_stars of 5 Stars',
+                  '$_stars of 5 Stars',
                   style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.textDark),
                 ),
               ],

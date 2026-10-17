@@ -94,6 +94,36 @@ class _ResumeUploadStepState extends State<ResumeUploadStep> {
     }
   }
 
+  Future<void> _demoAutoParse() async {
+    setState(() {
+      _selectedFileName = 'Anmol_Garg_Resume_VIPS.pdf';
+      _status = UploadStatus.uploading;
+      _uploadProgress = 0.35;
+      _statusMessage = 'Uploading Anmol_Garg_Resume_VIPS.pdf...';
+      _errorMessage = null;
+      _errorCode = null;
+    });
+
+    await Future.delayed(const Duration(milliseconds: 600));
+
+    setState(() {
+      _status = UploadStatus.parsing;
+      _uploadProgress = 0.75;
+      _statusMessage = 'Extracting skills, education & projects with Gemini AI...';
+    });
+
+    await Future.delayed(const Duration(milliseconds: 900));
+
+    final demoProfile = await widget.service.getProfile();
+
+    setState(() {
+      _uploadProgress = 1.0;
+      _status = UploadStatus.idle;
+    });
+
+    widget.onProfileParsed(demoProfile);
+  }
+
   void _setError(String msg, String? code) {
     setState(() {
       _status = UploadStatus.error;
@@ -271,6 +301,22 @@ class _ResumeUploadStepState extends State<ResumeUploadStep> {
                   style: TextStyle(fontSize: 13, color: AppColors.slate),
                 ),
               ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Center(
+            child: OutlinedButton.icon(
+              icon: const Icon(Icons.auto_awesome, color: AppColors.teal),
+              label: const Text(
+                'Demo: Use Sample VIPS Resume (AI Extract)',
+                style: TextStyle(color: AppColors.teal, fontWeight: FontWeight.bold),
+              ),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: AppColors.teal, width: 1.5),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                shape: const RoundedRectangleBorder(borderRadius: AppRadii.button),
+              ),
+              onPressed: _demoAutoParse,
             ),
           ),
           const SizedBox(height: 24),

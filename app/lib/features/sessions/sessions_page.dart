@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme/tokens.dart';
 import '../../core/widgets/w_card.dart';
 import '../../core/widgets/w_button.dart';
 import '../../core/widgets/empty_state.dart';
+import '../../core/widgets/main_bottom_nav.dart';
 import 'session_models.dart';
 import 'sessions_api_service.dart';
 import 'session_call_page.dart';
@@ -48,6 +50,18 @@ class _SessionsPageState extends ConsumerState<SessionsPage> {
         backgroundColor: AppColors.white,
         foregroundColor: AppColors.textDark,
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.mark_chat_unread_outlined, color: AppColors.teal),
+            tooltip: 'Mentorship Inbox',
+            onPressed: () => context.push('/inbox'),
+          ),
+          IconButton(
+            icon: const Icon(Icons.schedule_outlined, color: AppColors.primaryAction),
+            tooltip: 'Availability & Capacity',
+            onPressed: () => context.push('/availability'),
+          ),
+        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -73,6 +87,7 @@ class _SessionsPageState extends ConsumerState<SessionsPage> {
                     itemBuilder: (ctx, idx) => _buildSessionCard(_sessions[idx]),
                   ),
                 ),
+      bottomNavigationBar: const MainBottomNav(currentIndex: 1),
     );
   }
 
@@ -102,7 +117,7 @@ class _SessionsPageState extends ConsumerState<SessionsPage> {
                 ),
               ),
               Text(
-                '\${s.durationMinutes} mins',
+                '${s.durationMinutes} mins',
                 style: const TextStyle(color: AppColors.slate, fontSize: 12),
               ),
             ],
@@ -130,7 +145,10 @@ class _SessionsPageState extends ConsumerState<SessionsPage> {
               icon: const Icon(Icons.star_outline),
               label: const Text('Leave Feedback / Review'),
               onPressed: () {
-                // Navigate to rating
+                context.push('/ratings/rate', extra: {
+                  'session_id': s.id,
+                  'is_giver': false,
+                });
               },
             ),
         ],
