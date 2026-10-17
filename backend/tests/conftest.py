@@ -62,7 +62,15 @@ from app.main import app
 # Determine test database URL
 TEST_DB_URL = os.environ.get("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
 
-test_engine = create_async_engine(TEST_DB_URL, echo=False)
+engine_kwargs = {"echo": False}
+if "sqlite" not in TEST_DB_URL:
+    engine_kwargs.update({
+        "pool_size": 20,
+        "max_overflow": 10,
+        "pool_pre_ping": True,
+    })
+
+test_engine = create_async_engine(TEST_DB_URL, **engine_kwargs)
 test_session_maker = async_sessionmaker(test_engine, class_=AsyncSession, expire_on_commit=False)
 
 
@@ -82,26 +90,31 @@ async def db_session():
 
 
 @pytest_asyncio.fixture(autouse=True)
-async def seed_default_institution(db_session: AsyncSession):
-    inst_res = await db_session.execute(
-        select(Institution).where(Institution.name == "Vivekananda Institute")
-    )
-    inst = inst_res.scalar_one_or_none()
-    if not inst:
-        inst = Institution(
-            name="Vivekananda Institute",
-            short_name="VIPS",
-            city="Delhi",
-            email_domains=["vips.edu"],
+async def seed_default_institution():
+    async with test_session_maker() as session:
+        inst_res = await session.execute(
+            select(Institution).where(Institution.name == "Vivekananda Institute")
         )
-        db_session.add(inst)
-        await db_session.commit()
+        inst = inst_res.scalar_one_or_none()
+        if not inst:
+            inst = Institution(
+                name="Vivekananda Institute",
+                short_name="VIPS",
+                city="Delhi",
+                email_domains=["vips.edu"],
+            )
+            session.add(inst)
+            await session.commit()
 
 
 @pytest_asyncio.fixture(autouse=True)
-async def override_deps(db_session):
-    # Override database dependency with test session
-    app.dependency_overrides[get_db] = lambda: db_session
+async def override_deps():
+    # Override database dependency with isolated test session per request
+    async def _get_test_db():
+        async with test_session_maker() as session:
+            yield session
+
+    app.dependency_overrides[get_db] = _get_test_db
 
     orig_get_redis = core_redis.get_redis
     orig_redis_client = core_redis._redis_client

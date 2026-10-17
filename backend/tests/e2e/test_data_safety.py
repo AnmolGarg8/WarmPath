@@ -114,12 +114,12 @@ async def test_delete_me_anonymizes_and_publishes_event(async_client: AsyncClien
     assert "deleted successfully" in res.json().get("message", "")
 
     # 2. Verify user record is anonymized in DB
-    refreshed_user = await db_session.get(User, user.id)
-    assert refreshed_user.status == "deleted"
-    assert refreshed_user.full_name == "Deactivated Member"
-    assert refreshed_user.display_name is None
-    assert refreshed_user.headline is None
-    assert refreshed_user.badges == []
+    await db_session.refresh(user)
+    assert user.status == "deleted"
+    assert user.full_name == "Deactivated Member"
+    assert user.display_name is None
+    assert user.headline is None
+    assert user.badges == []
 
     # 3. Verify 'user.deleted' outbox event was recorded in DB
     events_res = await db_session.execute(

@@ -511,9 +511,9 @@ async def test_complete_end_to_end_platform_scenario(async_client: AsyncClient, 
     assert resolve_res.status_code == 200
 
     # Verify suspicious user is restricted
-    refreshed_bad = await db_session.get(User, suspicious_user.id)
-    assert refreshed_bad.trust_level == "restricted"
-    assert refreshed_bad.status == "restricted"
+    await db_session.refresh(suspicious_user)
+    assert suspicious_user.trust_level == "restricted"
+    assert suspicious_user.status == "restricted"
 
     # =========================================================================
     # 15. Giver No-Show Returns Reserved Credit to Student

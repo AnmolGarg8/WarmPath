@@ -90,6 +90,10 @@ def build_merged_openapi():
 def verify_backend(merged_contract):
     repo_root = Path(__file__).resolve().parent.parent
     backend_path = repo_root / "backend"
+    if str(repo_root) in sys.path:
+        sys.path.remove(str(repo_root))
+    if "" in sys.path:
+        sys.path.remove("")
     sys.path.insert(0, str(backend_path))
 
     try:
