@@ -8,4 +8,9 @@ final List<RouteBase> onboardingRoutes = [
     name: 'onboarding',
     builder: (context, state) => const OnboardingPage(),
   ),
+  GoRoute(
+    path: '/onboarding/giver-profile',
+    name: 'giver_profile_setup',
+    builder: (context, state) => const OnboardingPage(initialStep: OnboardingStep.giverSetup),
+  ),
 ];
