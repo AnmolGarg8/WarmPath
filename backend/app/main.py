@@ -90,14 +90,20 @@ if modules_dir.exists():
 if not module_names:
     module_names = DEFAULT_MODULES
 
+print(f"INFO: Discovering modules in {modules_dir}, found: {module_names}", file=sys.stderr, flush=True)
+
 for mod_name in module_names:
     try:
+        print(f"INFO: Importing app.modules.{mod_name}.module...", file=sys.stderr, flush=True)
         mod = importlib.import_module(f"app.modules.{mod_name}.module")
-        if hasattr(mod, "ROUTER"):
+        has_router = hasattr(mod, "ROUTER")
+        print(f"INFO: Loaded {mod_name}, has_router={has_router}", file=sys.stderr, flush=True)
+        if has_router:
             app.include_router(mod.ROUTER)
         if hasattr(mod, "register_events"):
             mod.register_events(event_bus)
         if hasattr(mod, "register_ports"):
             mod.register_ports(ports)
     except Exception as e:
-        print(f"Warning: Failed to load module '{mod_name}': {e}", file=sys.stderr)
+        import traceback
+        print(f"ERROR: Failed to load module '{mod_name}': {e}\n{traceback.format_exc()}", file=sys.stderr, flush=True)
