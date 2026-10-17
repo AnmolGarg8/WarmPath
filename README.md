@@ -413,8 +413,8 @@ Being honest about challenges is essential to building a dependable platform:
 
 Built by **Team Unsolved Loop** from **VIPS-TC**:
 
-- **Anmol Garg** <!-- TODO: add role & GitHub handle -->
-- **Tanush Yadav** <!-- TODO: add role & GitHub handle -->
+- **ANMOL GARG** <!-- TODO: add role & GitHub handle -->
+- **TANUSH YADAV** <!-- TODO: add role & GitHub handle -->
 - **Ayush Ghanshala** <!-- TODO: add role & GitHub handle -->
 - **Sneha Sinha** <!-- TODO: add role & GitHub handle -->
 
