@@ -16,7 +16,7 @@ repo_root = Path(__file__).resolve().parent.parent.parent.parent
 if str(repo_root) not in sys.path:
     sys.path.append(str(repo_root))
 
-from scripts.build_openapi import build_merged_openapi
+from scripts.build_openapi import build_merged_openapi, get_all_routes
 
 openapi_path = repo_root / "contracts" / "openapi.yaml"
 if not openapi_path.exists():
@@ -85,10 +85,7 @@ def test_schemathesis_operations_match_backend():
     Validates that every operation path in the Schemathesis parsed schema
     corresponds to a mounted route in the FastAPI application.
     """
-    backend_routes = set()
-    for route in app.routes:
-        if hasattr(route, "path"):
-            backend_routes.add(route.path)
+    backend_routes = get_all_routes(app)
 
     for op in schema:
         # op is the path in schemathesis 4

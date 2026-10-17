@@ -152,15 +152,12 @@ def test_all_contract_endpoints_in_router():
     if str(repo_root) not in sys.path:
         sys.path.append(str(repo_root))
 
-    from scripts.build_openapi import build_merged_openapi
+    from scripts.build_openapi import build_merged_openapi, get_all_routes
 
     merged = build_merged_openapi()
     contract_paths = set(merged.get("paths", {}).keys())
 
-    mounted_paths = set()
-    for route in main_app.app.routes:
-        if hasattr(route, "path"):
-            mounted_paths.add(route.path)
+    mounted_paths = get_all_routes(main_app.app)
 
     missing = contract_paths - mounted_paths
     assert not missing, f"Missing routes from contract in FastAPI app: {sorted(missing)}"

@@ -74,7 +74,7 @@ test_engine = create_async_engine(TEST_DB_URL, **engine_kwargs)
 test_session_maker = async_sessionmaker(test_engine, class_=AsyncSession, expire_on_commit=False)
 
 
-@pytest_asyncio.fixture(scope="session", autouse=True)
+@pytest_asyncio.fixture(scope="session", loop_scope="session", autouse=True)
 async def init_test_db():
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
