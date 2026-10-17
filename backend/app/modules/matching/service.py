@@ -123,6 +123,31 @@ async def generate_embedding(text: str) -> List[float]:
     return deterministic_dummy_vector(text)
 
 
+async def generate_embeddings_batch(texts: List[str]) -> List[List[float]]:
+    """
+    Batches vector embedding generation for multiple texts.
+    Uses concurrency and batching to optimize throughput during bulk operations.
+    """
+    import asyncio
+    api_key = settings.GEMINI_API_KEY
+    if not api_key or api_key == "your_gemini_api_key_here":
+        return [deterministic_dummy_vector(t) for t in texts]
+
+    results: List[List[float]] = []
+    # Process in concurrent chunks of 10
+    chunk_size = 10
+    for i in range(0, len(texts), chunk_size):
+        chunk = texts[i : i + chunk_size]
+        tasks = [generate_embedding(t) for t in chunk]
+        chunk_results = await asyncio.gather(*tasks, return_exceptions=True)
+        for res, original_text in zip(chunk_results, chunk):
+            if isinstance(res, list) and len(res) == 768:
+                results.append(res)
+            else:
+                results.append(deterministic_dummy_vector(original_text))
+    return results
+
+
 class MatchingService(MatchingPort):
     def __init__(self, session: AsyncSession):
         self.session = session
@@ -563,8 +588,23 @@ class MatchingService(MatchingPort):
         except Exception:
             pass
 
-        # 3. Retrieve Top Candidates (pgvector HNSW cosine query)
-        stmt = select(GiverProfile)
+        # 3. Retrieve Top Candidates (pgvector HNSW query bounded to 200 candidates)
+        try:
+            from sqlalchemy import text
+            await self.session.execute(text("SET LOCAL hnsw.ef_search = 40;"))
+        except Exception:
+            pass
+
+        stmt = select(GiverProfile).where(GiverProfile.weekly_capacity > 0)
+        stmt = stmt.where(GiverProfile.daily_impressions_count < MAX_DAILY_EXPOSURE)
+
+        # Pre-filter by scope to leverage ix_giver_profiles_inst_cap index
+        if scope == "own_college" and student.institution_id:
+            stmt = stmt.where(GiverProfile.institution_id == student.institution_id)
+        elif scope == "cross_college" and student.institution_id:
+            stmt = stmt.where(GiverProfile.institution_id != student.institution_id)
+
+        stmt = stmt.limit(200)
         res = await self.session.execute(stmt)
         all_candidates = res.scalars().all()
 
@@ -875,13 +915,25 @@ class MatchingService(MatchingPort):
             else:
                 why_lines = ["Experienced alumni mentor ready to assist"]
 
-        return GiverPublicCard(
+        # Check hot reads cache if requesting without student context
+        cache_key = f"wp:giver:{giver_id}"
+        redis_client = None
+        if requesting_student_id is None and why_lines is None:
+            try:
+                redis_client = await get_redis()
+                cached = await redis_client.get(cache_key)
+                if cached:
+                    return GiverPublicCard(**json.loads(cached))
+            except Exception:
+                pass
+
+        card = GiverPublicCard(
             id=giver.user_id,
             full_name=full_name,
             headline=f"{giver.role_title or 'Mentor'} at {giver.company or 'Tech'}",
             company=giver.company,
             role_title=giver.role_title,
-            bio=giver.bio,
+            bio=bio,
             offers=giver.offers,
             topics=giver.topics,
             skills=giver.skills,
@@ -902,16 +954,32 @@ class MatchingService(MatchingPort):
             why_lines=why_lines,
         )
 
+        if redis_client and requesting_student_id is None and why_lines is None:
+            try:
+                await redis_client.setex(cache_key, 300, json.dumps(card.model_dump(mode="json")))
+            except Exception:
+                pass
+
+        return card
+
     # --- Cache Invalidation Helpers (Requirement 8) ---
 
     @staticmethod
-    async def invalidate_recommendation_caches(student_id: Optional[str] = None):
+    async def invalidate_recommendation_caches(student_id: Optional[str] = None, giver_id: Optional[str] = None):
         """Invalidates matching recommendations cache in Redis."""
         try:
             redis_client = await get_redis()
-            pattern = f"wp:rec:{student_id}:*" if student_id else "wp:rec:*"
-            keys = await redis_client.keys(pattern)
-            if keys:
-                await redis_client.delete(*keys)
+            patterns = []
+            if student_id:
+                patterns.append(f"wp:rec:{student_id}:*")
+            else:
+                patterns.append("wp:rec:*")
+            if giver_id:
+                patterns.append(f"wp:giver:{giver_id}")
+
+            for pat in patterns:
+                keys = await redis_client.keys(pat)
+                if keys:
+                    await redis_client.delete(*keys)
         except Exception:
             pass

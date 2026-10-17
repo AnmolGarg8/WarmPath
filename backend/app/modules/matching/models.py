@@ -64,6 +64,13 @@ class GiverProfile(Base):
     created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
     updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
 
+    __table_args__ = (
+        Index("ix_giver_profiles_institution_id", "institution_id"),
+        Index("ix_giver_profiles_capacity", "weekly_capacity"),
+        Index("ix_giver_profiles_impressions", "daily_impressions_count"),
+        Index("ix_giver_profiles_inst_cap", "institution_id", "weekly_capacity"),
+    )
+
 
 class StudentMatchProfile(Base):
     """
@@ -87,3 +94,7 @@ class StudentMatchProfile(Base):
     intent_embedding = Column(Vector(768), nullable=True)
     profile_version = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
+
+    __table_args__ = (
+        Index("ix_student_match_institution_id", "institution_id"),
+    )

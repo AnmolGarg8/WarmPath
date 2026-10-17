@@ -65,6 +65,12 @@ def upgrade() -> None:
         "WITH (m = 16, ef_construction = 64);"
     )
 
+    # 3. High-throughput B-tree indexes for filtered candidate retrieval
+    op.create_index("ix_giver_profiles_institution_id", "giver_profiles", ["institution_id"])
+    op.create_index("ix_giver_profiles_capacity", "giver_profiles", ["weekly_capacity"])
+    op.create_index("ix_giver_profiles_impressions", "giver_profiles", ["daily_impressions_count"])
+    op.create_index("ix_giver_profiles_inst_cap", "giver_profiles", ["institution_id", "weekly_capacity"])
+
     # 3. Student match local projection table
     op.create_table(
         "student_match_profiles",
