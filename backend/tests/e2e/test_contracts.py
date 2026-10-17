@@ -14,7 +14,7 @@ from app.main import app
 
 repo_root = Path(__file__).resolve().parent.parent.parent.parent
 if str(repo_root) not in sys.path:
-    sys.path.insert(0, str(repo_root))
+    sys.path.append(str(repo_root))
 
 from scripts.build_openapi import build_merged_openapi
 

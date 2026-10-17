@@ -94,14 +94,13 @@ def verify_backend(merged_contract):
     # Ensure root and Flutter app directory do not shadow backend/app
     sys.path = [p for p in sys.path if Path(p).resolve() not in (repo_root.resolve(), flutter_path.resolve()) and p != ""]
     sys.path.insert(0, str(backend_path))
-    if "app" in sys.modules:
-        app_file = str(getattr(sys.modules["app"], "__file__", ""))
-        if "backend" not in app_file:
-            del sys.modules["app"]
+    for mod_key in list(sys.modules.keys()):
+        if mod_key == "app" or mod_key.startswith("app."):
+            del sys.modules[mod_key]
 
     try:
-        import app.main
-        app = app.main.app
+        import app.main as app_main_mod
+        app = app_main_mod.app
     except ImportError as e:
         print(f"Notice: Could not import app.main ({e}). Skipping backend route verification.", file=sys.stderr)
         return True
@@ -110,6 +109,10 @@ def verify_backend(merged_contract):
     for route in app.routes:
         if hasattr(route, "path"):
             backend_routes.add(route.path)
+
+    print(f"DEBUG: app.main file: {getattr(app_main_mod, '__file__', None)}", file=sys.stderr)
+    print(f"DEBUG: module_names in app.main: {getattr(app_main_mod, 'module_names', None)}", file=sys.stderr)
+    print(f"DEBUG: backend_routes count: {len(backend_routes)}", file=sys.stderr)
 
     contract_paths = set(merged_contract.get("paths", {}).keys())
     missing = contract_paths - backend_routes
