@@ -1,381 +1,426 @@
 # WarmPath
 
-> **Trust first, networking second.**  
-> A closed, institution-verified, intent-first alumni network that replaces static directories with structured, high-signal connections.
+Building a network, not a directory. A closed, institution-verified alumni network matched by expertise and intent.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
-[![Flutter](https://img.shields.io/badge/Mobile-Flutter-02569B.svg?logo=flutter&logoColor=white)](https://flutter.dev)
+[![Flutter](https://img.shields.io/badge/Client-Flutter-02569B.svg?logo=flutter&logoColor=white)](https://flutter.dev)
 [![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL%20%2B%20pgvector-336791.svg?logo=postgresql&logoColor=white)](https://github.com/pgvector/pgvector)
-[![Gemini](https://img.shields.io/badge/AI-Google%20Gemini%20API-4285F4.svg?logo=google&logoColor=white)](https://ai.google.dev)
-[![Compliance](https://img.shields.io/badge/Compliance-DPDP%20Act%20Ready-green.svg)](#privacy--data-protection-dpdp-act)
+[![Gemini](https://img.shields.io/badge/AI-Google%20Gemini-4285F4.svg?logo=google&logoColor=white)](https://ai.google.dev)
 
 ---
 
-## 📌 Executive Summary
+## At a glance
 
-Most alumni platforms fail because they treat alumni networks like **phonebooks**: static directories of hundreds of names where students send cold, vague messages into the void, and busy professionals get spammed until they turn off notifications.
-
-Meanwhile, open professional platforms (like LinkedIn) are filled with unverified recruiters, fake job listings asking for "security deposits", and pressure to move conversations to private channels like WhatsApp or Telegram.
-
-**WarmPath** is built on a simple thesis: **Building a Network, Not a Directory.**
-
-1. **Resume-Driven & Intent-First**: Students don't search by company names or senior job titles. They upload their resume and answer one question: *"What do you want next?"* WarmPath pairs their skills and aspirations with alumni who have actually walked that path.
-2. **Free Within College, Paid for Cross-College Reach**: Connecting with alumni from your own alma mater is always **100% free**. Students who want to reach domain experts, founders, and alumni across other institutions use a credit-based subscription where givers are fairly compensated.
-3. **Earn by Merit, Not College Brand**: What an expert earns per session is governed strictly by **student ratings and review consistency**, not their college's prestige tier.
-4. **7-Layer Trust & Fraud Shield**: Institution-backed identity verification, in-app audio/video calling (no phone numbers or personal emails exchanged), automated scam detection, and escrow-style protected payments.
+- **What it is**: An intent-first alumni network where students connect with verified alumni and experts for structured mentorship sessions, instead of sending unread cold messages into static directories.
+- **Who it is for**: College students who lack a personal professional network, busy alumni who want bounded ways to help without being spammed, and college placement cells that want real visibility into mentoring outcomes.
+- **Current status**: We are currently in the hackathon ideation and prototype round. The architectural specifications, data contracts, trust models, and matching heuristics are locked. Core API endpoints and mobile UI flows are in progress.
+- **Demo Link**: <!-- TODO: add demo link -->
+- **Demo Video**: <!-- TODO: add demo video link -->
 
 ---
 
-## 🧭 The Core Problem
+## The problem
 
-| Failure Mode Today | What Happens | The WarmPath Solution |
+Students at non-metro or lesser-known colleges start with almost zero professional network. When they reach out to strangers on open platforms like LinkedIn, their cold messages go unanswered 95% of the time because students rarely know how to write a clear, specific request.
+
+At the same time, alumni want to give back to their alma mater, but their time is limited. Without boundaries, they get overwhelmed by vague messages asking for immediate job referrals.
+
+Colleges try to solve this by purchasing alumni software, but these platforms usually end up as dead directories. Nobody knows if any actual mentoring happened after orientation week.
+
+Finally, open networks are easy to game. Students are routinely targeted by fake recruiter profiles, phishing links, and job offers demanding upfront "registration fees" or "security deposits", with bad actors constantly pushing conversations to private WhatsApp or Telegram chats.
+
+---
+
+## What WarmPath does
+
+WarmPath changes how college networking works through four core principles:
+
+1. **Free for your own college**: Every student gets free, verified access to alumni from their own institution, bounded only by the alumnus's weekly capacity.
+2. **Paid cross-college reach**: Students who want to consult alumni from other colleges, founders, or domain experts can book time using subscription credits. Givers are paid for their time.
+3. **Ratings decide earnings, not college pedigree**: What a giver earns depends entirely on ratings and feedback from students they have helped (in Rising, Trusted, and Top Rated bands), never on how prestigious their own college is.
+4. **Safety by design**: Verification is checked at registration, communication stays in-app without revealing phone numbers or emails, payments run through an escrow-style hold, and automated rules flag recruitment scams.
+
+---
+
+## How it fits the hackathon theme
+
+**Theme 1: Alumni Network and Professional Connections**  
+*Theme line: Building a Network, Not a Directory*
+
+A directory lists profiles and leaves users to fend for themselves. A network matches by intent, schedules real time, protects both parties, and measures whether the connection helped.
+
+| User | What they do | What they get |
 | :--- | :--- | :--- |
-| **Cold, Blind Outreach** | Students have no network and don't know who to ask or how to draft a request. Cold DMs get ignored 98% of the time. | **Resume parsing + Intent matching**: An LLM structures the student's skills and intent into a clean, actionable intro line with a transparent "Why this person" match summary. |
-| **Alumni Fatigue & Overload** | Busy alumni want to help, but get bombarded with open-ended messages ("Sir please refer me"). Helping has no boundary. | **Capacity limits & Instant windows**: Givers set strict weekly caps (e.g., max 2 calls/week) or toggle a 30-minute "Open Now" window. No routing beyond capacity. |
-| **Passive College Directories** | Colleges invest in alumni databases (e.g., Almabase, Graduway) that end up as static lists. Admins have zero visibility into actual outcomes. | **Admin Intelligence Dashboard**: Real-time metrics on sessions completed, response times, feedback, and student-alumni skill gap analytics. |
-| **Scams & Exploitation** | Fake recruiters prey on fresh graduates, demanding "registration fees", "training fees", or pushing to private chats. | **7-Layer Trust Engine**: Mandatory institutional / company verification, automated filters for money requests and Telegram/WhatsApp links, and fast human moderation. |
-| **No Outcome Accountability** | Nobody knows if a mentorship session was genuinely helpful or a complete waste of time. | **Mandatory two-way ratings**: Rating unlocks payment escrow, feeds algorithmic ranking, and updates giver pay bands. |
+| **Student** | Uploads resume, states intent, connects, books, and rates. | Relevant guidance, interview prep, and introductions without needing an existing network. |
+| **Alumnus** | Sets weekly availability, accepts requests in one tap, and holds sessions. | Fair compensation for cross-college sessions, credits, reputation, or an option to donate to student scholarships. |
+| **Faculty / Expert** | Mentors students on academic topics and reviews projects. | Compensated time and a verified expert profile. |
+| **Founder** | Hosts AMA slots, reviews portfolios, and speaks with students. | Access to pre-matched candidate pools and a verified employer badge. |
+| **Recruiter** | Conducts verified hiring outreach and screening chats. | Direct pipeline to interested students with verified credentials. |
+| **Institution** | Verifies alumni lists, monitors dashboard, and funds seats. | Real metrics on session volume, turnaround times, emerging skill gaps, and verified outcomes. |
+
+- **Expertise**: Extracted directly from the student's resume via an LLM into structured skills, domains, and project histories.
+- **Intent**: Captured from one clear question at onboarding: *"What do you want next?"* (e.g., frontend developer internship, GRE prep, or fintech startup advice).
+- **Opportunities**: Built into the platform through 1-on-1 mentorship, project reviews, referral conversations, and campus talks.
 
 ---
 
-## 🚀 Key Differentiators
+## Feature status
 
-```
-  Traditional Platforms                     WarmPath Architecture
-┌───────────────────────────┐             ┌───────────────────────────┐
-│  Searchable Profile List  │             │  Resume + Intent Engine   │
-│  Unverified Identities    │             │  Institution-Verified IDs │
-│  Unregulated Cold DMs     │   ──────▶   │  Capped Capacity Windows  │
-│  Pedigree-Biased Earnings │             │  Rating-Driven Pay Bands  │
-│  External Unsafe Chats    │             │  Protected In-App Comms   │
-└───────────────────────────┘             └───────────────────────────┘
-```
-
-- **Not Topmate / ADPList**: Topmate sells individual influencer time. WarmPath roots itself in verified college affinity first (free layer) and ties payouts to objective post-session ratings inside a closed credit economy.
-- **Not LinkedIn**: Identity is verified against college roll lists and corporate registrations (CIN/GST). Unverified accounts cannot post opportunities or initiate outreach.
-- **No "College Tier" Bias**: There are no "Tier 1 / Tier 2" labels. A giver from any college who consistently delivers high-value guidance earns top pay and priority ranking.
+| Feature | Status | Note |
+| :--- | :---: | :--- |
+| System architecture & data models | **Built** | Fully specified in repo documentation and design diagrams. |
+| Environment & local setup configs | **Built** | `.env.example`, `.gitignore`, and Docker orchestration defined. |
+| Institutional email & roster verification | **In progress** | Verification service logic and mock roster validation underway. |
+| Resume parser (Gemini API) | **In progress** | Prompt template and JSON schema extraction for skills and projects. |
+| Heuristic matching service | **In progress** | Python service computing weighted fit scores across signals. |
+| In-app text messaging & call relay | **Planned** | Embedded audio/video rooms (Jitsi/Meet) with masked identities. |
+| Session rating & giver review loop | **Planned** | Two-way feedback mechanism unlocking payout escrow. |
+| Protected payment & credit ledger | **Planned** | Razorpay integration in test mode with 72-hour refund triggers. |
+| Automated scam & keyword filters | **Planned** | Pattern matching for fee requests and off-platform chat redirects. |
+| Institution admin web dashboard | **Planned** | Analytics view for alumni cells on student demand and skill gaps. |
 
 ---
 
-## 🛠️ How It Works (End-to-End)
+## How it works
 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Student as Student (Seeker)
-    participant App as WarmPath Engine
-    participant LLM as Gemini AI + pgvector
-    actor Alum as Verified Alumnus (Giver)
-    participant Escrow as Credit / Escrow Layer
+    actor Student
+    participant WarmPath as WarmPath API
+    participant AI as Gemini + pgvector
+    actor Giver as Alumni / Expert
+    participant Escrow as Credit Escrow
 
-    Student->>App: 1. Verified login (.edu / Roll No)
-    Student->>App: 2. Upload Resume + State Intent ("What next?")
-    App->>LLM: 3. Parse skills, domains & generate embeddings
-    LLM-->>Student: 4. Editable profile + Matched Recommendations ("Why this match")
-    
-    alt Own-College Match
-        Student->>Alum: 5a. Free Request (within Alumnus weekly capacity)
-    else Cross-College / Expert Match
-        Student->>Escrow: 5b. Reserve Subscription Credit
-        Escrow-->>Alum: 5c. Notify session request with clear agenda
+    Student->>WarmPath: Sign up with college email & roll number
+    Student->>WarmPath: Upload resume (DPDP consent) & state intent
+    WarmPath->>AI: Parse skills to JSON & generate vector embeddings
+    AI-->>WarmPath: Structured profile & ranked candidates
+    WarmPath-->>Student: Recommendations with "Why this person" reason
+
+    alt Own-College Match (Free)
+        Student->>Giver: Request slot within giver's weekly capacity
+    else Cross-College Match (Credit-Backed)
+        Student->>Escrow: Reserve subscription credit
+        Escrow-->>Giver: Session request with structured student goal
     end
 
-    Alum->>App: 6. Accept request / Schedule slot (or "Connect Now")
-    App->>App: 7. Embedded Video/Voice Call (Contacts masked)
-    
-    Student->>App: 8. Rate session (1-5 Stars + Feedback)
-    Alum->>App: 9. Rate request quality
-    App->>Escrow: 10. Release giver payout share / credit
+    Giver->>WarmPath: Accept slot / Open 30-min window
+    WarmPath->>WarmPath: In-app session (masked contact details)
+    Student->>WarmPath: Rate session (1 to 5 stars + review)
+    Giver->>WarmPath: Rate request quality
+    WarmPath->>Escrow: Release payout / credit to giver
 ```
 
-### 1. Seeker Journey (Students)
-1. **Verification**: Sign up using verified institutional email or roll/enrolment ID against an institution-cleared roster.
-2. **Resume Parsing & Consent (DPDP Act)**: The student uploads a resume. An LLM parses skills, project areas, and domains into a structured JSON representation. The student can review and edit all extracted details before anything is saved.
-3. **Intent Definition**: Answer one clear question: *"What do you want next?"* (e.g., *Frontend internship at an early-stage startup*, *GRE prep for MS in CS*, *Switching from Mechanical to Analytics*).
-4. **Transparent Recommendations**: The system presents recommended alumni with a plain-language explanation (`"Matched because: Same department + React/Node project overlap + Alumnus offered startup mentoring"`).
-5. **Connection & Scheduling**:
-   - **Own-college alumni**: Always free, bounded by the alumnus's weekly capacity.
-   - **Cross-college alumni & experts**: Booked using monthly subscription credits.
-   - **Instant Connect**: If an alumnus has toggled their 30-minute "Open Now" window, connect immediately.
-6. **Masked In-App Session**: Audio/video calls and chat happen entirely within the app. Personal phone numbers and emails are never exposed.
-7. **Mutual Rating & Review**: The student rates the session quality (1–5 stars + review). The alumnus rates the student's preparation, incentivizing clear intents and polite communication.
+### Student journey (8 steps)
+1. **Sign up and verify**: College email confirms the institution. Roll or enrolment numbers are matched against an approved list.
+2. **Upload resume**: With explicit consent under the DPDP Act, the resume is parsed into skills, domain knowledge, projects, and education. Students can review and edit all extracted data.
+3. **Add intent**: The student answers one prompt: *"What do you want next?"*
+4. **See recommendations**: Best-fit alumni from the same college appear first for free, each showing a clear "Why this match" reason and an online indicator.
+5. **Connect**: Free connection for own-college alumni within their capacity. Cross-college alumni and external experts are unlocked via subscription credits.
+6. **Instant or booked**: If a giver has an active 30-minute "Open Now" window, connect immediately. Otherwise, pick an open calendar slot.
+7. **In-app session**: Audio or video call runs through an embedded link. Phone numbers and personal emails are never revealed.
+8. **Rate**: The student gives a 1 to 5 rating with a short note. The giver rates request quality. Payout is released only after this step.
 
-### 2. Giver Journey (Alumni, Founders, Faculty, Recruiters)
-1. **Identity Verification**: Verified via alumni cell records, work email domain, or portfolio proof.
-2. **Boundary Controls**: Set weekly session limits (e.g., *3 sessions per week*) and optional ad-hoc availability windows. Givers are never overwhelmed by open-ended backlogs.
-3. **Structured Inbound**: Givers receive pre-structured requests with the student's background summary and specific question, eliminating vague "Can we chat?" messages.
-4. **Compensated Value**: For cross-college sessions, givers earn competitive payouts based on their rating tier. Earnings can be cashed out, reinvested to consult other senior experts on the platform, or donated to the student scholarship pool.
+### Giver journey
+Alumni, founders, faculty, and recruiters verify their identity, set a strict weekly capacity (such as 2 or 3 sessions per week), and optionally toggle an "open for 30 minutes" status. They receive well-structured requests with clear agendas, accept in one tap, and hold calls inside the app. For cross-college calls, they earn credits or cash based on their rating band, which they can withdraw, spend on other experts, or donate to a student scholarship pool.
 
 ---
 
-## 🛡️ The 7-Layer Trust & Safety Architecture
+## Architecture and technical choices
 
-Trust is not assumed at registration—it is verified at entry, monitored during interaction, and enforced with definitive consequences.
+```mermaid
+graph TD
+    subgraph Client Layer
+        A[Flutter Mobile App<br/>Android & iOS]
+        B[Admin Web Portal<br/>College Admins & Moderators]
+    end
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│ 7. CONTINUOUS LEARNING   Post-mortems update detection rules│
-├─────────────────────────────────────────────────────────────┤
-│ 6. HUMAN REVIEW          Named moderators & 24hr SLA queues │
-├─────────────────────────────────────────────────────────────┤
-│ 5. ABUSE & SCAM FILTER   Real-time regex & NLP for pay/links│
-├─────────────────────────────────────────────────────────────┤
-│ 4. IN-APP COMMUNICATION  Zero exposure of personal PII      │
-├─────────────────────────────────────────────────────────────┤
-│ 3. GRADUATED PRIVILEGES  Trust scores govern action limits  │
-├─────────────────────────────────────────────────────────────┤
-│ 2. LAYERED BADGES        Verified Student, Alumnus, Employer│
-├─────────────────────────────────────────────────────────────┤
-│ 1. IDENTITY AT ENTRY     College roster, roll number, GST   │
-└─────────────────────────────────────────────────────────────┘
-```
+    subgraph API Services
+        C[FastAPI Backend]
+        C --> D[Auth & Verification]
+        C --> E[Resume Extraction]
+        C --> F[Heuristic Matcher]
+        C --> G[Session Scheduler]
+        C --> H[Payment & Escrow Service]
+        C --> I[Safety & Moderation Desk]
+    end
 
-1. **Identity at Entry**:
-   - Students & Alumni: Institution email verified against official rolls or alumni-cell rosters.
-   - Recruiters & Founders: Company-domain email plus mandatory business registry validation (CIN / GST).
-2. **Layered Badges**: Distinct badges visible across profiles: `Verified Student`, `Verified Alumnus`, `Verified Employer`, `Verified Expert`.
-3. **Graduated Privileges**: New accounts operate under constrained rate limits (messages/day, no job posting, no paid hosting) until a track record of completed, well-rated interactions is established.
-4. **In-App Communication Sandbox**: Communication remains strictly in-app. Phone numbers, personal WhatsApp handles, and personal emails are redacted.
-5. **Real-Time Scam Detection**: Messages containing keywords associated with employment fraud (`registration fee`, `security deposit`, `processing fee`, `payment required`, `join Telegram`) are blocked instantly with warning banners and routed to the moderation desk.
-6. **Fast Human Review & Sanctions**: Built-in 1-tap reporting on every profile, session, and message thread. Verified repeat offenders face permanent expulsion across both email and institutional enrolment identifiers.
-7. **Post-Mortem Loop**: Incident post-mortems immediately generate updated detection heuristics and behavioral rules.
+    subgraph Storage
+        J[(PostgreSQL + pgvector)]
+        K[(Redis Cache)]
+    end
 
----
+    subgraph Integrations
+        L[Google Gemini API]
+        M[Razorpay Test Mode]
+        N[WebRTC / Jitsi Relay]
+    end
 
-## ⚖️ The Economic Model & Fairness Guarantee
-
-### Why Charging for Cross-College Reach is Not "Pay-to-Network"
-
-- **Every student gets free access** to their own college's alumni base. That baseline never costs a cent.
-- Busy senior engineers, founders, and recruiters outside one's college have severe opportunity costs. Paying givers for cross-college sessions turns polite declines into willing mentors.
-- **No Pedigree Pricing**: Payout shares are tied exclusively to student satisfaction ratings:
-
-| Giver Rating Band | Minimum Requirement | Illustrative Payout Share | Giver Payout (per ₹250 session credit) |
-| :--- | :--- | :---: | :---: |
-| **Rising** | Baseline verified profile | 60% | ₹150 |
-| **Trusted** | Consistent 4.2+ rating (min. 5 sessions) | 70% | ₹175 |
-| **Top Rated** | Consistent 4.7+ rating (high volume) | 80% | ₹200 |
-
-*Note: Figures are illustrations for economics modeling. Platform margin covers infrastructure, video relays, verification checks, and escrow payment gateway fees.*
-
-### Protected Payments & Escrow Mechanism
-- **Credit Reservation**: Credits are held in escrow when a session is booked.
-- **Automatic Refund Guarantee**: If a giver fails to respond within **72 hours** or misses a booked session, the student's credit is automatically refunded.
-- **No-Show Protection**: If a student fails to attend a confirmed slot without notice, the credit is consumed to protect the giver's reserved time.
-- **Scholarship Pool**: Alumni can choose to donate their session earnings directly to a subsidized credit pool for underprivileged students.
-
----
-
-## 🧠 The Recommendation Engine (v1 Heuristic)
-
-WarmPath Version 1 utilizes a transparent, explainable heuristic scoring function rather than a black-box model. Every score can be justified to the student:
-
-$$\text{Match Score} = 0.35(E) + 0.25(I) + 0.15(A) + 0.10(C) + 0.10(R) + 0.05(O)$$
-
-| Component | Weight | Signal Source | Why It Matters |
-| :--- | :---: | :--- | :--- |
-| **Expertise Fit ($E$)** | **35%** | Resume skills & project vector cosine similarity (`pgvector`) | Technical & domain relevance |
-| **Intent Fit ($I$)** | **25%** | Match between student's *"What next?"* query and giver's offered topics | Focuses on where the student is heading, not just where they were |
-| **Affinity ($A$)** | **15%** | Shared college, department, student society, or graduation batch | Warmth factor and natural rapport |
-| **Availability ($C$)** | **10%** | Online-now flag, open time windows, remaining weekly bandwidth | Prioritizes givers who can respond immediately |
-| **Rating Band ($R$)** | **10%** | Bayesian-smoothed session rating and completion rate | Elevates consistently helpful mentors |
-| **Response Odds ($O$)** | **5%** | Historical acceptance speed and reply percentage | Prevents inquiries from hitting dead inboxes |
-
-> **Hard Gate**: Accounts that are unverified, restricted by moderation, or currently at 100% capacity are **strictly filtered out** prior to scoring.
-
----
-
-## 🏛️ Institutional Admin Dashboard
-
-Universities and college placement cells partner with WarmPath to gain unprecedented, compliant insight into their community's career trajectories:
-
-- **Engagement Analytics**: Requests posted, fulfillment rates, average response turnaround.
-- **Skill-Gap Heatmap**: Aggregate analysis of what skills students are seeking vs. what current alumni offer—informing curriculum enhancements and targeted alumni outreach.
-- **Sponsored Seat Allocation**: Administration of institutional grants and CSR-sponsored credits for eligible students.
-- **Safety & Moderation Audit**: Real-time visibility into reported incidents, resolution times, and network health.
-- **Data Sovereignty**: The institution retains ownership of its institutional data under clear DPDP-compliant data processing agreements.
-
----
-
-## 💻 Tech Stack & Architecture
-
-```
-┌────────────────────────────────────────────────────────┐
-│                   CLIENT LAYER                         │
-│   Flutter Mobile App (iOS / Android)  │  Web Admin     │
-└───────────────────────────┬────────────────────────────┘
-                            │ REST / WebSocket
-┌───────────────────────────▼────────────────────────────┐
-│                  FASTAPI BACKEND                       │
-│  ┌──────────────┐ ┌──────────────┐ ┌────────────────┐  │
-│  │ Auth & Trust │ │ Resume/Parse │ │ Match & Rank   │  │
-│  └──────────────┘ └──────────────┘ └────────────────┘  │
-│  ┌──────────────┐ ┌──────────────┐ ┌────────────────┐  │
-│  │ Book & Call  │ │ Escrow/Pay   │ │ ModerationDesk │  │
-│  └──────────────┘ └──────────────┘ └────────────────┘  │
-└─────────────┬──────────────────────────────┬───────────┘
-              │                              │
-┌─────────────▼──────────────┐ ┌─────────────▼───────────┐
-│     DATA & STATE           │ │     EXTERNAL SERVICES   │
-│  PostgreSQL + pgvector     │ │  Google Gemini 1.5 API  │
-│  Redis (Presence & Cache)  │ │  Razorpay Payment Engine│
-│  MinIO / S3 (Encrypted Doc)│ │  Google Calendar / Meet │
-└────────────────────────────┘ └─────────────────────────┘
+    A -->|REST / WebSocket| C
+    B -->|REST| C
+    E --> L
+    I --> L
+    F --> J
+    D --> J
+    G --> K
+    H --> M
+    G --> N
 ```
 
-| Layer | Technology | Role in WarmPath |
+| Component | Choice | Practical reason |
 | :--- | :--- | :--- |
-| **Mobile Client** | **Flutter / Dart** | Single unified cross-platform mobile client for students and givers. |
-| **Admin Web Portal** | **React / Next.js / Flutter Web** | Institution administration, verification queues, and analytics. |
-| **API Services** | **FastAPI (Python 3.11+)** | High-performance asynchronous API for auth, matching, scheduling, and chat. |
-| **Relational & Vector DB** | **PostgreSQL + pgvector** | User records, encrypted profiles, and high-dimensional semantic embeddings. |
-| **Cache & Real-Time** | **Redis** | Online presence ("Open Now" flags), session locks, and rate limiters. |
-| **AI Intelligence** | **Google Gemini API** | Deterministic resume JSON parsing, query structuring, and safety scanning. |
-| **Calling Infrastructure** | **WebRTC / Jitsi Meet** | In-app secure audio/video channels with masked caller identity. |
-| **Payments & Escrow** | **Razorpay** | Subscription billing, credit reservation, and direct payouts (test mode in build). |
-| **Push Notifications** | **Firebase Cloud Messaging (FCM)** | Real-time session alerts, 72-hour reminders, and rating notifications. |
+| **Client** | Flutter | A single codebase allows our 4-person team to build for Android and iOS without maintaining separate UI code. |
+| **Backend** | FastAPI (Python) | High-performance asynchronous endpoints with built-in Pydantic validation, which fits structured LLM JSON outputs. |
+| **Database** | PostgreSQL + pgvector | We already require Postgres for relational data (users, sessions, trust levels). Using `pgvector` lets us perform vector similarity search without paying for or running a separate vector database. |
+| **Cache & Queue** | Redis | Fast storage for transient state like active 30-minute "Open Now" windows, user rate limits, and live capacity counters. |
+| **AI / Extraction** | Google Gemini API | Reliable JSON extraction from resume text, intent structuring, and keyword scanning for flagged messages. |
+| **Video Relay** | Embedded Jitsi / Meet links | Enables quick, zero-cost calling where neither party needs to share their phone number or personal email. |
+| **Payments** | Razorpay (test mode) | Provides standard Indian payment methods with sandbox support for subscription handling and split payouts. |
 
 ---
 
-## 🔒 Privacy & Data Protection (DPDP Act)
+## Matching: how recommendations work
 
-WarmPath is engineered around India's **Digital Personal Data Protection (DPDP) Act**:
+In Version 1, recommendations use a **transparent heuristic score**, not a black-box machine learning model. Every score can be explained to the student:
 
-- **Explicit Granular Consent**: Students provide explicit consent for resume parsing and specific mentorship usage.
-- **Zero Public Indexing**: Resumes and contact information are never crawled, indexed, or surfaced to web search engines.
-- **Role-Based Selective Visibility**: Resumes are only shared with a specific matched alumnus after the student formally requests a session.
-- **Data Subject Rights**: One-click **Download My Data** and permanent **Delete My Account & Data** workflows.
-- **Strict Data Segregation**: Institutional roster data remains strictly isolated.
+$$\text{Score} = 0.35E + 0.25I + 0.15A + 0.10C + 0.10R + 0.05O$$
 
----
+| Signal | Weight | What it uses | Purpose |
+| :--- | :---: | :--- | :--- |
+| **Expertise fit ($E$)** | **35%** | Resume skills and projects vs. giver profile (cosine similarity) | Ensures technical relevance. |
+| **Intent fit ($I$)** | **25%** | Student's stated goal vs. topics the giver explicitly offers | Matches direction, not just past coursework. |
+| **Affinity ($A$)** | **15%** | Same college, department, or student society | Higher initial reply likelihood. |
+| **Availability ($C$)** | **10%** | Online status, open windows, remaining weekly capacity | Prevents over-routing to busy people. |
+| **Rating band ($R$)** | **10%** | Historical average rating and completion record | Rewards consistently helpful mentors. |
+| **Response odds ($O$)** | **5%** | Past acceptance rate and turnaround time | Minimizes dead-end requests. |
 
-## 📁 Repository Structure
-
-```text
-WarmPath/
-├── .github/
-│   └── workflows/              # CI/CD workflows for test & linting
-├── backend/
-│   ├── app/
-│   │   ├── api/                # API routes (auth, matching, sessions, reports)
-│   │   ├── core/               # Configuration, security, database connectors
-│   │   ├── models/             # SQLAlchemy / SQLModel database schemas
-│   │   ├── services/           # Business logic
-│   │   │   ├── parser.py       # Gemini resume parser & structuring
-│   │   │   ├── matcher.py      # pgvector heuristic ranking algorithm
-│   │   │   ├── trust.py        # 7-layer trust score & graduated limits
-│   │   │   └── escrow.py       # Payment reservation and dispute lifecycle
-│   │   └── main.py             # FastAPI entrypoint
-│   ├── requirements.txt
-│   └── Dockerfile
-├── mobile/                     # Flutter mobile client
-│   ├── lib/
-│   │   ├── features/           # Feature modules (auth, explore, booking, call)
-│   │   ├── shared/             # Common widgets, theme, networking
-│   │   └── main.dart
-│   └── pubspec.yaml
-├── web-admin/                  # Institutional dashboard
-├── docs/                       # Architectural specifications & pilot playbooks
-├── docker-compose.yml          # Local container orchestration
-└── README.md
-```
+> **Hard Gates**: Unverified or restricted accounts are never recommended. Givers who have hit their weekly session quota are temporarily excluded from search results.
 
 ---
 
-## ⚡ Quickstart & Local Setup
+## Ratings and trust score
+
+We do not use arbitrary "Tier 1 / Tier 2" college rankings. Instead, two distinct mechanisms run independently:
+
+1. **Ratings decide pay and visibility**:
+   - Students rate every completed session (1 to 5 stars plus a short explanation).
+   - Givers belong to one of three rating bands: **Rising** (starting band), **Trusted**, or **Top Rated**.
+   - Higher bands receive a larger payout share and better placement in search results.
+   - To keep ratings fair, givers have a buffer of minimum rated sessions (such as 5) before their band shifts, preventing a single poor rating from dropping someone immediately.
+   - Ratings are calculated using a smoothed average, and only completed sessions where both parties met the minimum call duration can be reviewed.
+   - Givers also rate request quality, which pushes students to write clear agendas and reduces spam.
+
+2. **The trust score controls safety limits**:
+   - Each account has an internal trust score based on verification level, completion rate, account age, and report history.
+   - The trust score determines daily action limits (e.g., maximum requests per day, permission to post opportunities).
+   - The trust score is completely private, is never used as a public ranking, and has no impact on session earnings.
+
+---
+
+## Trust, safety, and privacy
+
+<details>
+<summary><strong>View the 7-layer trust model and privacy rules</strong></summary>
+
+### The 7 defensive layers
+
+| Layer | What we do | Risk it stops |
+| :--- | :--- | :--- |
+| **1. Identity at entry** | Students & alumni verify via institutional email and roll numbers. Recruiters verify via company domains and business checks (CIN/GST). | Fake alumni, impersonation, unverified recruiters. |
+| **2. Layered badges** | Explicit badges for `Verified Student`, `Verified Alumnus`, `Verified Employer`, and `Verified Expert`. | Fake credibility and misleading profiles. |
+| **3. Graduated privileges** | New accounts start with low daily request limits and cannot post jobs until a verified track record exists. | Throwaway accounts and bulk spam. |
+| **4. In-app communication** | Calls and messaging happen in-app. Phone numbers and personal emails remain hidden. | Off-platform scams and external harassment. |
+| **5. Scam detection** | Automated filters flag words like "registration fee", "security deposit", or links to Telegram/WhatsApp. | Recruitment fraud and upfront payment scams. |
+| **6. Human moderation queue** | One-tap reporting on profiles and chats with a pilot review target of 24 hours. Repeat offenders are permanently banned by institutional ID. | Harassment and repeat bad actors. |
+| **7. Incident review** | Every upheld report generates a brief post-mortem to update automated detection rules. | The same exploit happening twice. |
+
+### Recruiter & job safety rules
+- Recruiters cannot post opportunities or message students until their company registration is verified.
+- Any message requesting payment from a student for an interview or test is blocked immediately with a warning banner, and repeated attempts result in a permanent ban.
+
+### Data privacy by design (DPDP Act)
+- Resumes are parsed only after explicit consent, and students can view, edit, or delete extracted fields before they are stored.
+- Resumes are never indexed publicly or shown to third parties; they are visible only to the specific alumnus a student requests time with.
+- Students can download or permanently delete their data at any time.
+
+*Implementation Note: Trust rules and data privacy workflows are currently in the design specification stage.*
+</details>
+
+---
+
+## Plans, unit economics, and fairness
+
+Connecting with alumni from your own college is **always free**. Subscriptions apply only to students who choose to reach across colleges to external experts and founders.
+
+### Illustrative plans
+
+| Feature | Standard | High | Premium |
+| :--- | :---: | :---: | :---: |
+| **Own-college alumni** | Free (within capacity) | Free (within capacity) | Free (within capacity) |
+| **Monthly session credits** | Few | More | Most |
+| **Reach** | Limited cross-college | Wider (Trusted & above) | All bands, founders, recruiters |
+| **Instant connect** | Basic | Included | Highest priority |
+| **Response guarantee** | Credit back if no reply in 72h | Credit back if no reply in 72h | Credit back if no reply in 72h |
+| **Illustrative price** | Low | ₹499 / month | Higher |
+
+### Illustrative unit economics
+In an illustrative ₹499 plan with 2 session credits (roughly ₹250 revenue per session):
+- **Rising band (60% share)**: Giver earns ₹150; platform retains ₹100.
+- **Trusted band (70% share)**: Giver earns ₹175; platform retains ₹75.
+- **Top Rated band (80% share)**: Giver earns ₹200; platform retains ₹50.
+
+*Note: All money figures and payout shares are illustrations for the pitch. Real pricing and unit economics will be finalized with financial guidance prior to a commercial launch. During the build, all payments run in test mode.*
+
+### Is it fair to charge for cross-college access?
+Charging for cross-college reach is not "pay-to-network". Every student receives free access to their own college's alumni base. The subscription compensates external professionals for their scarce time. What givers earn depends strictly on student reviews, never on college prestige. Furthermore, colleges and alumni can fund sponsored seats and scholarship pools so students who cannot pay still get access.
+
+---
+
+## Getting started
 
 ### Prerequisites
-- **Python 3.11+**
-- **Flutter 3.19+**
-- **Docker & Docker Compose**
-- **Google Gemini API Key**
+- Python 3.11+
+- Flutter SDK (3.19+)
+- Docker & Docker Compose (for running local PostgreSQL and Redis)
 
-### 1. Clone & Setup Environment
-
+### 1. Clone the repository
 ```bash
 git clone https://github.com/AnmolGarg8/WarmPath.git
 cd WarmPath
 ```
 
-Create a `.env` file in the `backend/` directory:
-
-```env
-PROJECT_NAME="WarmPath"
-DATABASE_URL="postgresql://warmpath:secret@localhost:5432/warmpath_db"
-REDIS_URL="redis://localhost:6379/0"
-GEMINI_API_KEY="your-gemini-api-key"
-JWT_SECRET="your-jwt-secret-key"
-RAZORPAY_KEY_ID="rzp_test_xxxx"
-RAZORPAY_KEY_SECRET="your_razorpay_secret"
+### 2. Environment variables
+Copy the sample environment file:
+```bash
+cp .env.example .env
 ```
+Open `.env` and fill in your local database credentials and Gemini API key.
 
-### 2. Start Database & Infrastructure
-
+### 3. Start local infrastructure
 ```bash
 docker compose up -d postgres redis
 ```
+*(Note: docker-compose configuration is in the process of being scaffolded alongside the backend modules).*
 
-### 3. Launch Backend API
-
+### 4. Run the backend service (FastAPI)
 ```bash
 cd backend
 python -m venv venv
-source venv/bin/activate  # On Windows: .\venv\Scripts\Activate.ps1
+# On Windows:
+.\venv\Scripts\Activate.ps1
+# On macOS/Linux:
+source venv/bin/activate
+
 pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8000
 ```
-Interactive API documentation will be available at `http://localhost:8000/docs`.
+Interactive Swagger documentation will be available at `http://localhost:8000/docs`.
 
-### 4. Launch Flutter App
-
+### 5. Run the Flutter mobile app
 ```bash
 cd ../mobile
 flutter pub get
 flutter run
 ```
 
+*Automated test suites are currently in development; test running instructions will be added as test files are committed.*
+
 ---
 
-## 🗺️ 90-Day Pilot Roadmap
+## Repository structure
 
-WarmPath adheres to a strict single-college gate rule: *We do not expand to a second institution until the launch gates of the pilot college are satisfied.*
+```text
+WarmPath/
+├── .env.example            # Template for environment configuration
+├── .gitignore              # Ignored paths for Python, Flutter, and environment files
+├── LICENSE                 # MIT License file
+├── README.md               # Main project overview and hackathon brief
+├── docs/                   # Extended design and specification documents
+│   ├── ARCHITECTURE.md     # Deep-dive system topology and component contracts
+│   └── TRUST_AND_SAFETY.md # Detailed 7-layer trust and compliance rules
+├── backend/                # FastAPI application (in progress)
+├── mobile/                 # Flutter mobile client (in progress)
+└── web-admin/              # Institution management portal (planned)
+```
+
+---
+
+## 90-day single-college pilot roadmap
+
+We follow a strict launch gate rule: **we do not expand to a second college until the pilot college meets its exit conditions.**
+
+<details>
+<summary><strong>View the 3-phase pilot plan</strong></summary>
 
 ```
 Days 1 - 30                 Days 31 - 60                Days 61 - 90
-[ PREPARE ]                 [ OPEN TO STUDENTS ]        [ PROVE & SCALE ]
-├── Onboard Alumni Cell     ├── Batch student invites   ├── Paid tier rollout
-├── Seed 50 verified givers ├── Moderate flagged items  ├── Admin dashboard review
-└── Legal & DPDP review     └── Track 72hr reply rate   └── Convert to annual license
+[ PHASE 1: PREPARE ]        [ PHASE 2: OPEN ]           [ PHASE 3: PROVE ]
+├── Sign alumni cell        ├── Batch student invites   ├── Enable paid tier
+├── Verify 50 real givers   ├── Moderate flagged items  ├── Review dashboard
+└── Legal & DPDP checks     └── Track 72hr reply rate   └── College licence decision
 ```
 
-- **Phase 1 (Days 1–30): Foundation & Seeding**
-  - Partner with college alumni cell; ingest approved graduation roster.
-  - Onboard and verify 50 initial alumni across diverse sectors.
-  - Finalize legal policies, DPDP consent flows, and test-mode payment rails.
-  - *Gate: 50 active verified givers ready; 0 critical vulnerabilities.*
-- **Phase 2 (Days 31–60): Controlled Student Access**
-  - Roll out access to students in batches of 100.
-  - Hands-on moderation of all flagged interactions; fine-tune matching weights.
-  - *Gate: $\ge 60\%$ of requests answered within 72 hours; zero unresolved serious disputes.*
-- **Phase 3 (Days 61–90): Verification of Value & Conversion**
-  - Enable cross-college subscription features in closed pilot cohorts.
-  - Present engagement and skill-gap reports to college leadership.
-  - Transition pilot into a formal institutional subscription.
+- **Phase 1 (Days 1–30: Prepare)**: Partner with one institution's alumni cell, obtain approved roster lists, onboard 50 verified alumni givers, and run internal tests.  
+  *Exit condition*: 50 verified givers live; terms reviewed; test-mode payments functioning.
+- **Phase 2 (Days 31–60: Open to students)**: Invite students in batches, track turnaround times and feedback weekly, and handle moderation reports manually.  
+  *Exit condition*: At least 60% of requests answered within 72 hours; zero unresolved serious reports.
+- **Phase 3 (Days 61–90: Prove it)**: Enable the cross-college paid plan for a test group, share the engagement dashboard with college leadership, and run post-mortems on every incident.  
+  *Exit condition*: Pilot goals met and reviewed; decision on paid institutional licensing.
+</details>
 
 ---
 
-## 👥 The Team: Unsolved Loop
+## Business model and pilot targets
 
-Built with pride by **Team Unsolved Loop** at **VIPS-TC**:
+### Revenue streams
+- **Student subscriptions**: Standard, High, and Premium tiers funding cross-college payouts and platform margins.
+- **Institutional licences**: Annual fee paid by colleges and alumni offices for the analytics dashboard and student career tracking.
+- **Sponsored seats**: Subsidized credits funded by colleges, alumni associations, or CSR initiatives for students needing financial assistance.
 
-- **Anmol Garg**
-- **Tanush Yadav**
-- **Ayush Ghanshala**
-- **Sneha Sinha**
+### Pilot targets (not final results)
+- Higher reply rates and faster first responses compared to cold LinkedIn messages.
+- Measurable access for students from non-metro colleges who have no existing network.
+- High giver retention due to strict capacity limits and fair compensation.
+- Lower scam rates through mandatory identity verification and in-app communications.
+- Metrics to track: fulfillment rate, time to first response, average session rating, repeat giver percentage, and reports per 1,000 users.
 
 ---
 
-## 📄 License
+## How we differ from similar products
 
-This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
+We respect existing products in the market, but we address different use cases:
+
+- **Topmate & ADPList**: These platforms focus on individual creators and monetizing expert time on an open marketplace. WarmPath starts with a free, closed alumni layer, matches on resume data and explicit intent, and ties earnings to student ratings rather than self-set fees.
+- **PeopleGrove, Graduway & Almabase**: These tools are sold to university administrations primarily as alumni directories and donor management systems. WarmPath is built for active 1-on-1 student routing, strict capacity limits, and verified session outcomes.
+- **LinkedIn**: An open professional network where anyone can message anyone. Because it is open, it suffers from spam, unverified recruiters, and job scams asking for fees. WarmPath is closed, verified against college records, and keeps all messaging and calling inside the platform.
+
+---
+
+## Known limitations and risks
+
+Being honest about challenges is essential to building a dependable platform:
+
+1. **Cold start challenge**: A two-sided network requires both students and alumni to be active. We address this with our single-college playbook: seeding 50 verified alumni before inviting any students.
+2. **Giver inactivity**: Mentors can lose momentum over time. We use weekly capacity caps, 30-day activity check-ins, and auto-removal from search after 90 days of inactivity so students never message inactive profiles.
+3. **Moderation turnaround**: Our 24-hour incident review target is a pilot goal that depends on having a dedicated team member or college staff member available. We will not promise instant moderation at scale until it is properly staffed.
+4. **Current prototype status**: The repository currently holds the core architectural specifications, data schemas, and design documents. Backend services and Flutter screens are in active development for the upcoming demonstration round.
+
+---
+
+## The team
+
+Built by **Team Unsolved Loop** from **VIPS-TC**:
+
+- **Anmol Garg** <!-- TODO: add role & GitHub handle -->
+- **Tanush Yadav** <!-- TODO: add role & GitHub handle -->
+- **Ayush Ghanshala** <!-- TODO: add role & GitHub handle -->
+- **Sneha Sinha** <!-- TODO: add role & GitHub handle -->
+
+---
+
+## Licence and acknowledgements
+
+- **Licence**: Distributed under the MIT Licence. See [LICENSE](LICENSE) for full details.
+- **Acknowledgements**: We thank the faculty and the alumni cell at Vivekananda Institute of Professional Studies - Technical Campus (VIPS-TC) for feedback on our initial assumptions and workflow design.
