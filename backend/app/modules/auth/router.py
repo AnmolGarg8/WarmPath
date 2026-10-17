@@ -1,4 +1,5 @@
 from fastapi import APIRouter, WebSocket, Request, Response
+from app.core.config import settings
 from app.core.errors import ModuleNotImplemented
 
 router = APIRouter(tags=["auth"])
@@ -46,3 +47,21 @@ async def post_verification_submit():
 @router.get("/verification/status", summary="Check current verification status")
 async def get_verification_status():
     raise ModuleNotImplemented("/verification/status")
+
+@router.get("/config/public", summary="Retrieve public deployment configuration and demo/test mode flags")
+async def get_config_public():
+    return {
+        "demo_profile": settings.DEMO_PROFILE,
+        "test_mode": settings.TEST_MODE,
+        "windows": {
+            "dispute_minutes": settings.DISPUTE_WINDOW_MINUTES,
+            "no_reply_minutes": settings.NO_REPLY_EXPIRY_MINUTES,
+            "min_call_seconds": settings.MIN_CALL_SECONDS,
+        },
+        "band_thresholds": {
+            "trusted_min_sessions": settings.TRUSTED_MIN_SESSIONS,
+            "top_rated_min_sessions": settings.TOP_RATED_MIN_SESSIONS,
+            "lowered": (settings.TRUSTED_MIN_SESSIONS < 5 or settings.TOP_RATED_MIN_SESSIONS < 10),
+        },
+    }
+

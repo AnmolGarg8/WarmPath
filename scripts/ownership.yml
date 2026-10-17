@@ -29,6 +29,7 @@ roles:
       - .editorconfig
       - .pre-commit-config.yaml
       - .env.example
+      - backend/.env.demo.example
       - docker-compose.yml
       - backend/Dockerfile
       - backend/pyproject.toml
@@ -69,6 +70,7 @@ roles:
       - contracts/modules/availability.yaml
       - contracts/modules/sessions.yaml
       - contracts/modules/ratings.yaml
+      - scripts/demo/
 
   m4:
     allowed_prefixes:
