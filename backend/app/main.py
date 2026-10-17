@@ -58,8 +58,13 @@ app.include_router(health_router)
 
 # Module Auto-Discovery
 modules_dir = Path(__file__).resolve().parent / "modules"
-for module_info in pkgutil.iter_modules([str(modules_dir)]):
-    mod_name = module_info.name
+module_names = []
+if modules_dir.exists():
+    for p in sorted(modules_dir.iterdir()):
+        if p.is_dir() and not p.name.startswith(("_", ".")):
+            module_names.append(p.name)
+
+for mod_name in module_names:
     try:
         mod = importlib.import_module(f"app.modules.{mod_name}.module")
         if hasattr(mod, "ROUTER"):
@@ -69,4 +74,4 @@ for module_info in pkgutil.iter_modules([str(modules_dir)]):
         if hasattr(mod, "register_ports"):
             mod.register_ports(ports)
     except Exception as e:
-        print(f"Warning: Failed to load module '{mod_name}': {e}")
+        print(f"Warning: Failed to load module '{mod_name}': {e}", file=sys.stderr)
