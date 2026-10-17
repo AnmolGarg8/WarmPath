@@ -1,0 +1,42 @@
+# WarmPath CODEOWNERS
+# Replace @GITHUB_M1 through @GITHUB_M4 with actual member GitHub usernames.
+# TODO: Replace @GITHUB_M1 with M1's GitHub handle (Anmol Garg)
+# TODO: Replace @GITHUB_M2 with M2's GitHub handle (Tanush Yadav)
+# TODO: Replace @GITHUB_M3 with M3's GitHub handle (Ayush Ghanshala)
+# TODO: Replace @GITHUB_M4 with M4's GitHub handle (Sneha Sinha)
+
+# M1 Ownership
+backend/app/core/                     @GITHUB_M1
+backend/app/modules/auth/             @GITHUB_M1
+backend/app/modules/trust/            @GITHUB_M1
+app/lib/core/                         @GITHUB_M1
+app/lib/features/auth/                @GITHUB_M1
+app/lib/features/safety/              @GITHUB_M1
+admin/src/core/                       @GITHUB_M1
+admin/src/pages/moderation/           @GITHUB_M1
+admin/src/pages/verification/         @GITHUB_M1
+scripts/                              @GITHUB_M1
+.github/                              @GITHUB_M1
+PROJECT_CONTEXT.md                    @GITHUB_M1
+
+# M2 Ownership
+backend/app/modules/resume/           @GITHUB_M2
+backend/app/modules/matching/         @GITHUB_M2
+app/lib/features/onboarding/          @GITHUB_M2
+app/lib/features/discover/            @GITHUB_M2
+
+# M3 Ownership
+backend/app/modules/availability/     @GITHUB_M3
+backend/app/modules/sessions/         @GITHUB_M3
+backend/app/modules/ratings/          @GITHUB_M3
+app/lib/features/availability/        @GITHUB_M3
+app/lib/features/sessions/            @GITHUB_M3
+app/lib/features/ratings/             @GITHUB_M3
+
+# M4 Ownership
+backend/app/modules/credits/          @GITHUB_M4
+backend/app/modules/payments/         @GITHUB_M4
+backend/app/modules/institution/      @GITHUB_M4
+app/lib/features/plans_wallet/        @GITHUB_M4
+admin/src/pages/dashboard/            @GITHUB_M4
+admin/src/pages/seats/                @GITHUB_M4
