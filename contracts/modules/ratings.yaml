@@ -1,0 +1,71 @@
+paths:
+  /sessions/{id}/rating:
+    post:
+      summary: "Student rates session quality (1-5 + feedback)"
+      responses:
+        "501":
+          description: Module not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /sessions/{id}/request-quality:
+    post:
+      summary: "Giver rates student preparation and request clarity"
+      responses:
+        "501":
+          description: Module not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /sessions/{id}/dispute:
+    post:
+      summary: "Open dispute for abusive or low-effort session"
+      responses:
+        "501":
+          description: Module not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /givers/{id}/rating-summary:
+    get:
+      summary: "Get public rating aggregate for giver"
+      responses:
+        "501":
+          description: Module not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /me/band:
+    get:
+      summary: "Get current rating band (Rising, Trusted, Top Rated)"
+      responses:
+        "501":
+          description: Module not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /admin/disputes:
+    get:
+      summary: "List pending session disputes"
+      responses:
+        "501":
+          description: Module not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /admin/disputes/{id}/resolve:
+    post:
+      summary: "Resolve a session dispute"
+      responses:
+        "501":
+          description: Module not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'

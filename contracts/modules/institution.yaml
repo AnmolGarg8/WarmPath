@@ -1,0 +1,41 @@
+paths:
+  /admin/dashboard/overview:
+    get:
+      summary: "Overview of active sessions, response times, and fulfillment"
+      responses:
+        "501":
+          description: Module not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /admin/dashboard/skill-gap:
+    get:
+      summary: "Analysis of in-demand student skills vs alumni supply"
+      responses:
+        "501":
+          description: Module not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /admin/dashboard/safety-summary:
+    get:
+      summary: "Safety incident summary and moderation resolution rate"
+      responses:
+        "501":
+          description: Module not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /admin/dashboard/seats:
+    get:
+      summary: "Usage metrics for sponsored seats and credits"
+      responses:
+        "501":
+          description: Module not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'

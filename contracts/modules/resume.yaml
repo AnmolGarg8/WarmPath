@@ -1,0 +1,81 @@
+paths:
+  /resume:
+    post:
+      summary: "Upload resume PDF for extraction"
+      responses:
+        "501":
+          description: Module not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /resume/profile:
+    get:
+      summary: "Retrieve parsed resume skills and entities"
+      responses:
+        "501":
+          description: Module not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /resume/profile:
+    put:
+      summary: "Update or correct parsed resume entities"
+      responses:
+        "501":
+          description: Module not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /resume:
+    delete:
+      summary: "Delete uploaded resume and extracted vectors"
+      responses:
+        "501":
+          description: Module not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /me/intent:
+    put:
+      summary: "Save 'what do you want next' intent prompt"
+      responses:
+        "501":
+          description: Module not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /me/intent:
+    get:
+      summary: "Retrieve current student intent prompt"
+      responses:
+        "501":
+          description: Module not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /me/consents:
+    get:
+      summary: "Retrieve DPDP consent records"
+      responses:
+        "501":
+          description: Module not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /me/consents:
+    put:
+      summary: "Update DPDP consent preferences"
+      responses:
+        "501":
+          description: Module not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'

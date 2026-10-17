@@ -1,0 +1,81 @@
+paths:
+  /plans:
+    get:
+      summary: "List subscription plans and credit allowances"
+      responses:
+        "501":
+          description: Module not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /me/subscription:
+    get:
+      summary: "Get authenticated user active subscription"
+      responses:
+        "501":
+          description: Module not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /me/wallet:
+    get:
+      summary: "Get credit balance and transaction history"
+      responses:
+        "501":
+          description: Module not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /me/earnings:
+    get:
+      summary: "Get earned credits and cashout availability"
+      responses:
+        "501":
+          description: Module not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /me/cashout:
+    post:
+      summary: "Request cashout for earned session credits"
+      responses:
+        "501":
+          description: Module not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /me/donate-credits:
+    post:
+      summary: "Donate earned credits to scholarship pool"
+      responses:
+        "501":
+          description: Module not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /sponsored-seats:
+    get:
+      summary: "Check sponsored seat availability"
+      responses:
+        "501":
+          description: Module not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /admin/sponsored-seats:
+    post:
+      summary: "Allocate sponsored seats for institution"
+      responses:
+        "501":
+          description: Module not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'

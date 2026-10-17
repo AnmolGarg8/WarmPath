@@ -1,0 +1,41 @@
+paths:
+  /recommendations:
+    get:
+      summary: "Get ranked mentor recommendations for student"
+      responses:
+        "501":
+          description: Module not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /givers/{id}:
+    get:
+      summary: "View giver mentorship profile"
+      responses:
+        "501":
+          description: Module not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /me/giver-profile:
+    put:
+      summary: "Update own giver mentorship profile and topics"
+      responses:
+        "501":
+          description: Module not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /me/giver-profile:
+    get:
+      summary: "Retrieve own giver mentorship profile"
+      responses:
+        "501":
+          description: Module not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'

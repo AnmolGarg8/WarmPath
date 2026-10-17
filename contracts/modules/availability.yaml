@@ -1,0 +1,51 @@
+paths:
+  /me/availability:
+    put:
+      summary: "Set weekly schedule and session capacity limit"
+      responses:
+        "501":
+          description: Module not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /me/availability:
+    get:
+      summary: "Retrieve current availability schedule"
+      responses:
+        "501":
+          description: Module not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /me/online:
+    post:
+      summary: "Open 30-minute instant connect window"
+      responses:
+        "501":
+          description: Module not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /me/online:
+    delete:
+      summary: "Close instant connect window"
+      responses:
+        "501":
+          description: Module not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /presence:
+    get:
+      summary: "Check online and capacity status for givers"
+      responses:
+        "501":
+          description: Module not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'

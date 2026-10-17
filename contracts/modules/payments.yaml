@@ -1,0 +1,31 @@
+paths:
+  /subscriptions:
+    post:
+      summary: "Create checkout subscription in Razorpay test mode"
+      responses:
+        "501":
+          description: Module not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /subscriptions/cancel:
+    post:
+      summary: "Cancel current active subscription"
+      responses:
+        "501":
+          description: Module not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /webhooks/razorpay:
+    post:
+      summary: "Handle Razorpay payment and refund webhooks"
+      responses:
+        "501":
+          description: Module not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'

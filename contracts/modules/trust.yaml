@@ -1,0 +1,101 @@
+paths:
+  /reports:
+    post:
+      summary: "Submit a report against a user, message, or session"
+      responses:
+        "501":
+          description: Module not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /blocks:
+    post:
+      summary: "Block a user from contacting or booking"
+      responses:
+        "501":
+          description: Module not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /blocks/{user_id}:
+    delete:
+      summary: "Unblock a previously blocked user"
+      responses:
+        "501":
+          description: Module not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /me/trust:
+    get:
+      summary: "Retrieve current private trust score and safety limits"
+      responses:
+        "501":
+          description: Module not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /admin/moderation/queue:
+    get:
+      summary: "List pending moderation reports"
+      responses:
+        "501":
+          description: Module not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /admin/moderation/{id}/resolve:
+    post:
+      summary: "Resolve a moderation report"
+      responses:
+        "501":
+          description: Module not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /admin/verification/queue:
+    get:
+      summary: "List pending verification submissions"
+      responses:
+        "501":
+          description: Module not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /admin/verification/{id}/decide:
+    post:
+      summary: "Approve or reject a verification request"
+      responses:
+        "501":
+          description: Module not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /admin/approved-members/upload:
+    post:
+      summary: "Upload institutional roster CSV"
+      responses:
+        "501":
+          description: Module not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /admin/audit-log:
+    get:
+      summary: "Retrieve security audit trail"
+      responses:
+        "501":
+          description: Module not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
