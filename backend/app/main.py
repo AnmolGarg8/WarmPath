@@ -6,6 +6,7 @@ Frozen after P0.
 
 import importlib
 import pkgutil
+import sys
 from contextlib import asynccontextmanager
 from pathlib import Path
 

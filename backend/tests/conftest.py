@@ -58,6 +58,15 @@ sqlite3.register_adapter(list, json.dumps)
 import app.core.redis as core_redis
 from app.core.db import Base, Institution, get_db
 from app.main import app
+import asyncio
+import pytest
+
+@pytest.fixture(scope="session")
+def event_loop():
+    loop = asyncio.new_event_loop()
+    yield loop
+    loop.close()
+
 
 # Determine test database URL
 TEST_DB_URL = os.environ.get("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
