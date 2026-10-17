@@ -65,7 +65,7 @@ async def test_online_ttl_and_presence_mock():
         mock_redis.set.assert_called_once()
 
         # Check is_online
-        online_now, exp, rem_ttl = await AvailabilityService.is_online(user_id)
+        online_now, _exp, rem_ttl = await AvailabilityService.is_online(user_id)
         assert online_now is True
         assert rem_ttl == 1800
 

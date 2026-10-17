@@ -91,7 +91,7 @@ class WarmPathRazorpayService {
     if (!_initialized || _razorpay == null) {
       debugPrint('Razorpay running in fallback simulation mode.');
       // Simulate successful checkout response for web/desktop/testing
-      await Future.delayed(const Duration(milliseconds: 600));
+      await Future.delayed(const Duration(milliseconds: 600)); // allow-delay: payment gateway simulation delay for desktop/emulator
       _handleSuccess(
         PaymentSuccessResponse(
           'pay_simulated_${DateTime.now().millisecondsSinceEpoch}',
@@ -108,7 +108,7 @@ class WarmPathRazorpayService {
     } catch (e) {
       debugPrint('Error invoking Razorpay native checkout: $e');
       // Graceful fallback for non-mobile platforms
-      await Future.delayed(const Duration(milliseconds: 600));
+      await Future.delayed(const Duration(milliseconds: 600)); // allow-delay: payment gateway fallback delay for non-mobile
       _handleSuccess(
         PaymentSuccessResponse(
           'pay_fallback_${DateTime.now().millisecondsSinceEpoch}',

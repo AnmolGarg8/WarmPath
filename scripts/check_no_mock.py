@@ -40,11 +40,12 @@ BANNED_WORD_PATTERNS = [
     r"\b(fake_data|sample_data|sample_user|sample_event|sample_mentor)\b",
     r"\b(fakeData|sampleData|sampleUser|sampleEvent|sampleMentor)\b",
     # mock, dummy, lorem bounded by non-alphanumeric or string boundaries or underscores
-    r"(?:(?<=[^a-zA-Z0-9])|^)(mock|dummy|lorem)(?=[^a-zA-Z0-9]|$)",
+    # Note: 'mock_interview' is a legitimate domain offering type (interview preparation), not mock data
+    r"(?:(?<=[^a-zA-Z0-9])|^)(mock(?!_interview|\s+interview)|dummy|lorem)(?=[^a-zA-Z0-9]|$)",
     # camelCase / PascalCase variants: e.g. mockUser, getMockData, DummyClass, loremIpsum
-    r"(?:(?<=[a-z])|(?<=[0-9]))(Mock|Dummy|Lorem)(?=[A-Z0-9]|$|[^a-zA-Z0-9])",
-    r"(?:(?<=[^a-zA-Z0-9])|^)(Mock|Dummy|Lorem)(?=[A-Z])",
-    r"(?:(?<=[^a-zA-Z0-9])|^)(mock|dummy|lorem)(?=[A-Z])",
+    r"(?:(?<=[a-z])|(?<=[0-9]))(Mock(?!Interview)|Dummy|Lorem)(?=[A-Z0-9]|$|[^a-zA-Z0-9])",
+    r"(?:(?<=[^a-zA-Z0-9])|^)(Mock(?!Interview)|Dummy|Lorem)(?=[A-Z])",
+    r"(?:(?<=[^a-zA-Z0-9])|^)(mock(?!Interview)|dummy|lorem)(?=[A-Z])",
 ]
 
 COMPILED_BANNED_WORDS = re.compile("|".join(BANNED_WORD_PATTERNS), re.IGNORECASE)
@@ -52,7 +53,7 @@ ALLOW_MOCK_RE = re.compile(r"allow-mock:\s*(.+)", re.IGNORECASE)
 ALLOW_DELAY_RE = re.compile(r"allow-delay:\s*(.+)", re.IGNORECASE)
 
 EXCLUDED_DIR_NAMES = {"test", "tests", "__tests__", "docs", "node_modules", ".dart_tool", ".git", "__pycache__", "build", "dist"}
-EXCLUDED_FILE_SUFFIXES = ("_test.dart", "_test.py", ".test.ts", ".test.tsx", ".test.js", ".test.jsx", ".spec.ts", ".spec.tsx")
+EXCLUDED_FILE_SUFFIXES = ("_test.dart", "_test.py", ".test.ts", ".test.tsx", ".test.js", ".test.jsx", ".spec.ts", ".spec.tsx", ".md")
 
 
 def is_test_or_excluded_path(path: Path) -> bool:

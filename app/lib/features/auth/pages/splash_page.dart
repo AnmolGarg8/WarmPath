@@ -20,7 +20,7 @@ class _SplashPageState extends ConsumerState<SplashPage> {
   }
 
   Future<void> _checkInitialAuth() async {
-    await Future.delayed(const Duration(milliseconds: 300));
+    await Future.delayed(const Duration(milliseconds: 300)); // allow-delay: splash brand reveal animation
     if (!mounted) return;
 
     final token = await SecureStorageService.getAccessToken();

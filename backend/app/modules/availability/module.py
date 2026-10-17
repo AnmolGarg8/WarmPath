@@ -30,7 +30,7 @@ def register_events(bus):
         giver_id = getattr(payload, "giver_id", None)
         if party == "giver" and giver_id:
             async with async_session_maker() as session:
-                avail = await AvailabilityService.get_or_create_availability(session, uuid.UUID(str(giver_id)))
+                await AvailabilityService.get_or_create_availability(session, uuid.UUID(str(giver_id)))
                 # Giver no-show penalizes them (does not free up capacity or restores per domain rules)
                 pass
 

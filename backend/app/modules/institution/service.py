@@ -569,8 +569,8 @@ class InstitutionService:
         ratings = [s.rating for s in completed_sessions if s.rating is not None]
         avg_rating = round(sum(ratings) / len(ratings), 2) if ratings else 0.0
 
-        active_givers = len(set(s.giver_id for s in sessions))
-        active_students = len(set(s.student_id for s in sessions))
+        active_givers = len({s.giver_id for s in sessions})
+        active_students = len({s.student_id for s in sessions})
 
         # Repeat givers (givers with >= 2 sessions)
         giver_counts: Dict[Any, int] = {}

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import '../controllers/pagination_controller.dart';
-import '../models/discover_models.dart';
-import '../services/discover_service.dart';
-import '../widgets/giver_card.dart';
+import 'package:warmpath_app/features/discover/controllers/pagination_controller.dart';
+import 'package:warmpath_app/features/discover/models/discover_models.dart';
+import 'package:warmpath_app/features/discover/services/discover_service.dart';
+import 'package:warmpath_app/features/discover/widgets/giver_card.dart';
 
 class MockDiscoverService extends DiscoverService {
   final List<RecommendationItemData> mockItems;

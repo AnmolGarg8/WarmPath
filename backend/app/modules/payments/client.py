@@ -29,14 +29,13 @@ class RazorpayClientWrapper:
         self.webhook_secret = webhook_secret or settings.RAZORPAY_WEBHOOK_SECRET or "rzp_test_webhook_secret"
 
         # Config gate: if keys do not start with rzp_test_ in non-production, refuse to start
-        if settings.ENVIRONMENT != "production":
-            if not self.key_id.startswith("rzp_test_"):
-                raise AppError(
-                    code="invalid_razorpay_keys",
-                    message="Razorpay key ID must start with 'rzp_test_' in non-production environment.",
-                    status_code=500,
-                    details={"key_id_prefix": self.key_id[:8] if len(self.key_id) >= 8 else self.key_id},
-                )
+        if settings.ENVIRONMENT != "production" and not self.key_id.startswith("rzp_test_"):
+            raise AppError(
+                code="invalid_razorpay_keys",
+                message="Razorpay key ID must start with 'rzp_test_' in non-production environment.",
+                status_code=500,
+                details={"key_id_prefix": self.key_id[:8] if len(self.key_id) >= 8 else self.key_id},
+            )
 
         self._client = razorpay.Client(auth=(self.key_id, self.key_secret))
         self._client.set_app_details({"title": "WarmPath", "version": "0.1.0"})
@@ -137,6 +136,6 @@ def get_razorpay_client() -> RazorpayClientWrapper:
 
 
 def set_razorpay_client(client: Optional[RazorpayClientWrapper]) -> None:
-    """Helper for testing to inject mock clients."""
+    """Helper for testing to inject test clients."""
     global _client_instance
     _client_instance = client

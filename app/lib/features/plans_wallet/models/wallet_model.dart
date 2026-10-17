@@ -27,10 +27,12 @@ class LedgerEntryModel {
     this.notes,
   });
 
-  bool get isPositive =>
-      direction.toLowerCase() == 'in' ||
-      direction.toLowerCase() == 'credit' ||
-      amountCredits > 0;
+  bool get isPositive {
+    final d = direction.toLowerCase();
+    if (d == 'out' || d == 'debit') return false;
+    if (d == 'in' || d == 'credit') return true;
+    return amountCredits > 0;
+  }
 
   String get displayCredits {
     final prefix = isPositive ? '+' : '-';

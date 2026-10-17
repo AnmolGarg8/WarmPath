@@ -31,5 +31,5 @@ String getCreditDisclosureText({
   if (isOwnCollege) {
     return 'Free: own college network (0 credits used)';
   }
-  return 'This mentorship session uses \$cost credit (\${planName} plan)';
+  return 'This mentorship session uses $cost credit ($planName plan)';
 }

@@ -36,7 +36,7 @@ from app.modules.matching.service import (
 # --- Mock Port Classes for Testing ---
 
 class MockTrustPort:
-    def __init__(self, levels: Dict[str, str] = None, blocked: set = None):
+    def __init__(self, levels: Dict[str, str] | None = None, blocked: set | None = None):
         self.levels = levels or {}
         self.blocked = blocked or set()
 
@@ -51,7 +51,7 @@ class MockTrustPort:
 
 
 class MockPresencePort:
-    def __init__(self, mapping: Dict[str, Dict[str, Any]] = None):
+    def __init__(self, mapping: Dict[str, Dict[str, Any]] | None = None):
         self.mapping = mapping or {}
 
     async def status(self, user_ids: List[str]) -> Dict[str, Any]:
@@ -62,7 +62,7 @@ class MockPresencePort:
 
 
 class MockRatingsPort:
-    def __init__(self, mapping: Dict[str, Dict[str, Any]] = None):
+    def __init__(self, mapping: Dict[str, Dict[str, Any]] | None = None):
         self.mapping = mapping or {}
 
     async def get_band(self, giver_id: str) -> Dict[str, Any]:

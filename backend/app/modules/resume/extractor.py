@@ -124,7 +124,7 @@ def extract_text_from_docx(file_bytes: bytes) -> str:
     except Exception as e:
         raise AppError(
             code="docx_extraction_failed",
-            message=f"Could not parse DOCX document: {str(e)}",
+            message=f"Could not parse DOCX document: {e!s}",
             status_code=422,
         )
 

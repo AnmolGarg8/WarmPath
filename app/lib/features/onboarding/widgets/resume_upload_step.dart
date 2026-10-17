@@ -104,7 +104,7 @@ class _ResumeUploadStepState extends State<ResumeUploadStep> {
       _errorCode = null;
     });
 
-    await Future.delayed(const Duration(milliseconds: 600));
+    await Future.delayed(const Duration(milliseconds: 600)); // allow-delay: UX upload progress animation
 
     setState(() {
       _status = UploadStatus.parsing;
@@ -112,7 +112,7 @@ class _ResumeUploadStepState extends State<ResumeUploadStep> {
       _statusMessage = 'Extracting skills, education & projects with Gemini AI...';
     });
 
-    await Future.delayed(const Duration(milliseconds: 900));
+    await Future.delayed(const Duration(milliseconds: 900)); // allow-delay: UX extraction animation
 
     final demoProfile = await widget.service.getProfile();
 

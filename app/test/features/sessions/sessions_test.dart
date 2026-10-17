@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'sessions_error_helper.dart';
+import 'package:warmpath_app/features/sessions/sessions_error_helper.dart';
 
 void main() {
   group('Credit Disclosure Tests', () {

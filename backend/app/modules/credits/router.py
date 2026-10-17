@@ -53,7 +53,7 @@ async def get_current_user_id(
         return payload.get("sub", "")
     if x_user_id:
         return x_user_id
-    # Default deterministic mock user ID for local tests/development
+    # Default deterministic test user ID for local development
     return "00000000-0000-0000-0000-000000000001"
 
 

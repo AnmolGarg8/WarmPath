@@ -345,10 +345,9 @@ class PaymentsService:
                     ),
                 )
 
-        elif event_name == "payment.failed":
-            if sub:
-                sub.status = "past_due"
-                sub.updated_at = now
+        elif event_name == "payment.failed" and sub:
+            sub.status = "past_due"
+            sub.updated_at = now
 
         pe.processed_at = datetime.now(timezone.utc)
         await session.flush()

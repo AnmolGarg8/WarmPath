@@ -1,7 +1,7 @@
-/// Unit and widget tests for WarmPath Plans & Wallet feature.
-/// Tests plan card models, subscription polling controller state machine,
-/// wallet ledger plain language formatting, earnings shares, and credit cost widgets.
-/// Owner: M4
+// Unit and widget tests for WarmPath Plans & Wallet feature.
+// Tests plan card models, subscription polling controller state machine,
+// wallet ledger plain language formatting, earnings shares, and credit cost widgets.
+// Owner: M4
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';

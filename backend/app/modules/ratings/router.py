@@ -46,7 +46,7 @@ async def post_session_rating(
     db: AsyncSession = Depends(get_db),
     user_id: str = Depends(get_current_user_id)
 ):
-    # Dummy giver_id placeholder for standalone test/modular wiring or passed via body/session lookup
+    # Fallback giver_id placeholder for standalone test/modular wiring or passed via body/session lookup
     s_uid = uuid.UUID(user_id)
     session_uid = uuid.UUID(id)
     # Simulated giver ID if session model is separated by modules

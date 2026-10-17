@@ -215,7 +215,7 @@ class CreditsService:
         now = datetime.now(timezone.utc)
 
         # Collect unique account IDs and sort them to prevent deadlocks
-        account_ids = sorted(list({to_uuid(d["account_id"]) for d in drafts}), key=lambda x: str(x))
+        account_ids = sorted({to_uuid(d["account_id"]) for d in drafts}, key=lambda x: str(x))
 
         # Row-lock accounts with FOR UPDATE
         stmt = (
@@ -247,13 +247,12 @@ class CreditsService:
             acc.updated_at = now
 
             # Invariant: User balances must never go negative
-            if acc.kind in ("user_paid", "user_affinity"):
-                if acc.balance_credits < 0 or acc.balance_inr < -0.01:
-                    raise AppError(
-                        code="insufficient_balance",
-                        message=f"Account balance cannot go negative: credits={acc.balance_credits}, inr={acc.balance_inr}",
-                        status_code=400,
-                    )
+            if acc.kind in ("user_paid", "user_affinity") and (acc.balance_credits < 0 or acc.balance_inr < -0.01):
+                raise AppError(
+                    code="insufficient_balance",
+                    message=f"Account balance cannot go negative: credits={acc.balance_credits}, inr={acc.balance_inr}",
+                    status_code=400,
+                )
 
             direction = "credit" if (c_delta > 0 or i_delta > 0) else "debit"
             entry = LedgerEntry(
@@ -333,14 +332,13 @@ class CreditsService:
         # 3. Premium category check (expert, recruiter, founder, faculty)
         giver_roles = giver.roles if giver and giver.roles else []
         premium_roles = {"expert", "recruiter", "founder", "faculty"}
-        if any(r in premium_roles for r in giver_roles):
-            if plan.code != "premium":
-                return {
-                    "allowed": False,
-                    "reason": "giver_requires_premium",
-                    "plan": plan.code,
-                    "cost": 1,
-                }
+        if any(r in premium_roles for r in giver_roles) and plan.code != "premium":
+            return {
+                "allowed": False,
+                "reason": "giver_requires_premium",
+                "plan": plan.code,
+                "cost": 1,
+            }
 
         # 4. Giver Rating Band check
         giver_band = "Rising"

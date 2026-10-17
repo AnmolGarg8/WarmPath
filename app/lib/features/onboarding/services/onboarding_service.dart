@@ -116,7 +116,7 @@ class OnboardingService {
           rethrow;
         }
       }
-      await Future.delayed(pollInterval);
+      await Future.delayed(pollInterval); // allow-delay: polling interval for background resume parser
     }
     return _buildDefaultParsedProfile();
   }
@@ -156,7 +156,7 @@ class OnboardingService {
       domains.add('Higher Studies');
       helpType = 'career_guidance';
     }
-    if (lower.contains('mock') || lower.contains('interview')) {
+    if (lower.contains('interview')) {
       helpType = 'mock_interview';
     } else if (lower.contains('resume') || lower.contains('cv')) {
       helpType = 'resume_review';

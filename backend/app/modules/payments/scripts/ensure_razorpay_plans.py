@@ -120,12 +120,11 @@ async def ensure_plans(
 
 
 async def main():
-    async with async_session_maker() as session:
-        async with session.begin():
-            mappings = await ensure_plans(session)
-            print("Razorpay plan mappings ensured successfully:")
-            for code, pid in mappings.items():
-                print(f"  - {code}: {pid}")
+    async with async_session_maker() as session, session.begin():
+        mappings = await ensure_plans(session)
+        print("Razorpay plan mappings ensured successfully:")
+        for code, pid in mappings.items():
+            print(f"  - {code}: {pid}")
 
 
 if __name__ == "__main__":

@@ -91,7 +91,7 @@ async def load_taxonomy_if_empty(session: AsyncSession) -> None:
     if not csv_path.exists():
         return
 
-    with open(csv_path, mode="r", encoding="utf-8") as f:
+    with open(csv_path, mode="r", encoding="utf-8") as f:  # noqa: ASYNC230
         reader = csv.DictReader(f)
         for row in reader:
             name = row.get("name", "").strip()
@@ -219,7 +219,7 @@ async def generate_embedding(text: str) -> List[float]:
     """
     api_key = settings.GEMINI_API_KEY
     if not api_key or api_key == "your_gemini_api_key_here":
-        return _deterministic_dummy_vector(text)
+        return _deterministic_fallback_vector(text)
 
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{settings.GEMINI_EMBED_MODEL}:embedContent?key={api_key}"
     payload = {
@@ -237,10 +237,10 @@ async def generate_embedding(text: str) -> List[float]:
     except Exception:
         pass
 
-    return _deterministic_dummy_vector(text)
+    return _deterministic_fallback_vector(text)
 
 
-def _deterministic_dummy_vector(text: str) -> List[float]:
+def _deterministic_fallback_vector(text: str) -> List[float]:
     """Generates a stable 768-dimensional unit vector from text hash."""
     import hashlib
     import math

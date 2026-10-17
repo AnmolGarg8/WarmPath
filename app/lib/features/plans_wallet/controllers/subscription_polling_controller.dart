@@ -82,7 +82,7 @@ class SubscriptionPollingController extends ChangeNotifier {
       }
 
       if (i < maxAttempts) {
-        await Future.delayed(pollInterval);
+        await Future.delayed(pollInterval); // allow-delay: polling interval for subscription activation webhook
       }
     }
 

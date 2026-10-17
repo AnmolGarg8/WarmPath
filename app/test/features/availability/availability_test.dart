@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'availability_models.dart';
+import 'package:warmpath_app/features/availability/availability_models.dart';
 
 void main() {
   group('TimeWindow Model Tests', () {

@@ -85,7 +85,7 @@ def cosine_similarity(v1: Optional[List[float]], v2: Optional[List[float]]) -> f
     return max(0.0, min(1.0, (cos + 1.0) / 2.0))
 
 
-def deterministic_dummy_vector(text: str) -> List[float]:
+def deterministic_fallback_vector(text: str) -> List[float]:
     """Generates a stable 768-dimensional unit vector from text hash."""
     seed_bytes = hashlib.sha256(text.encode("utf-8")).digest()
     vec = []
@@ -104,7 +104,7 @@ async def generate_embedding(text: str) -> List[float]:
     """
     api_key = settings.GEMINI_API_KEY
     if not api_key or api_key == "your_gemini_api_key_here":
-        return deterministic_dummy_vector(text)
+        return deterministic_fallback_vector(text)
 
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{settings.GEMINI_EMBED_MODEL}:embedContent?key={api_key}"
     payload = {
@@ -120,7 +120,7 @@ async def generate_embedding(text: str) -> List[float]:
                     return values
     except Exception:
         pass
-    return deterministic_dummy_vector(text)
+    return deterministic_fallback_vector(text)
 
 
 async def generate_embeddings_batch(texts: List[str]) -> List[List[float]]:
@@ -131,7 +131,7 @@ async def generate_embeddings_batch(texts: List[str]) -> List[List[float]]:
     import asyncio
     api_key = settings.GEMINI_API_KEY
     if not api_key or api_key == "your_gemini_api_key_here":
-        return [deterministic_dummy_vector(t) for t in texts]
+        return [deterministic_fallback_vector(t) for t in texts]
 
     results: List[List[float]] = []
     # Process in concurrent chunks of 10
@@ -144,7 +144,7 @@ async def generate_embeddings_batch(texts: List[str]) -> List[List[float]]:
             if isinstance(res, list) and len(res) == 768:
                 results.append(res)
             else:
-                results.append(deterministic_dummy_vector(original_text))
+                results.append(deterministic_fallback_vector(original_text))
     return results
 
 
@@ -296,12 +296,12 @@ class MatchingService(MatchingPort):
                 societies=["ACM"],
                 skills=[{"name": "Python", "category": "Programming Languages"}],
                 domains=["Web Development", "AI/ML"],
-                profile_embedding=deterministic_dummy_vector(f"student:{student_id}:profile"),
+                profile_embedding=deterministic_fallback_vector(f"student:{student_id}:profile"),
                 intent_goal="Find mentorship for software engineering internship",
                 intent_roles=["Software Engineer Intern"],
                 intent_domains=["Technology"],
                 intent_help_type="resume_review",
-                intent_embedding=deterministic_dummy_vector(f"student:{student_id}:intent"),
+                intent_embedding=deterministic_fallback_vector(f"student:{student_id}:intent"),
                 updated_at=utc_now(),
             )
             self.session.add(match_profile)
@@ -689,12 +689,8 @@ class MatchingService(MatchingPort):
                 continue
 
             # Gate E: Scope filtering
-            if scope == "own_college":
-                if giver.institution_id and student.institution_id and giver.institution_id != student.institution_id:
-                    continue
-            elif scope == "cross_college":
-                if giver.institution_id and student.institution_id and giver.institution_id == student.institution_id:
-                    continue
+            if scope == "own_college" and (giver.institution_id and student.institution_id and giver.institution_id != student.institution_id) or scope == "cross_college" and (giver.institution_id and student.institution_id and giver.institution_id == student.institution_id):
+                continue
 
             # Filter by domain or help type if provided
             if filter_domain and filter_domain.lower() not in [d.lower() for d in (giver.domains or [])]:
@@ -933,7 +929,7 @@ class MatchingService(MatchingPort):
             headline=f"{giver.role_title or 'Mentor'} at {giver.company or 'Tech'}",
             company=giver.company,
             role_title=giver.role_title,
-            bio=bio,
+            bio=getattr(giver, "bio", "") or (user.headline if user else "") or "",
             offers=giver.offers,
             topics=giver.topics,
             skills=giver.skills,

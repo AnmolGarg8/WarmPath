@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import '../models/onboarding_models.dart';
-import '../services/onboarding_service.dart';
+import 'package:warmpath_app/features/onboarding/models/onboarding_models.dart';
+import 'package:warmpath_app/features/onboarding/services/onboarding_service.dart';
 
 void main() {
   group('Onboarding Models & Review Form Mapping', () {

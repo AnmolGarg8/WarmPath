@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'rating_models.dart';
+import 'package:warmpath_app/features/ratings/rating_models.dart';
 
 void main() {
   group('GiverBandInfo Model Tests', () {
