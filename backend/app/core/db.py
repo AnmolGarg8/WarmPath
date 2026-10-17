@@ -4,7 +4,7 @@ backend/app/core/db.py - Async SQLAlchemy engine, session factory, and core mode
 
 import uuid
 from datetime import datetime, timezone
-from typing import AsyncGenerator, List, Optional
+from typing import Any, AsyncGenerator, List, Optional
 
 from sqlalchemy import ARRAY, Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
@@ -37,7 +37,7 @@ class Institution(Base):
     name = Column(String(255), nullable=False)
     short_name = Column(String(50), nullable=True)
     city = Column(String(100), nullable=True)
-    email_domains = Column(ARRAY(String), nullable=False, default=list)
+    email_domains: Any = Column(ARRAY(String), nullable=False, default=list)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
 
     users = relationship("User", back_populates="institution")
@@ -50,7 +50,7 @@ class User(Base):
     email = Column(String(255), unique=True, index=True, nullable=False)
     full_name = Column(String(255), nullable=False)
     institution_id = Column(Integer, ForeignKey("institutions.id"), nullable=True)
-    roles = Column(ARRAY(String), nullable=False, default=lambda: ["student"])
+    roles: Any = Column(ARRAY(String), nullable=False, default=lambda: ["student"])
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
 
     institution = relationship("Institution", back_populates="users")
