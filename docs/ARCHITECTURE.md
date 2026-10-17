@@ -5,38 +5,38 @@ This document details the technical design, data flows, and service contracts fo
 ## High-Level Component Topology
 
 ```mermaid
-graph TD
-    subgraph Clients
-        A[Flutter Mobile App<br/>Students & Givers]
-        B[Web Admin Panel<br/>Colleges & Moderation]
+flowchart TD
+    subgraph Clients["Client Layer"]
+        A["Flutter Mobile App<br/>(Students & Givers)"]
+        B["Admin Web Panel<br/>(Colleges & Moderation)"]
     end
 
-    subgraph API Layer
-        C[FastAPI Gateway]
-        C --> D[Auth & Verification]
-        C --> E[Resume & Intent Extraction]
-        C --> F[Heuristic Matcher]
-        C --> G[Session & Booking]
-        C --> H[Escrow & Payout Service]
-        C --> I[Scam Detection & Trust]
+    subgraph API["API Layer"]
+        C["FastAPI Gateway"]
+        C --> D["Auth and Verification"]
+        C --> E["Resume and Intent Extraction"]
+        C --> F["Heuristic Matcher"]
+        C --> G["Session and Booking"]
+        C --> H["Payment and Escrow Service"]
+        C --> I["Scam Detection and Trust"]
     end
 
-    subgraph Data Stores
-        J[(PostgreSQL + pgvector)]
-        K[(Redis Cache & Queues)]
+    subgraph DataStores["Data Stores"]
+        J[("PostgreSQL and pgvector")]
+        K[("Redis Cache and Queues")]
     end
 
-    subgraph External Services
-        L[Google Gemini API]
-        M[Razorpay Test Mode]
-        N[Google Calendar / Meet API]
+    subgraph External["External Services"]
+        L["Google Gemini API"]
+        M["Razorpay (Test Mode)"]
+        N["Google Calendar / Meet API"]
     end
 
-    A -->|HTTPS / WSS| C
-    B -->|HTTPS| C
-    E -->|Structured Prompting| L
-    I -->|Content Filtering| L
-    F -->|Vector & Attribute Query| J
+    A -->|"HTTPS / WSS"| C
+    B -->|"HTTPS"| C
+    E -->|"Structured Prompting"| L
+    I -->|"Content Filtering"| L
+    F -->|"Vector Query"| J
     D --> J
     G --> K
     H --> M

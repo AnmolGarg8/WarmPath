@@ -89,8 +89,8 @@ sequenceDiagram
     autonumber
     actor Student
     participant WarmPath as WarmPath API
-    participant AI as Gemini + pgvector
-    actor Giver as Alumni / Expert
+    participant AI as Gemini and pgvector
+    actor Giver as Alumni and Mentors
     participant Escrow as Credit Escrow
 
     Student->>WarmPath: Sign up with college email & roll number
@@ -131,35 +131,35 @@ Alumni, founders, faculty, and recruiters verify their identity, set a strict we
 ## Architecture and technical choices
 
 ```mermaid
-graph TD
-    subgraph Client Layer
-        A[Flutter Mobile App<br/>Android & iOS]
-        B[Admin Web Portal<br/>College Admins & Moderators]
+flowchart TD
+    subgraph Clients["Client Layer"]
+        A["Flutter Mobile App<br/>(Android and iOS)"]
+        B["Admin Web Portal<br/>(College Admins and Moderators)"]
     end
 
-    subgraph API Services
-        C[FastAPI Backend]
-        C --> D[Auth & Verification]
-        C --> E[Resume Extraction]
-        C --> F[Heuristic Matcher]
-        C --> G[Session Scheduler]
-        C --> H[Payment & Escrow Service]
-        C --> I[Safety & Moderation Desk]
+    subgraph API["API Services"]
+        C["FastAPI Backend"]
+        C --> D["Auth and Verification"]
+        C --> E["Resume Extraction"]
+        C --> F["Heuristic Matcher"]
+        C --> G["Session Scheduler"]
+        C --> H["Payment and Escrow Service"]
+        C --> I["Safety and Moderation Desk"]
     end
 
-    subgraph Storage
-        J[(PostgreSQL + pgvector)]
-        K[(Redis Cache)]
+    subgraph Storage["Storage Layer"]
+        J[("PostgreSQL and pgvector")]
+        K[("Redis Cache")]
     end
 
-    subgraph Integrations
-        L[Google Gemini API]
-        M[Razorpay Test Mode]
-        N[WebRTC / Jitsi Relay]
+    subgraph External["External Integrations"]
+        L["Google Gemini API"]
+        M["Razorpay (Test Mode)"]
+        N["WebRTC / Jitsi Relay"]
     end
 
-    A -->|REST / WebSocket| C
-    B -->|REST| C
+    A -->|"REST / WebSocket"| C
+    B -->|"REST"| C
     E --> L
     I --> L
     F --> J
