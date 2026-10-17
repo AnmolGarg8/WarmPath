@@ -1,0 +1,53 @@
+roles:
+  m1:
+    - backend/app/core/
+    - backend/app/modules/auth/
+    - backend/app/modules/trust/
+    - app/lib/core/
+    - app/lib/features/auth/
+    - app/lib/features/safety/
+    - admin/src/core/
+    - admin/src/pages/moderation/
+    - admin/src/pages/verification/
+    - scripts/
+    - .github/
+    - contracts/modules/auth.yaml
+    - contracts/modules/trust.yaml
+    - PROJECT_CONTEXT.md
+    - README.md
+    - CONTRIBUTING.md
+    - OWNERS.md
+    - .editorconfig
+    - .gitattributes
+    - .gitignore
+    - .pre-commit-config.yaml
+    - docker-compose.yml
+    - .env.example
+    - data/
+  m2:
+    - backend/app/modules/resume/
+    - backend/app/modules/matching/
+    - app/lib/features/onboarding/
+    - app/lib/features/discover/
+    - contracts/modules/resume.yaml
+    - contracts/modules/matching.yaml
+  m3:
+    - backend/app/modules/availability/
+    - backend/app/modules/sessions/
+    - backend/app/modules/ratings/
+    - app/lib/features/availability/
+    - app/lib/features/sessions/
+    - app/lib/features/ratings/
+    - contracts/modules/availability.yaml
+    - contracts/modules/sessions.yaml
+    - contracts/modules/ratings.yaml
+  m4:
+    - backend/app/modules/credits/
+    - backend/app/modules/payments/
+    - backend/app/modules/institution/
+    - app/lib/features/plans_wallet/
+    - admin/src/pages/dashboard/
+    - admin/src/pages/seats/
+    - contracts/modules/credits.yaml
+    - contracts/modules/payments.yaml
+    - contracts/modules/institution.yaml
