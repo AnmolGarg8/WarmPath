@@ -1,71 +1,332 @@
+openapi: 3.0.3
+info:
+  title: WarmPath Ratings Module
+  version: 1.0.0
 paths:
   /sessions/{id}/rating:
     post:
-      summary: "Student rates session quality (1-5 + feedback)"
+      summary: Student rates session quality
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StudentRatingCreate'
       responses:
-        "501":
-          description: Module not implemented
+        '200':
+          description: Rating submitted
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/StudentRatingResponse'
   /sessions/{id}/request-quality:
     post:
-      summary: "Giver rates student preparation and request clarity"
+      summary: Giver rates student preparation and request clarity
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequestQualityCreate'
       responses:
-        "501":
-          description: Module not implemented
+        '200':
+          description: Request quality feedback submitted
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/RequestQualityResponse'
   /sessions/{id}/dispute:
     post:
-      summary: "Open dispute for abusive or low-effort session"
+      summary: Open dispute for abusive or low-effort session
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DisputeCreate'
       responses:
-        "501":
-          description: Module not implemented
+        '200':
+          description: Dispute opened
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/DisputeResponse'
   /givers/{id}/rating-summary:
     get:
-      summary: "Get public rating aggregate for giver"
+      summary: Get public rating aggregate for giver
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
       responses:
-        "501":
-          description: Module not implemented
+        '200':
+          description: Giver rating summary
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/RatingSummaryResponse'
   /me/band:
     get:
-      summary: "Get current rating band (Rising, Trusted, Top Rated)"
+      summary: Get current rating band and progress requirements
+      security:
+        - BearerAuth: []
       responses:
-        "501":
-          description: Module not implemented
+        '200':
+          description: Band progress details
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/MeBandResponse'
   /admin/disputes:
     get:
-      summary: "List pending session disputes"
+      summary: List session disputes
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            default: open
       responses:
-        "501":
-          description: Module not implemented
+        '200':
+          description: List of disputes
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                type: array
+                items:
+                  $ref: '#/components/schemas/DisputeResponse'
   /admin/disputes/{id}/resolve:
     post:
-      summary: "Resolve a session dispute"
+      summary: Resolve a session dispute
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DisputeResolveRequest'
       responses:
-        "501":
-          description: Module not implemented
+        '200':
+          description: Dispute resolved
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/DisputeResponse'
+
+components:
+  schemas:
+    StudentRatingCreate:
+      type: object
+      required:
+        - stars
+      properties:
+        stars:
+          type: integer
+          minimum: 1
+          maximum: 5
+        reason:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+    StudentRatingResponse:
+      type: object
+      required:
+        - id
+        - session_id
+        - student_id
+        - giver_id
+        - stars
+        - created_at
+      properties:
+        id:
+          type: string
+        session_id:
+          type: string
+        student_id:
+          type: string
+        giver_id:
+          type: string
+        stars:
+          type: integer
+        reason:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        created_at:
+          type: string
+          format: date-time
+    RequestQualityCreate:
+      type: object
+      required:
+        - stars
+      properties:
+        stars:
+          type: integer
+          minimum: 1
+          maximum: 5
+        note:
+          type: string
+    RequestQualityResponse:
+      type: object
+      required:
+        - id
+        - session_id
+        - stars
+        - created_at
+      properties:
+        id:
+          type: string
+        session_id:
+          type: string
+        stars:
+          type: integer
+        note:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+    DisputeCreate:
+      type: object
+      required:
+        - reason
+        - details
+      properties:
+        reason:
+          type: string
+        details:
+          type: string
+    DisputeResponse:
+      type: object
+      required:
+        - id
+        - session_id
+        - opened_by_user_id
+        - reason
+        - details
+        - status
+        - created_at
+      properties:
+        id:
+          type: string
+        session_id:
+          type: string
+        opened_by_user_id:
+          type: string
+        reason:
+          type: string
+        details:
+          type: string
+        status:
+          type: string
+        decision:
+          type: string
+        resolution_note:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        resolved_at:
+          type: string
+          format: date-time
+    DisputeResolveRequest:
+      type: object
+      required:
+        - decision
+      properties:
+        decision:
+          type: string
+        note:
+          type: string
+    RatingSummaryResponse:
+      type: object
+      required:
+        - giver_id
+        - current_band
+        - smoothed_average
+        - rated_sessions_count
+        - completion_rate
+        - distribution
+        - recent_reviews
+      properties:
+        giver_id:
+          type: string
+        current_band:
+          type: string
+        smoothed_average:
+          type: number
+        rated_sessions_count:
+          type: integer
+        completion_rate:
+          type: number
+        distribution:
+          type: object
+        recent_reviews:
+          type: array
+          items:
+            type: object
+    MeBandResponse:
+      type: object
+      required:
+        - giver_id
+        - current_band
+        - smoothed_average
+        - rated_sessions_count
+        - completion_rate
+        - payout_share
+        - progress_notes
+      properties:
+        giver_id:
+          type: string
+        current_band:
+          type: string
+        smoothed_average:
+          type: number
+        rated_sessions_count:
+          type: integer
+        completion_rate:
+          type: number
+        payout_share:
+          type: number
+        next_band:
+          type: string
+        progress_notes:
+          type: string
