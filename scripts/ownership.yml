@@ -4,7 +4,10 @@
 roles:
   m1:
     allowed_prefixes:
+      - backend/app/__init__.py
       - backend/app/core/
+      - backend/app/main.py
+      - backend/app/modules/__init__.py
       - backend/app/modules/auth/
       - backend/app/modules/trust/
       - app/lib/core/
@@ -37,6 +40,7 @@ roles:
       - backend/tests/
       - app/pubspec.yaml
       - app/pubspec.lock
+      - app/analysis_options.yaml
       - app/lib/main.dart
       - app/lib/app_router.dart
       - app/test/

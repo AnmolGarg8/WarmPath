@@ -5,6 +5,7 @@ backend/app/core/logging.py - Structured logging with request IDs.
 import logging
 import sys
 import uuid
+
 import structlog
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware

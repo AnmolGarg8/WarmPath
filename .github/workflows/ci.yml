@@ -26,6 +26,8 @@ jobs:
   backend:
     name: Backend Lint & Test
     runs-on: ubuntu-latest
+    env:
+      PYTHONPATH: ${{ github.workspace }}/backend
     services:
       postgres:
         image: pgvector/pgvector:pg16
@@ -58,8 +60,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install ruff mypy pytest pytest-asyncio httpx
-          if [ -f backend/pyproject.toml ]; then pip install -e backend/; fi
+          if [ -f backend/pyproject.toml ]; then pip install -e "backend/[dev]" python-multipart email-validator; else pip install ruff mypy pytest pytest-asyncio httpx python-multipart email-validator; fi
       - name: Ruff Lint
         run: ruff check backend/
       - name: Check Contract Paths
@@ -70,7 +71,55 @@ jobs:
           REDIS_URL: redis://localhost:6379/0
           ENVIRONMENT: test
         run: |
-          pytest -v backend/tests/ backend/app/modules/*/tests/
+          pytest -v backend/app/modules/*/tests/
+
+  e2e:
+    name: E2E Integration & Contract Tests
+    runs-on: ubuntu-latest
+    env:
+      PYTHONPATH: ${{ github.workspace }}/backend
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: warmpath
+          POSTGRES_PASSWORD: secretpassword
+          POSTGRES_DB: warmpath_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f backend/pyproject.toml ]; then pip install -e "backend/[dev]" python-multipart email-validator; else pip install pytest pytest-asyncio httpx schemathesis python-multipart email-validator; fi
+      - name: Build OpenAPI Contract
+        run: python scripts/build_openapi.py
+      - name: Run E2E, Wire-Up & Data Safety Tests
+        env:
+          DATABASE_URL: postgresql+asyncpg://warmpath:secretpassword@localhost:5432/warmpath_test
+          REDIS_URL: redis://localhost:6379/0
+          ENVIRONMENT: test
+        run: |
+          pytest -v backend/tests/e2e/
 
   app:
     name: Flutter App Analyze & Test

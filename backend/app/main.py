@@ -6,8 +6,18 @@ Frozen after P0.
 
 import importlib
 import pkgutil
+import sys
 from contextlib import asynccontextmanager
 from pathlib import Path
+
+_backend_dir = Path(__file__).resolve().parent.parent
+_repo_root = _backend_dir.parent
+if str(_backend_dir) not in sys.path:
+    sys.path.insert(0, str(_backend_dir))
+if str(_repo_root) in sys.path:
+    sys.path.remove(str(_repo_root))
+if "" in sys.path:
+    sys.path.remove("")
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -46,22 +56,54 @@ app.add_middleware(
 )
 
 # Exception Handlers
+from fastapi.exceptions import RequestValidationError
+
+from app.core.errors import validation_error_handler
+
 app.add_exception_handler(AppError, app_error_handler)
+app.add_exception_handler(RequestValidationError, validation_error_handler)
 
 # Health & Readiness
 app.include_router(health_router)
 
 # Module Auto-Discovery
+DEFAULT_MODULES = [
+    "auth",
+    "availability",
+    "credits",
+    "institution",
+    "matching",
+    "payments",
+    "ratings",
+    "resume",
+    "sessions",
+    "trust",
+]
+
 modules_dir = Path(__file__).resolve().parent / "modules"
-for module_info in pkgutil.iter_modules([str(modules_dir)]):
-    mod_name = module_info.name
+module_names = []
+if modules_dir.exists():
+    for p in sorted(modules_dir.iterdir()):
+        if p.is_dir() and not p.name.startswith(("_", ".")):
+            module_names.append(p.name)
+
+if not module_names:
+    module_names = DEFAULT_MODULES
+
+print(f"INFO: Discovering modules in {modules_dir}, found: {module_names}", file=sys.stderr, flush=True)
+
+for mod_name in module_names:
     try:
+        print(f"INFO: Importing app.modules.{mod_name}.module...", file=sys.stderr, flush=True)
         mod = importlib.import_module(f"app.modules.{mod_name}.module")
-        if hasattr(mod, "ROUTER"):
+        has_router = hasattr(mod, "ROUTER")
+        print(f"INFO: Loaded {mod_name}, has_router={has_router}", file=sys.stderr, flush=True)
+        if has_router:
             app.include_router(mod.ROUTER)
         if hasattr(mod, "register_events"):
             mod.register_events(event_bus)
         if hasattr(mod, "register_ports"):
             mod.register_ports(ports)
     except Exception as e:
-        print(f"Warning: Failed to load module '{mod_name}': {e}")
+        import traceback
+        print(f"ERROR: Failed to load module '{mod_name}': {e}\n{traceback.format_exc()}", file=sys.stderr, flush=True)

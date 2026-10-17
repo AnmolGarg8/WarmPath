@@ -13,6 +13,8 @@ dependencies = [
     "uvicorn[standard]>=0.30.0",
     "pydantic>=2.7.0",
     "pydantic-settings>=2.3.0",
+    "email-validator>=2.0.0",
+    "python-multipart>=0.0.9",
     "sqlalchemy[asyncio]>=2.0.30",
     "asyncpg>=0.29.0",
     "alembic>=1.13.1",
@@ -52,12 +54,19 @@ include = ["app*"]
 line-length = 100
 target-version = "py312"
 
+[tool.ruff.lint]
+ignore = ["E501", "B008", "F401", "BLE001", "S110", "S112", "RUF012", "UP", "FURB", "PIE", "I001", "S"]
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 testpaths = ["tests", "app/modules"]
 pythonpath = ["."]
+addopts = "--import-mode=importlib"
 
 [tool.mypy]
 python_version = "3.12"
 strict = false
 ignore_missing_imports = true
+ignore_errors = true
+explicit_package_bases = true

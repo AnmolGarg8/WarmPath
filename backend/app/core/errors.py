@@ -3,7 +3,8 @@ backend/app/core/errors.py - Unified error representation and exception handlers
 Contract format: {"error": {"code": "...", "message": "...", "details": {...}}}
 """
 
-from typing import Any, Dict, Optional
+from typing import Any
+
 from fastapi import Request, status
 from fastapi.responses import JSONResponse
 
@@ -14,7 +15,7 @@ class AppError(Exception):
         code: str,
         message: str,
         status_code: int = status.HTTP_400_BAD_REQUEST,
-        details: Optional[Dict[str, Any]] = None,
+        details: dict[str, Any] | None = None,
     ):
         self.code = code
         self.message = message
@@ -43,7 +44,7 @@ class ModuleNotImplemented(AppError):
         )
 
 
-def error_response(code: str, message: str, status_code: int, details: Optional[Dict[str, Any]] = None) -> JSONResponse:
+def error_response(code: str, message: str, status_code: int, details: dict[str, Any] | None = None) -> JSONResponse:
     return JSONResponse(
         status_code=status_code,
         content={
@@ -56,10 +57,24 @@ def error_response(code: str, message: str, status_code: int, details: Optional[
     )
 
 
+from fastapi.exceptions import RequestValidationError
+
+
 async def app_error_handler(request: Request, exc: AppError) -> JSONResponse:
     return error_response(
         code=exc.code,
         message=exc.message,
         status_code=exc.status_code,
         details=exc.details,
+    )
+
+
+async def validation_error_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
+    errors = exc.errors()
+    msg = errors[0].get("msg", "Invalid request parameters") if errors else "Validation error"
+    return error_response(
+        code="validation_error",
+        message=msg,
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        details={"validation_errors": errors},
     )

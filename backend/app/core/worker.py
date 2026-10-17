@@ -3,8 +3,8 @@ backend/app/core/worker.py - Background outbox worker using arq.
 Delivers outbox events with retries.
 """
 
-import asyncio
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+
 import structlog
 from arq.connections import RedisSettings
 from sqlalchemy import select
@@ -28,7 +28,7 @@ async def process_outbox_events(ctx):
         for event in events:
             logger.info("Dispatching event", topic=event.topic, event_id=str(event.id))
             event.status = "processed"
-            event.processed_at = datetime.now(timezone.utc)
+            event.processed_at = datetime.now(UTC)
         await session.commit()
 
 

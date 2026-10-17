@@ -2,110 +2,467 @@ paths:
   /auth/request-otp:
     post:
       summary: "Request one-time password for email"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequestOtpRequest'
       responses:
-        "501":
-          description: Module not implemented
+        "200":
+          description: "OTP sent successfully"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestOtpResponse'
+        "422":
+          description: "Institution not supported or validation error"
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        "429":
+          description: "Rate limit exceeded"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   /auth/verify-otp:
     post:
       summary: "Verify one-time password and receive tokens"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyOtpRequest'
       responses:
-        "501":
-          description: Module not implemented
+        "200":
+          description: "Authenticated successfully"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        "400":
+          description: "Invalid or expired OTP"
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        "429":
+          description: "Max attempts exceeded"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   /auth/refresh:
     post:
       summary: "Refresh access token"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
       responses:
-        "501":
-          description: Module not implemented
+        "200":
+          description: "Token refreshed successfully"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefreshTokenResponse'
+        "401":
+          description: "Invalid or reused refresh token"
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+
   /auth/logout:
     post:
       summary: "Revoke active session token"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogoutRequest'
       responses:
-        "501":
-          description: Module not implemented
+        "200":
+          description: "Logged out successfully"
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                type: object
+                properties:
+                  message:
+                    type: string
+
   /me:
     get:
       summary: "Retrieve current authenticated user profile"
       responses:
-        "501":
-          description: Module not implemented
+        "200":
+          description: "Current user profile"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSchema'
+        "401":
+          description: "Unauthorized"
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-  /me:
     patch:
       summary: "Update authenticated user profile"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateMeRequest'
       responses:
-        "501":
-          description: Module not implemented
+        "200":
+          description: "Profile updated"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSchema'
+        "401":
+          description: "Unauthorized"
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-  /me:
     delete:
       summary: "Request account and data deletion under DPDP Act"
       responses:
-        "501":
-          description: Module not implemented
+        "200":
+          description: "Account deleted"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "401":
+          description: "Unauthorized"
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+
   /me/data-export:
     get:
       summary: "Download personal data export"
       responses:
-        "501":
-          description: Module not implemented
+        "200":
+          description: "Personal data export archive"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataExportResponse'
+        "401":
+          description: "Unauthorized"
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+
   /institutions:
     get:
       summary: "List supported institutions"
       responses:
-        "501":
-          description: Module not implemented
+        "200":
+          description: "List of affiliated institutions"
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                type: array
+                items:
+                  $ref: '#/components/schemas/InstitutionSchema'
+
   /verification/submit:
     post:
       summary: "Submit institutional credentials for verification"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerificationSubmitRequest'
       responses:
-        "501":
-          description: Module not implemented
+        "201":
+          description: "Verification request created"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerificationRequestSchema'
+        "401":
+          description: "Unauthorized"
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+
   /verification/status:
     get:
       summary: "Check current verification status"
       responses:
-        "501":
-          description: Module not implemented
+        "200":
+          description: "Verification status and active badges"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerificationStatusResponse'
+        "401":
+          description: "Unauthorized"
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    RequestOtpRequest:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+          format: email
+
+    RequestOtpResponse:
+      type: object
+      required: [message, email]
+      properties:
+        message:
+          type: string
+        email:
+          type: string
+
+    VerifyOtpRequest:
+      type: object
+      required: [email, code]
+      properties:
+        email:
+          type: string
+          format: email
+        code:
+          type: string
+          pattern: '^[0-9]{6}$'
+
+    InstitutionSchema:
+      type: object
+      required: [id, name, email_domains]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        short_name:
+          type: string
+          nullable: true
+        city:
+          type: string
+          nullable: true
+        email_domains:
+          type: array
+          items:
+            type: string
+
+    UserSchema:
+      type: object
+      required: [id, email, full_name, roles, verification_level, badges, trust_level, status, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+        full_name:
+          type: string
+        display_name:
+          type: string
+          nullable: true
+        headline:
+          type: string
+          nullable: true
+        avatar_url:
+          type: string
+          nullable: true
+        institution_id:
+          type: integer
+          nullable: true
+        roles:
+          type: array
+          items:
+            type: string
+        verification_level:
+          type: string
+        badges:
+          type: array
+          items:
+            type: string
+        trust_level:
+          type: string
+        status:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        last_seen_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    AuthResponse:
+      type: object
+      required: [access_token, refresh_token, token_type, user, is_new]
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+        token_type:
+          type: string
+        user:
+          $ref: '#/components/schemas/UserSchema'
+        is_new:
+          type: boolean
+
+    RefreshTokenRequest:
+      type: object
+      required: [refresh_token]
+      properties:
+        refresh_token:
+          type: string
+
+    RefreshTokenResponse:
+      type: object
+      required: [access_token, refresh_token, token_type]
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+        token_type:
+          type: string
+
+    LogoutRequest:
+      type: object
+      properties:
+        refresh_token:
+          type: string
+          nullable: true
+
+    UpdateMeRequest:
+      type: object
+      properties:
+        display_name:
+          type: string
+          nullable: true
+        headline:
+          type: string
+          nullable: true
+        avatar_url:
+          type: string
+          nullable: true
+
+    VerificationSubmitRequest:
+      type: object
+      required: [kind, evidence_text]
+      properties:
+        kind:
+          type: string
+          enum: [alumnus, employer, expert, faculty]
+        evidence_text:
+          type: string
+        evidence_urls:
+          type: array
+          items:
+            type: string
+          nullable: true
+        company_name:
+          type: string
+          nullable: true
+        company_registration:
+          type: string
+          nullable: true
+
+    VerificationRequestSchema:
+      type: object
+      required: [id, user_id, kind, evidence_text, status, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        kind:
+          type: string
+        evidence_text:
+          type: string
+        evidence_urls:
+          type: array
+          items:
+            type: string
+          nullable: true
+        company_name:
+          type: string
+          nullable: true
+        company_registration:
+          type: string
+          nullable: true
+        status:
+          type: string
+        decision_reason:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    VerificationStatusResponse:
+      type: object
+      required: [verification_level, badges, trust_level, pending_requests]
+      properties:
+        verification_level:
+          type: string
+        badges:
+          type: array
+          items:
+            type: string
+        trust_level:
+          type: string
+        pending_requests:
+          type: array
+          items:
+            $ref: '#/components/schemas/VerificationRequestSchema'
+
+    DataExportResponse:
+      type: object
+      required: [user, verification_requests, exported_at]
+      properties:
+        user:
+          $ref: '#/components/schemas/UserSchema'
+        verification_requests:
+          type: array
+          items:
+            $ref: '#/components/schemas/VerificationRequestSchema'
+        approved_member_record:
+          type: object
+          nullable: true
+        modules_data:
+          type: object
+        exported_at:
+          type: string
+          format: date-time

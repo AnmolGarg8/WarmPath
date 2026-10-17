@@ -4,8 +4,10 @@ Topics defined in PROJECT_CONTEXT Section 6.
 """
 
 import uuid
-from datetime import datetime, timezone
-from typing import Any, Callable, Coroutine, Dict, List, Optional
+from collections.abc import Callable, Coroutine
+from datetime import UTC, datetime
+from typing import Any
+
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -14,7 +16,7 @@ from app.core.db import OutboxEvent
 # --- Typed Event Payloads ---
 
 class BaseEventPayload(BaseModel):
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class UserVerifiedPayload(BaseEventPayload):
@@ -23,11 +25,17 @@ class UserVerifiedPayload(BaseEventPayload):
     role: str
 
 
+class UserDeletedPayload(BaseEventPayload):
+    user_id: str
+    email: str
+    reason: str = "user_requested_deletion"
+
+
 class TrustLevelChangedPayload(BaseEventPayload):
     user_id: str
     old_level: str
     new_level: str
-    reason: Optional[str] = None
+    reason: str | None = None
 
 
 class ResumeParsedPayload(BaseEventPayload):
@@ -38,13 +46,13 @@ class ResumeParsedPayload(BaseEventPayload):
 
 class ProfileUpdatedPayload(BaseEventPayload):
     user_id: str
-    updated_fields: List[str]
+    updated_fields: list[str]
 
 
 class GiverProfileUpdatedPayload(BaseEventPayload):
     giver_id: str
     weekly_capacity: int
-    topics: List[str]
+    topics: list[str]
 
 
 class RequestCreatedPayload(BaseEventPayload):
@@ -57,13 +65,13 @@ class RequestCreatedPayload(BaseEventPayload):
 class RequestAcceptedPayload(BaseEventPayload):
     request_id: str
     giver_id: str
-    slot_time: Optional[datetime] = None
+    slot_time: datetime | None = None
 
 
 class RequestDeclinedPayload(BaseEventPayload):
     request_id: str
     giver_id: str
-    reason: Optional[str] = None
+    reason: str | None = None
 
 
 class SessionBookedPayload(BaseEventPayload):
@@ -163,7 +171,7 @@ class DisputeResolvedPayload(BaseEventPayload):
 
 class EventBus:
     def __init__(self):
-        self._subscribers: Dict[str, List[Callable[[BaseEventPayload], Coroutine[Any, Any, None]]]] = {}
+        self._subscribers: dict[str, list[Callable[[BaseEventPayload], Coroutine[Any, Any, None]]]] = {}
 
     def subscribe(self, topic: str, handler: Callable[[BaseEventPayload], Coroutine[Any, Any, None]]):
         if topic not in self._subscribers:
@@ -179,7 +187,7 @@ class EventBus:
             topic=topic,
             payload=payload.model_dump(mode="json"),
             status="pending",
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
         )
         session.add(event)
         return event

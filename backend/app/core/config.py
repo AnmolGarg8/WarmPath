@@ -2,8 +2,6 @@
 backend/app/core/config.py - Central configuration using pydantic-settings.
 """
 
-from typing import List
-from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 

@@ -3,13 +3,14 @@ backend/app/core/ports.py - Inter-module synchronous Protocol interfaces & regis
 All default stubs FAIL CLOSED by raising PortNotReady (HTTP 503, port_not_ready).
 """
 
-from typing import Any, Dict, List, Optional, Protocol, runtime_checkable
+from typing import Any, Protocol, runtime_checkable
+
 from app.core.errors import PortNotReady
 
 
 @runtime_checkable
 class SafetyPort(Protocol):
-    async def scan_text(self, text: str, sender_id: str, context: Optional[str] = None) -> Dict[str, Any]:
+    async def scan_text(self, text: str, sender_id: str, context: str | None = None) -> dict[str, Any]:
         """Returns {flags: [...], action: 'allow'|'warn'|'block'|'review'}"""
         ...
 
@@ -20,7 +21,7 @@ class TrustPort(Protocol):
         """Returns trust level: new|verified|established|restricted"""
         ...
 
-    async def can(self, user_id: str, action: str) -> Dict[str, Any]:
+    async def can(self, user_id: str, action: str) -> dict[str, Any]:
         """Returns {allowed: bool, reason: str}"""
         ...
 
@@ -31,7 +32,7 @@ class TrustPort(Protocol):
 
 @runtime_checkable
 class CreditsPort(Protocol):
-    async def can_access(self, student_id: str, giver_id: str) -> Dict[str, Any]:
+    async def can_access(self, student_id: str, giver_id: str) -> dict[str, Any]:
         """Returns {allowed: bool, reason: str, plan: str, cost: int}"""
         ...
 
@@ -50,21 +51,21 @@ class CreditsPort(Protocol):
 
 @runtime_checkable
 class RatingsPort(Protocol):
-    async def get_band(self, giver_id: str) -> Dict[str, Any]:
+    async def get_band(self, giver_id: str) -> dict[str, Any]:
         """Returns {band: str, smoothed_avg: float, n: int, completion_rate: float}"""
         ...
 
 
 @runtime_checkable
 class PresencePort(Protocol):
-    async def status(self, user_ids: List[str]) -> Dict[str, Any]:
+    async def status(self, user_ids: list[str]) -> dict[str, Any]:
         """Returns {online: bool, capacity_left: int} mapping per user_id"""
         ...
 
 
 @runtime_checkable
 class MatchingPort(Protocol):
-    async def explain(self, student_id: str, giver_id: str) -> List[str]:
+    async def explain(self, student_id: str, giver_id: str) -> list[str]:
         """Returns list of explainable match reasons"""
         ...
 
@@ -72,7 +73,7 @@ class MatchingPort(Protocol):
 # --- Default Fail-Closed Stub Implementations ---
 
 class DefaultSafetyPort(SafetyPort):
-    async def scan_text(self, text: str, sender_id: str, context: Optional[str] = None) -> Dict[str, Any]:
+    async def scan_text(self, text: str, sender_id: str, context: str | None = None) -> dict[str, Any]:
         raise PortNotReady("SafetyPort")
 
 
@@ -80,7 +81,7 @@ class DefaultTrustPort(TrustPort):
     async def get_level(self, user_id: str) -> str:
         raise PortNotReady("TrustPort")
 
-    async def can(self, user_id: str, action: str) -> Dict[str, Any]:
+    async def can(self, user_id: str, action: str) -> dict[str, Any]:
         raise PortNotReady("TrustPort")
 
     async def is_blocked(self, user_a: str, user_b: str) -> bool:
@@ -88,7 +89,7 @@ class DefaultTrustPort(TrustPort):
 
 
 class DefaultCreditsPort(CreditsPort):
-    async def can_access(self, student_id: str, giver_id: str) -> Dict[str, Any]:
+    async def can_access(self, student_id: str, giver_id: str) -> dict[str, Any]:
         raise PortNotReady("CreditsPort")
 
     async def reserve(self, student_id: str, request_id: str, giver_id: str) -> None:
@@ -102,17 +103,17 @@ class DefaultCreditsPort(CreditsPort):
 
 
 class DefaultRatingsPort(RatingsPort):
-    async def get_band(self, giver_id: str) -> Dict[str, Any]:
+    async def get_band(self, giver_id: str) -> dict[str, Any]:
         raise PortNotReady("RatingsPort")
 
 
 class DefaultPresencePort(PresencePort):
-    async def status(self, user_ids: List[str]) -> Dict[str, Any]:
+    async def status(self, user_ids: list[str]) -> dict[str, Any]:
         raise PortNotReady("PresencePort")
 
 
 class DefaultMatchingPort(MatchingPort):
-    async def explain(self, student_id: str, giver_id: str) -> List[str]:
+    async def explain(self, student_id: str, giver_id: str) -> list[str]:
         raise PortNotReady("MatchingPort")
 
 
