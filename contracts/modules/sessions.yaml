@@ -1,131 +1,438 @@
+openapi: 3.0.3
+info:
+  title: WarmPath Sessions Module
+  version: 1.0.0
 paths:
   /requests:
     post:
-      summary: "Submit mentorship request to a giver"
+      summary: Submit mentorship request
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequestCreate'
       responses:
-        "501":
-          description: Module not implemented
+        '200':
+          description: Mentorship request created
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-  /requests:
+                $ref: '#/components/schemas/RequestResponse'
     get:
-      summary: "List incoming or outgoing mentorship requests"
+      summary: List mentorship requests
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: box
+          in: query
+          schema:
+            type: string
+            enum: [incoming, outgoing]
+            default: incoming
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: cursor
+          in: query
+          schema:
+            type: string
       responses:
-        "501":
-          description: Module not implemented
+        '200':
+          description: List of requests
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                type: array
+                items:
+                  $ref: '#/components/schemas/RequestResponse'
   /requests/{id}:
     get:
-      summary: "Get request details and agenda"
+      summary: Get request details
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
       responses:
-        "501":
-          description: Module not implemented
+        '200':
+          description: Request details
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/RequestResponse'
   /requests/{id}/accept:
     post:
-      summary: "Accept a mentorship request"
+      summary: Accept mentorship request
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
       responses:
-        "501":
-          description: Module not implemented
+        '200':
+          description: Request accepted, session scheduled
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/SessionResponse'
   /requests/{id}/decline:
     post:
-      summary: "Decline a mentorship request"
+      summary: Decline mentorship request
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeclineRequest'
       responses:
-        "501":
-          description: Module not implemented
+        '200':
+          description: Request declined
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/RequestResponse'
   /givers/{id}/slots:
     get:
-      summary: "List open booking slots for a giver"
+      summary: List open booking slots for a giver
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: from
+          in: query
+          schema:
+            type: string
+        - name: to
+          in: query
+          schema:
+            type: string
       responses:
-        "501":
-          description: Module not implemented
+        '200':
+          description: List of open slots
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                type: array
+                items:
+                  $ref: '#/components/schemas/SlotItem'
   /requests/{id}/messages:
     post:
-      summary: "Send message in request thread"
+      summary: Send message in request thread
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MessageCreate'
       responses:
-        "501":
-          description: Module not implemented
+        '200':
+          description: Message sent
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-  /requests/{id}/messages:
+                $ref: '#/components/schemas/MessageResponse'
     get:
-      summary: "Get messages for a request thread"
+      summary: Get messages for a request thread
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
       responses:
-        "501":
-          description: Module not implemented
+        '200':
+          description: List of messages
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                type: array
+                items:
+                  $ref: '#/components/schemas/MessageResponse'
   /sessions/{id}/join:
     post:
-      summary: "Join in-app video/voice call session"
+      summary: Join session call
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
       responses:
-        "501":
-          description: Module not implemented
+        '200':
+          description: Join recorded
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/SessionResponse'
   /sessions/{id}/leave:
     post:
-      summary: "Leave video/voice call session"
+      summary: Leave session call
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
       responses:
-        "501":
-          description: Module not implemented
+        '200':
+          description: Leave recorded
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/SessionResponse'
   /sessions/{id}:
     get:
-      summary: "Get session details and duration"
+      summary: Get session details
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
       responses:
-        "501":
-          description: Module not implemented
+        '200':
+          description: Session details
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/SessionResponse'
   /me/sessions:
     get:
-      summary: "List past and upcoming sessions"
+      summary: List past and upcoming sessions
+      security:
+        - BearerAuth: []
       responses:
-        "501":
-          description: Module not implemented
+        '200':
+          description: List of sessions
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                type: array
+                items:
+                  $ref: '#/components/schemas/SessionResponse'
   /notifications/devices:
     post:
-      summary: "Register device token for push notifications"
+      summary: Register device token for push notifications
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceTokenCreate'
       responses:
-        "501":
-          description: Module not implemented
+        '200':
+          description: Device token registered
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/DeviceTokenResponse'
+
+components:
+  schemas:
+    RequestCreate:
+      type: object
+      required:
+        - giver_id
+        - kind
+        - intent_text
+      properties:
+        giver_id:
+          type: string
+        kind:
+          type: string
+          enum: [instant, booked]
+        intent_text:
+          type: string
+        slot_start:
+          type: string
+          format: date-time
+    RequestResponse:
+      type: object
+      required:
+        - id
+        - student_id
+        - giver_id
+        - kind
+        - intent_text
+        - status
+        - priority
+        - is_cross_college
+        - created_at
+      properties:
+        id:
+          type: string
+        student_id:
+          type: string
+        giver_id:
+          type: string
+        kind:
+          type: string
+        intent_text:
+          type: string
+        slot_start:
+          type: string
+          format: date-time
+        status:
+          type: string
+        priority:
+          type: integer
+        plan_name:
+          type: string
+        is_cross_college:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+    DeclineRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+    SlotItem:
+      type: object
+      required:
+        - slot_start
+        - slot_end
+        - available
+      properties:
+        slot_start:
+          type: string
+          format: date-time
+        slot_end:
+          type: string
+          format: date-time
+        available:
+          type: boolean
+    MessageCreate:
+      type: object
+      required:
+        - content
+      properties:
+        content:
+          type: string
+    MessageResponse:
+      type: object
+      required:
+        - id
+        - request_id
+        - sender_id
+        - content
+        - safety_action
+        - created_at
+      properties:
+        id:
+          type: string
+        request_id:
+          type: string
+        sender_id:
+          type: string
+        content:
+          type: string
+        safety_action:
+          type: string
+        flags:
+          type: array
+          items:
+            type: string
+        created_at:
+          type: string
+          format: date-time
+    SessionResponse:
+      type: object
+      required:
+        - id
+        - request_id
+        - student_id
+        - giver_id
+        - scheduled_at
+        - duration_minutes
+        - room_url
+        - status
+      properties:
+        id:
+          type: string
+        request_id:
+          type: string
+        student_id:
+          type: string
+        giver_id:
+          type: string
+        scheduled_at:
+          type: string
+          format: date-time
+        duration_minutes:
+          type: integer
+        room_url:
+          type: string
+        status:
+          type: string
+        student_joined_at:
+          type: string
+          format: date-time
+        giver_joined_at:
+          type: string
+          format: date-time
+        no_show_party:
+          type: string
+    DeviceTokenCreate:
+      type: object
+      required:
+        - fcm_token
+      properties:
+        fcm_token:
+          type: string
+        platform:
+          type: string
+    DeviceTokenResponse:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
