@@ -60,12 +60,18 @@ def error_response(code: str, message: str, status_code: int, details: dict[str,
 from fastapi.exceptions import RequestValidationError
 
 
-async def app_error_handler(request: Request, exc: AppError) -> JSONResponse:
+async def app_error_handler(request: Request, exc: Exception) -> JSONResponse:
+    if isinstance(exc, AppError):
+        return error_response(
+            code=exc.code,
+            message=exc.message,
+            status_code=exc.status_code,
+            details=exc.details,
+        )
     return error_response(
-        code=exc.code,
-        message=exc.message,
-        status_code=exc.status_code,
-        details=exc.details,
+        code="internal_error",
+        message=str(exc),
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
     )
 
 

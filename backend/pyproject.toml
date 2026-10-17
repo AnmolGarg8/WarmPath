@@ -70,3 +70,4 @@ strict = false
 ignore_missing_imports = true
 ignore_errors = true
 explicit_package_bases = true
+mypy_path = "."

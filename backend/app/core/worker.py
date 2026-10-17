@@ -4,7 +4,7 @@ Delivers outbox events with retries.
 """
 
 from datetime import UTC, datetime
-
+from typing import Any
 import structlog
 from arq.connections import RedisSettings
 from sqlalchemy import select
@@ -34,7 +34,7 @@ async def process_outbox_events(ctx):
 
 class WorkerSettings:
     functions = [process_outbox_events]
-    cron_jobs = []
+    cron_jobs: list[Any] = []
     redis_settings = RedisSettings.from_dsn(settings.REDIS_URL)
 
 

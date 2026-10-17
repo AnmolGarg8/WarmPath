@@ -54,7 +54,7 @@ def upgrade() -> None:
         'outbox_events',
         sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column('topic', sa.String(length=100), nullable=False),
-        sa.Column('payload', postgresql.JSONB(as_json=True), nullable=False),
+        sa.Column('payload', postgresql.JSONB(), nullable=False),
         sa.Column('status', sa.String(length=20), nullable=False),
         sa.Column('retry_count', sa.Integer(), nullable=False),
         sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
@@ -70,7 +70,7 @@ def upgrade() -> None:
         sa.Column('key', sa.String(length=255), nullable=False),
         sa.Column('user_id', postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column('response_code', sa.Integer(), nullable=False),
-        sa.Column('response_body', postgresql.JSONB(as_json=True), nullable=True),
+        sa.Column('response_body', postgresql.JSONB(), nullable=True),
         sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
         sa.PrimaryKeyConstraint('key')
     )

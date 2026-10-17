@@ -1,7 +1,6 @@
 """
 backend/app/core/db.py - Async SQLAlchemy engine, session factory, and core models.
 """
-
 import uuid
 from collections.abc import AsyncGenerator
 from datetime import UTC, datetime
