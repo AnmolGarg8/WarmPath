@@ -1,81 +1,267 @@
 paths:
   /plans:
     get:
-      summary: "List subscription plans and credit allowances"
+      tags: [credits]
+      summary: List subscription plans and credit allowances
       responses:
-        "501":
-          description: Module not implemented
+        "200":
+          description: List of subscription plans
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/PlansListResponse'
+
   /me/subscription:
     get:
-      summary: "Get authenticated user active subscription"
+      tags: [credits]
+      summary: Get authenticated user active subscription
       responses:
-        "501":
-          description: Module not implemented
+        "200":
+          description: Current user subscription
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/SubscriptionResponse'
+
   /me/wallet:
     get:
-      summary: "Get credit balance and transaction history"
+      tags: [credits]
+      summary: Get credit balance and transaction history
+      parameters:
+        - name: cursor
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 20
       responses:
-        "501":
-          description: Module not implemented
+        "200":
+          description: Wallet balances and cursor-paginated transaction history
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/WalletResponse'
+
   /me/earnings:
     get:
-      summary: "Get earned credits and cashout availability"
+      tags: [credits]
+      summary: Get earned credits and cashout availability
       responses:
-        "501":
-          description: Module not implemented
+        "200":
+          description: Giver earnings breakdown and readiness
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/EarningsResponse'
+
   /me/cashout:
     post:
-      summary: "Request cashout for earned session credits"
+      tags: [credits]
+      summary: Request cashout for earned session credits
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CashoutRequest'
       responses:
-        "501":
-          description: Module not implemented
+        "200":
+          description: Cashout initiated
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/CashoutResponse'
+
   /me/donate-credits:
     post:
-      summary: "Donate earned credits to scholarship pool"
+      tags: [credits]
+      summary: Donate earned credits to scholarship pool
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DonateCreditsRequest'
       responses:
-        "501":
-          description: Module not implemented
+        "200":
+          description: Donation confirmed
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/DonateCreditsResponse'
+
   /sponsored-seats:
     get:
-      summary: "Check sponsored seat availability"
+      tags: [credits]
+      summary: Check sponsored seat availability
       responses:
-        "501":
-          description: Module not implemented
+        "200":
+          description: Sponsored seat availability and active grants
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/SponsoredSeatsEligibilityResponse'
+
   /admin/sponsored-seats:
     post:
-      summary: "Allocate sponsored seats for institution"
+      tags: [credits]
+      summary: Allocate sponsored seats for institution
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminSponsoredSeatRequest'
       responses:
-        "501":
-          description: Module not implemented
+        "200":
+          description: Sponsored seat allocated
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/AdminSponsoredSeatResponse'
+
+components:
+  schemas:
+    PlanResponse:
+      type: object
+      required: [id, code, name, price_inr, credits_per_month, reach_bands, booking_horizon_days, priority, features, active]
+      properties:
+        id: {type: integer}
+        code: {type: string}
+        name: {type: string}
+        price_inr: {type: integer}
+        credits_per_month: {type: integer}
+        reach_bands: {type: array, items: {type: string}}
+        booking_horizon_days: {type: integer}
+        priority: {type: integer}
+        features: {type: array, items: {type: string}}
+        active: {type: boolean}
+
+    PlansListResponse:
+      type: object
+      required: [plans]
+      properties:
+        plans:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlanResponse'
+
+    SubscriptionResponse:
+      type: object
+      required: [plan_tier, status]
+      properties:
+        plan_tier: {type: string}
+        status: {type: string}
+        renews_at: {type: string, format: date-time, nullable: true}
+        period_start: {type: string, format: date-time, nullable: true}
+        period_end: {type: string, format: date-time, nullable: true}
+        credits_remaining: {type: integer}
+
+    LedgerEntryResponse:
+      type: object
+      required: [id, txn_id, amount_credits, amount_inr, direction, reason, plain_reason, ref_type, ref_id, created_at]
+      properties:
+        id: {type: string, format: uuid}
+        txn_id: {type: string, format: uuid}
+        amount_credits: {type: integer}
+        amount_inr: {type: number}
+        direction: {type: string}
+        reason: {type: string}
+        plain_reason: {type: string}
+        ref_type: {type: string}
+        ref_id: {type: string}
+        created_at: {type: string, format: date-time}
+
+    WalletResponse:
+      type: object
+      required: [available_credits, affinity_credits]
+      properties:
+        available_credits: {type: integer}
+        affinity_credits: {type: integer}
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/LedgerEntryResponse'
+        next_cursor: {type: string, nullable: true}
+
+    EarningsResponse:
+      type: object
+      required: [cashable_balance_inr, held_in_escrow_inr, paid_out_inr, total_earned_inr, by_band_payout_share]
+      properties:
+        cashable_balance_inr: {type: number}
+        held_in_escrow_inr: {type: number}
+        paid_out_inr: {type: number}
+        total_earned_inr: {type: number}
+        by_band_payout_share:
+          type: object
+          additionalProperties: {type: number}
+
+    CashoutRequest:
+      type: object
+      required: [amount_inr, upi_id]
+      properties:
+        amount_inr: {type: number}
+        upi_id: {type: string}
+
+    CashoutResponse:
+      type: object
+      required: [payout_id, status]
+      properties:
+        payout_id: {type: string, format: uuid}
+        status: {type: string}
+
+    DonateCreditsRequest:
+      type: object
+      required: [credits]
+      properties:
+        credits: {type: integer}
+
+    DonateCreditsResponse:
+      type: object
+      required: [donated_credits]
+      properties:
+        donated_credits: {type: integer}
+
+    SponsoredSeatInfo:
+      type: object
+      required: [id, student_id, plan_tier, funded_by, created_at]
+      properties:
+        id: {type: string, format: uuid}
+        institution_id: {type: integer, nullable: true}
+        student_id: {type: string, format: uuid}
+        plan_tier: {type: string}
+        sponsor_name: {type: string, nullable: true}
+        funded_by: {type: string}
+        created_at: {type: string, format: date-time}
+
+    SponsoredSeatsEligibilityResponse:
+      type: object
+      required: [eligible]
+      properties:
+        eligible: {type: boolean}
+        seat_type: {type: string, nullable: true}
+        seats:
+          type: array
+          items:
+            $ref: '#/components/schemas/SponsoredSeatInfo'
+
+    AdminSponsoredSeatRequest:
+      type: object
+      required: [student_id, plan_tier]
+      properties:
+        student_id: {type: string, format: uuid}
+        plan_tier: {type: string}
+        sponsor_name: {type: string}
+        funded_by: {type: string}
+
+    AdminSponsoredSeatResponse:
+      type: object
+      required: [success, message]
+      properties:
+        success: {type: boolean}
+        message: {type: string}
