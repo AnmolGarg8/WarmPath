@@ -1,48 +1,120 @@
-from fastapi import APIRouter, WebSocket, Request, Response
-from app.core.errors import ModuleNotImplemented
+"""
+backend/app/modules/auth/router.py - Endpoints for authentication, profiles, and verification.
+"""
+
+
+from fastapi import APIRouter, Depends, Request, status
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.db import User, get_db
+from app.core.deps import get_current_user
+from app.modules.auth.schemas import (
+    AuthResponse,
+    DataExportResponse,
+    InstitutionSchema,
+    LogoutRequest,
+    RefreshTokenRequest,
+    RefreshTokenResponse,
+    RequestOtpRequest,
+    RequestOtpResponse,
+    UpdateMeRequest,
+    UserSchema,
+    VerificationRequestSchema,
+    VerificationStatusResponse,
+    VerificationSubmitRequest,
+    VerifyOtpRequest,
+)
+from app.modules.auth.service import AuthService
 
 router = APIRouter(tags=["auth"])
 
-@router.post("/auth/request-otp", summary="Request one-time password for email")
-async def post_auth_request_otp():
-    raise ModuleNotImplemented("/auth/request-otp")
 
-@router.post("/auth/verify-otp", summary="Verify one-time password and receive tokens")
-async def post_auth_verify_otp():
-    raise ModuleNotImplemented("/auth/verify-otp")
+@router.post("/auth/request-otp", response_model=RequestOtpResponse, summary="Request one-time password for email")
+async def request_otp(
+    payload: RequestOtpRequest,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    client_ip = request.client.host if request.client else "127.0.0.1"
+    res = await AuthService.request_otp(payload.email, client_ip, db)
+    return res
 
-@router.post("/auth/refresh", summary="Refresh access token")
-async def post_auth_refresh():
-    raise ModuleNotImplemented("/auth/refresh")
+
+@router.post("/auth/verify-otp", response_model=AuthResponse, summary="Verify one-time password and receive tokens")
+async def verify_otp(
+    payload: VerifyOtpRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    res = await AuthService.verify_otp(payload.email, payload.code, db)
+    return res
+
+
+@router.post("/auth/refresh", response_model=RefreshTokenResponse, summary="Refresh access token")
+async def refresh_token(
+    payload: RefreshTokenRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    res = await AuthService.refresh_tokens(payload.refresh_token, db)
+    return res
+
 
 @router.post("/auth/logout", summary="Revoke active session token")
-async def post_auth_logout():
-    raise ModuleNotImplemented("/auth/logout")
+async def logout(
+    payload: LogoutRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    await AuthService.logout(payload.refresh_token, db)
+    return {"message": "Logged out successfully"}
 
-@router.get("/me", summary="Retrieve current authenticated user profile")
-async def get_me():
-    raise ModuleNotImplemented("/me")
 
-@router.patch("/me", summary="Update authenticated user profile")
-async def patch_me():
-    raise ModuleNotImplemented("/me")
+@router.get("/me", response_model=UserSchema, summary="Retrieve current authenticated user profile")
+async def get_me(user: User = Depends(get_current_user)):
+    return user
+
+
+@router.patch("/me", response_model=UserSchema, summary="Update authenticated user profile")
+async def update_me(
+    payload: UpdateMeRequest,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    return await AuthService.update_me(user, payload, db)
+
 
 @router.delete("/me", summary="Request account and data deletion under DPDP Act")
-async def delete_me():
-    raise ModuleNotImplemented("/me")
+async def delete_me(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    await AuthService.delete_me(user, db)
+    return {"message": "Account and personal data deleted successfully"}
 
-@router.get("/me/data-export", summary="Download personal data export")
-async def get_me_data_export():
-    raise ModuleNotImplemented("/me/data-export")
 
-@router.get("/institutions", summary="List supported institutions")
-async def get_institutions():
-    raise ModuleNotImplemented("/institutions")
+@router.get("/me/data-export", response_model=DataExportResponse, summary="Download personal data export")
+async def get_data_export(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    return await AuthService.get_data_export(user, db)
 
-@router.post("/verification/submit", summary="Submit institutional credentials for verification")
-async def post_verification_submit():
-    raise ModuleNotImplemented("/verification/submit")
 
-@router.get("/verification/status", summary="Check current verification status")
-async def get_verification_status():
-    raise ModuleNotImplemented("/verification/status")
+@router.get("/institutions", response_model=list[InstitutionSchema], summary="List supported institutions")
+async def get_institutions(db: AsyncSession = Depends(get_db)):
+    return await AuthService.get_institutions(db)
+
+
+@router.post("/verification/submit", response_model=VerificationRequestSchema, status_code=status.HTTP_201_CREATED, summary="Submit institutional credentials for verification")
+async def submit_verification(
+    payload: VerificationSubmitRequest,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    return await AuthService.submit_verification(user, payload, db)
+
+
+@router.get("/verification/status", response_model=VerificationStatusResponse, summary="Check current verification status")
+async def get_verification_status(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    return await AuthService.get_verification_status(user, db)

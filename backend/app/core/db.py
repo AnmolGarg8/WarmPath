@@ -51,9 +51,17 @@ class User(Base):
     full_name = Column(String(255), nullable=False)
     institution_id = Column(Integer, ForeignKey("institutions.id"), nullable=True)
     roles = Column(ARRAY(String), nullable=False, default=lambda: ["student"])
+    verification_level = Column(String(50), default="email_only", nullable=False)
+    badges = Column(ARRAY(String), default=list, nullable=False)
+    display_name = Column(String(255), nullable=True)
+    headline = Column(String(255), nullable=True)
+    avatar_url = Column(String(1024), nullable=True)
+    trust_level = Column(String(50), default="new", nullable=False)
+    status = Column(String(50), default="active", nullable=False)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    last_seen_at = Column(DateTime(timezone=True), nullable=True)
 
-    institution = relationship("Institution", back_populates="users")
+    institution = relationship("Institution", back_populates="users", lazy="joined")
 
 
 class OutboxEvent(Base):
