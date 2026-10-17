@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'discover_page.dart';
 import 'widgets/giver_detail_page.dart';

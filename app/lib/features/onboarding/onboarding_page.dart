@@ -128,7 +128,24 @@ class _OnboardingPageState extends State<OnboardingPage> {
   }
 
   @override
+  ConsumerState<OnboardingPage> createState() => _OnboardingPageState();
+}
+
+class _OnboardingPageState extends ConsumerState<OnboardingPage> {
+  final TextEditingController _intentController = TextEditingController();
+  bool _initializedIntent = false;
+
+  @override
+  void dispose() {
+    _intentController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final profileAsync = ref.watch(resumeProfileProvider);
+    final intentAsync = ref.watch(studentIntentProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: Text(_stepTitle),
