@@ -1,12 +1,23 @@
+"""
+Router sanity tests for institution module.
+Owner: M4
+"""
+
 import pytest
-from httpx import AsyncClient, ASGITransport
-from app.main import app
+from httpx import AsyncClient
+
 
 @pytest.mark.asyncio
-async def test_institution_endpoints_return_501():
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
-        response = await client.get("/admin/dashboard/overview")
-        assert response.status_code == 501
-        data = response.json()
-        assert data["error"]["code"] == "module_not_implemented"
+async def test_institution_endpoints_registered(client: AsyncClient):
+    """Confirm institution admin endpoints are properly registered and return 200."""
+    res_ov = await client.get("/admin/dashboard/overview")
+    assert res_ov.status_code == 200
+
+    res_sg = await client.get("/admin/dashboard/skill-gap")
+    assert res_sg.status_code == 200
+
+    res_safe = await client.get("/admin/dashboard/safety-summary")
+    assert res_safe.status_code == 200
+
+    res_seats = await client.get("/admin/dashboard/seats")
+    assert res_seats.status_code == 200
