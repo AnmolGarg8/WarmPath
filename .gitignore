@@ -1,4 +1,4 @@
-# Environment variables
+# Environment files
 .env
 .env.*
 !.env.example
@@ -9,9 +9,6 @@ __pycache__/
 *$py.class
 *.so
 .Python
-env/
-venv/
-ENV/
 build/
 develop-eggs/
 dist/
@@ -24,36 +21,50 @@ parts/
 sdist/
 var/
 wheels/
+share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
 .pytest_cache/
 .coverage
 htmlcov/
+.mypy_cache/
+.ruff_cache/
+venv/
+.venv/
+ENV/
 
-# Flutter / Dart
-.dart_tool/
-.flutter-plugins
-.flutter-plugins-dependencies
-.packages
-.pub-cache/
-.pub/
-/build/
-ios/Flutter/.last_build_id
-
-# Node / Web Admin
-node_modules/
+# Node & Admin
+admin/node_modules/
+admin/dist/
+admin/.vite/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.next/
-out/
+pnpm-debug.log*
 
-# IDE & OS
-.vscode/
+# Flutter & Dart
+app/.dart_tool/
+app/.flutter-plugins
+app/.flutter-plugins-dependencies
+app/.packages
+app/build/
+app/ios/Flutter/Generated.xcconfig
+app/ios/Flutter/app.framework
+app/android/local.properties
+app/**/*.g.dart
+app/**/*.freezed.dart
+
+# Generated API clients & schemas
+contracts/openapi.yaml
+app/lib/core/api/generated/
+admin/src/core/api/generated/
+
+# OS and IDE files
+.DS_Store
+Thumbs.db
 .idea/
+.vscode/
 *.swp
 *.swo
 *~
-.DS_Store
-Thumbs.db
