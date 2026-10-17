@@ -2,40 +2,397 @@ paths:
   /admin/dashboard/overview:
     get:
       summary: "Overview of active sessions, response times, and fulfillment"
+      description: "Aggregated institutional analytics including requests posted, fulfillment rate, average response times, active/repeat givers, ratings, and access reach."
+      parameters:
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: "Start of date range filter (ISO-8601)"
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: "End of date range filter (ISO-8601)"
+        - name: institution_id
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: "Filter by institution (platform admins only)"
       responses:
-        "501":
-          description: Module not implemented
+        "200":
+          description: "Dashboard overview metrics"
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/DashboardOverviewResponse'
+
   /admin/dashboard/skill-gap:
     get:
       summary: "Analysis of in-demand student skills vs alumni supply"
+      description: "Comparison of student demand from requests and intents against alumni supply from mentor profiles to identify alumni recruitment opportunities."
+      parameters:
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: institution_id
+          in: query
+          required: false
+          schema:
+            type: integer
       responses:
-        "501":
-          description: Module not implemented
+        "200":
+          description: "Skill gap analytics and mentor recruitment recommendations"
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/SkillGapResponse'
+
   /admin/dashboard/safety-summary:
     get:
       summary: "Safety incident summary and moderation resolution rate"
+      description: "Summary of reports received and resolved, resolution rate, average resolution time measured against the 24-hour pilot target, and disputes."
+      parameters:
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: institution_id
+          in: query
+          required: false
+          schema:
+            type: integer
       responses:
-        "501":
-          description: Module not implemented
+        "200":
+          description: "Safety and moderation metrics"
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/SafetySummaryResponse'
+
   /admin/dashboard/seats:
     get:
       summary: "Usage metrics for sponsored seats and credits"
+      description: "Overview of sponsored seats allocated, remaining institutional budget, scholarship pool balance, and donation history."
+      parameters:
+        - name: institution_id
+          in: query
+          required: false
+          schema:
+            type: integer
       responses:
-        "501":
-          description: Module not implemented
+        "200":
+          description: "Sponsored seats allocation and budget metrics"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeatsResponse'
+
+  /admin/dashboard/seats/grant:
+    post:
+      summary: "Grant sponsored seat to a student"
+      description: "Subsidize a student mentorship plan funded by institutional budget or scholarship pool."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GrantSeatInput'
+      responses:
+        "200":
+          description: "Sponsored seat granted successfully"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GrantSeatResponse'
+        "400":
+          description: "Insufficient budget or invalid student"
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    AccessReachItem:
+      type: object
+      required:
+        - student_institution_id
+        - giver_institution_id
+        - session_count
+      properties:
+        student_institution_id:
+          type: integer
+        giver_institution_id:
+          type: integer
+        session_count:
+          type: integer
+        student_count:
+          type: integer
+        giver_count:
+          type: integer
+        last_activity_at:
+          type: string
+          format: date-time
+
+    DashboardOverviewResponse:
+      type: object
+      required:
+        - requests_posted
+        - requests_fulfilled
+        - requests_declined
+        - requests_expired
+        - fulfillment_rate
+        - average_first_response_hours
+        - sessions_completed
+        - average_rating
+        - active_givers
+        - active_students
+        - repeat_givers
+        - sponsored_seat_usage
+        - cross_college_share
+        - own_college_share
+      properties:
+        requests_posted:
+          type: integer
+        requests_fulfilled:
+          type: integer
+        requests_declined:
+          type: integer
+        requests_expired:
+          type: integer
+        fulfillment_rate:
+          type: number
+          format: float
+        average_first_response_hours:
+          type: number
+          format: float
+        sessions_completed:
+          type: integer
+        average_rating:
+          type: number
+          format: float
+        active_givers:
+          type: integer
+        active_students:
+          type: integer
+        repeat_givers:
+          type: integer
+        sponsored_seat_usage:
+          type: integer
+        cross_college_share:
+          type: number
+          format: float
+        own_college_share:
+          type: number
+          format: float
+        access_reach:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccessReachItem'
+        cached:
+          type: boolean
+        from_date:
+          type: string
+        to_date:
+          type: string
+
+    SkillGapItem:
+      type: object
+      required:
+        - skill
+        - demand_count
+        - supply_count
+        - gap_score
+        - status
+        - recommendation
+      properties:
+        skill:
+          type: string
+        category:
+          type: string
+        demand_count:
+          type: integer
+        supply_count:
+          type: integer
+        gap_score:
+          type: integer
+        status:
+          type: string
+        recommendation:
+          type: string
+
+    SkillGapResponse:
+      type: object
+      required:
+        - items
+        - total_demand
+        - total_supply
+        - critical_gaps_count
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkillGapItem'
+        total_demand:
+          type: integer
+        total_supply:
+          type: integer
+        critical_gaps_count:
+          type: integer
+        cached:
+          type: boolean
+
+    SafetySummaryResponse:
+      type: object
+      required:
+        - reports_received
+        - reports_resolved
+        - resolution_rate
+        - average_resolution_hours
+        - target_resolution_hours
+        - scam_messages_blocked
+        - disputes_opened
+        - disputes_resolved
+        - status
+      properties:
+        reports_received:
+          type: integer
+        reports_resolved:
+          type: integer
+        resolution_rate:
+          type: number
+          format: float
+        average_resolution_hours:
+          type: number
+          format: float
+        target_resolution_hours:
+          type: number
+          format: float
+        scam_messages_blocked:
+          type: integer
+        disputes_opened:
+          type: integer
+        disputes_resolved:
+          type: integer
+        status:
+          type: string
+        cached:
+          type: boolean
+
+    SeatGrantItem:
+      type: object
+      required:
+        - id
+        - student_email_masked
+        - plan_code
+        - funding_source
+        - granted_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        student_email_masked:
+          type: string
+        plan_code:
+          type: string
+        funding_source:
+          type: string
+        granted_at:
+          type: string
+          format: date-time
+
+    SeatsResponse:
+      type: object
+      required:
+        - sponsored_seats_granted
+        - total_budget_inr
+        - remaining_budget_inr
+        - scholarship_pool_balance
+        - donations_count
+        - donations_amount_inr
+      properties:
+        sponsored_seats_granted:
+          type: integer
+        total_budget_inr:
+          type: number
+          format: float
+        remaining_budget_inr:
+          type: number
+          format: float
+        scholarship_pool_balance:
+          type: number
+          format: float
+        donations_count:
+          type: integer
+        donations_amount_inr:
+          type: number
+          format: float
+        recent_grants:
+          type: array
+          items:
+            $ref: '#/components/schemas/SeatGrantItem'
+        cached:
+          type: boolean
+
+    GrantSeatInput:
+      type: object
+      required:
+        - student_email
+      properties:
+        student_email:
+          type: string
+          format: email
+        plan_code:
+          type: string
+          default: "standard"
+        funding_source:
+          type: string
+          default: "Institution Budget"
+
+    GrantSeatResponse:
+      type: object
+      required:
+        - success
+        - grant_id
+        - student_email_masked
+        - plan_code
+        - funding_source
+        - remaining_budget_inr
+      properties:
+        success:
+          type: boolean
+        grant_id:
+          type: string
+          format: uuid
+        student_email_masked:
+          type: string
+        plan_code:
+          type: string
+        funding_source:
+          type: string
+        remaining_budget_inr:
+          type: number
+          format: float
