@@ -5,9 +5,11 @@ Validates that endpoints conform to the schemas, response codes, and error forma
 
 import sys
 from pathlib import Path
+
 import pytest
-from httpx import ASGITransport, AsyncClient
 import schemathesis
+from httpx import AsyncClient
+
 from app.main import app
 
 repo_root = Path(__file__).resolve().parent.parent.parent.parent
@@ -15,7 +17,14 @@ if str(repo_root) not in sys.path:
     sys.path.insert(0, str(repo_root))
 
 from scripts.build_openapi import build_merged_openapi
+
 openapi_path = repo_root / "contracts" / "openapi.yaml"
+if not openapi_path.exists():
+    import yaml
+    merged = build_merged_openapi()
+    openapi_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(openapi_path, "w", encoding="utf-8") as f:
+        yaml.dump(merged, f, sort_keys=False)
 
 # Load Schemathesis schema from the merged openapi specification
 schema = schemathesis.openapi.from_path(str(openapi_path))

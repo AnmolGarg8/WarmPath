@@ -4,18 +4,13 @@ Verifies port registrations and ensures strict zero inter-module code imports.
 """
 
 import ast
-import inspect
 from pathlib import Path
+
 import pytest
-from app.core import ports as core_ports
+
+import app.main as main_app
 from app.core.ports import (
     CreditsPort,
-    DefaultCreditsPort,
-    DefaultMatchingPort,
-    DefaultPresencePort,
-    DefaultRatingsPort,
-    DefaultSafetyPort,
-    DefaultTrustPort,
     MatchingPort,
     PortRegistry,
     PresencePort,
@@ -23,7 +18,6 @@ from app.core.ports import (
     SafetyPort,
     TrustPort,
 )
-import app.main as main_app
 
 
 def test_no_inter_module_imports():

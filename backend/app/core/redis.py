@@ -2,11 +2,12 @@
 backend/app/core/redis.py - Redis async client.
 """
 
-from typing import Optional
+
 import redis.asyncio as aioredis
+
 from app.core.config import settings
 
-_redis_client: Optional[aioredis.Redis] = None
+_redis_client: aioredis.Redis | None = None
 
 
 async def get_redis() -> aioredis.Redis:

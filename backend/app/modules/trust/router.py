@@ -2,7 +2,6 @@
 backend/app/modules/trust/router.py - Trust, Safety, Reports, Blocks, and Moderation Endpoints.
 """
 
-from typing import Any, Dict, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, Form, Query, UploadFile, status
@@ -98,9 +97,9 @@ async def get_me_trust(
     summary="List pending moderation reports",
 )
 async def get_admin_moderation_queue(
-    status: Optional[str] = Query(None, description="Filter by status: pending, resolved, dismissed"),
-    type: Optional[str] = Query(None, description="Filter by type: report, flagged_message, restricted_account"),
-    cursor: Optional[str] = Query(None, description="Pagination cursor"),
+    status: str | None = Query(None, description="Filter by status: pending, resolved, dismissed"),
+    type: str | None = Query(None, description="Filter by type: report, flagged_message, restricted_account"),
+    cursor: str | None = Query(None, description="Pagination cursor"),
     limit: int = Query(20, ge=1, le=100),
     current_user: User = Depends(require_role("moderator", "institution_admin", "platform_admin")),
     db: AsyncSession = Depends(get_db),
@@ -128,7 +127,7 @@ async def post_admin_moderation_id_resolve(
     summary="List pending verification submissions",
 )
 async def get_admin_verification_queue(
-    cursor: Optional[str] = Query(None),
+    cursor: str | None = Query(None),
     limit: int = Query(20, ge=1, le=100),
     current_user: User = Depends(require_role("moderator", "institution_admin", "platform_admin")),
     db: AsyncSession = Depends(get_db),
@@ -157,7 +156,7 @@ async def post_admin_verification_id_decide(
 )
 async def post_admin_approved_members_upload(
     file: UploadFile = File(...),
-    institution_id: Optional[int] = Form(None),
+    institution_id: int | None = Form(None),
     current_user: User = Depends(require_role("institution_admin", "platform_admin")),
     db: AsyncSession = Depends(get_db),
 ):
@@ -170,10 +169,10 @@ async def post_admin_approved_members_upload(
     summary="Retrieve security audit trail",
 )
 async def get_admin_audit_log(
-    action: Optional[str] = Query(None),
-    actor_id: Optional[UUID] = Query(None),
-    target_id: Optional[str] = Query(None),
-    cursor: Optional[str] = Query(None),
+    action: str | None = Query(None),
+    actor_id: UUID | None = Query(None),
+    target_id: str | None = Query(None),
+    cursor: str | None = Query(None),
     limit: int = Query(20, ge=1, le=100),
     current_user: User = Depends(require_role("moderator", "institution_admin", "platform_admin")),
     db: AsyncSession = Depends(get_db),

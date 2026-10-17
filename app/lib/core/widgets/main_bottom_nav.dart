@@ -35,7 +35,7 @@ class MainBottomNav extends StatelessWidget {
       selectedIndex: currentIndex,
       onDestinationSelected: (index) => _onItemTapped(context, index),
       backgroundColor: AppColors.white,
-      indicatorColor: AppColors.primaryAction.withValues(alpha: 0.15),
+      indicatorColor: AppColors.primaryAction.withOpacity(0.15),
       elevation: 3,
       destinations: const [
         NavigationDestination(

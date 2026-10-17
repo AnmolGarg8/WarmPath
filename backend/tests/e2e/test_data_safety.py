@@ -4,7 +4,6 @@ Verifies that DELETE /me removes personal data across modules via transactional 
 and GET /me/data-export covers every module in a structured JSON payload.
 """
 
-from datetime import UTC, datetime
 import pytest
 from httpx import AsyncClient
 from sqlalchemy import select

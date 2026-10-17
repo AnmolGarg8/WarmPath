@@ -3,8 +3,8 @@ backend/app/core/db.py - Async SQLAlchemy engine, session factory, and core mode
 """
 
 import uuid
-from datetime import datetime, timezone
-from typing import AsyncGenerator, List, Optional
+from collections.abc import AsyncGenerator
+from datetime import UTC, datetime
 
 from sqlalchemy import ARRAY, Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
@@ -38,7 +38,7 @@ class Institution(Base):
     short_name = Column(String(50), nullable=True)
     city = Column(String(100), nullable=True)
     email_domains = Column(ARRAY(String), nullable=False, default=list)
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False)
 
     users = relationship("User", back_populates="institution")
 
@@ -58,7 +58,7 @@ class User(Base):
     avatar_url = Column(String(1024), nullable=True)
     trust_level = Column(String(50), default="new", nullable=False)
     status = Column(String(50), default="active", nullable=False)
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False)
     last_seen_at = Column(DateTime(timezone=True), nullable=True)
 
     institution = relationship("Institution", back_populates="users", lazy="joined")
@@ -72,7 +72,7 @@ class OutboxEvent(Base):
     payload = Column(JSONB, nullable=False)
     status = Column(String(20), default="pending", index=True, nullable=False)
     retry_count = Column(Integer, default=0, nullable=False)
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False)
     processed_at = Column(DateTime(timezone=True), nullable=True)
 
 
@@ -83,7 +83,7 @@ class IdempotencyKey(Base):
     user_id = Column(UUID(as_uuid=True), nullable=True, index=True)
     response_code = Column(Integer, nullable=False)
     response_body = Column(JSONB, nullable=True)
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False)
 
 
 class ApprovedMember(Base):
@@ -97,7 +97,7 @@ class ApprovedMember(Base):
     batch = Column(String(50), nullable=True)
     department = Column(String(100), nullable=True)
     claimed_by_user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False)
 
     institution = relationship("Institution")
     claimed_by = relationship("User")
@@ -116,8 +116,8 @@ class VerificationRequest(Base):
     status = Column(String(50), default="pending", nullable=False, index=True)  # 'pending', 'approved', 'rejected'
     decided_by = Column(UUID(as_uuid=True), nullable=True)
     decision_reason = Column(Text, nullable=True)
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
-    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), nullable=False)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC), nullable=False)
 
     user = relationship("User")
 

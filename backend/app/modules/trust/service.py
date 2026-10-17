@@ -2,22 +2,22 @@
 backend/app/modules/trust/service.py - Business logic for Trust, Safety, and Moderation.
 """
 
-from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta
 import hashlib
 import json
 import re
-from typing import Any, Dict, List, Optional, Tuple
+from dataclasses import dataclass
+from datetime import UTC, datetime, timedelta
+from typing import Any
 from uuid import UUID, uuid4
 
 from fastapi import UploadFile
-from sqlalchemy import func, or_, select, update
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
 import app.core.redis as core_redis
 from app.core.config import settings
-from app.core.db import ApprovedMember, User, VerificationRequest, async_session_maker
+from app.core.db import ApprovedMember, User, VerificationRequest
 from app.core.errors import AppError
 from app.core.events import (
     ReportFiledPayload,
@@ -39,7 +39,7 @@ from app.modules.trust.schemas import (
 )
 
 
-def _ensure_utc(dt: Optional[datetime]) -> datetime:
+def _ensure_utc(dt: datetime | None) -> datetime:
     if dt is None:
         return datetime.min.replace(tzinfo=UTC)
     if dt.tzinfo is None:
@@ -113,30 +113,30 @@ SHORTENER_REGEX = re.compile(
 )
 
 FEE_PATTERNS = [
-    re.compile(r"registration\s*fee", re.I),
-    re.compile(r"security\s*deposit", re.I),
-    re.compile(r"pay\s*to\s*get\s*(?:the\s*)?job", re.I),
-    re.compile(r"processing\s*fee", re.I),
-    re.compile(r"application\s*fee", re.I),
-    re.compile(r"refundable\s*deposit", re.I),
-    re.compile(r"joining\s*fee", re.I),
-    re.compile(r"training\s*fee", re.I),
-    re.compile(r"interview\s*fee", re.I),
-    re.compile(r"upfront\s*(?:fee|payment|money)", re.I),
-    re.compile(r"send\s*(?:money|cash|crypto|usdt|bitcoin)", re.I),
-    re.compile(r"wire\s*transfer", re.I),
+    re.compile(r"registration\s*fee", re.IGNORECASE),
+    re.compile(r"security\s*deposit", re.IGNORECASE),
+    re.compile(r"pay\s*to\s*get\s*(?:the\s*)?job", re.IGNORECASE),
+    re.compile(r"processing\s*fee", re.IGNORECASE),
+    re.compile(r"application\s*fee", re.IGNORECASE),
+    re.compile(r"refundable\s*deposit", re.IGNORECASE),
+    re.compile(r"joining\s*fee", re.IGNORECASE),
+    re.compile(r"training\s*fee", re.IGNORECASE),
+    re.compile(r"interview\s*fee", re.IGNORECASE),
+    re.compile(r"upfront\s*(?:fee|payment|money)", re.IGNORECASE),
+    re.compile(r"send\s*(?:money|cash|crypto|usdt|bitcoin)", re.IGNORECASE),
+    re.compile(r"wire\s*transfer", re.IGNORECASE),
 ]
 
 OFF_PLATFORM_PATTERNS = [
-    re.compile(r"whats?\s*app", re.I),
-    re.compile(r"wats\s*app", re.I),
-    re.compile(r"wa\.me", re.I),
-    re.compile(r"wa\.link", re.I),
-    re.compile(r"telegram", re.I),
-    re.compile(r"t\.me", re.I),
-    re.compile(r"tele\s*gram", re.I),
-    re.compile(r"ping\s*(?:me\s*)?on\s*wa", re.I),
-    re.compile(r"dm\s*(?:me\s*)?on\s*(?:wa|telegram|insta|ig)", re.I),
+    re.compile(r"whats?\s*app", re.IGNORECASE),
+    re.compile(r"wats\s*app", re.IGNORECASE),
+    re.compile(r"wa\.me", re.IGNORECASE),
+    re.compile(r"wa\.link", re.IGNORECASE),
+    re.compile(r"telegram", re.IGNORECASE),
+    re.compile(r"t\.me", re.IGNORECASE),
+    re.compile(r"tele\s*gram", re.IGNORECASE),
+    re.compile(r"ping\s*(?:me\s*)?on\s*wa", re.IGNORECASE),
+    re.compile(r"dm\s*(?:me\s*)?on\s*(?:wa|telegram|insta|ig)", re.IGNORECASE),
 ]
 
 
@@ -164,8 +164,8 @@ class SafetyServiceImpl(SafetyPort):
         return core_db.async_session_maker()
 
     async def scan_text(
-        self, text: str, sender_id: str, context: Optional[str] = None
-    ) -> Dict[str, Any]:
+        self, text: str, sender_id: str, context: str | None = None
+    ) -> dict[str, Any]:
         """
         Scans message content for scam indicators, off-platform pushes, and spam.
         Returns: {flags: [...], action: 'allow'|'warn'|'block'|'review'}
@@ -175,7 +175,7 @@ class SafetyServiceImpl(SafetyPort):
 
         raw_text = text.strip()
         normalized_text = normalize_for_keyword_search(raw_text)
-        flags: List[str] = []
+        flags: list[str] = []
         action = "allow"
 
         # 1. Scam fee detection (High severity -> BLOCK)
@@ -257,8 +257,8 @@ class SafetyServiceImpl(SafetyPort):
         return {"flags": list(set(flags)), "action": action}
 
     async def _call_gemini_classifier(
-        self, text: str, context: Optional[str]
-    ) -> Optional[Dict[str, Any]]:
+        self, text: str, context: str | None
+    ) -> dict[str, Any] | None:
         """Optional Gemini classifier with strict JSON output."""
         try:
             import google.generativeai as genai
@@ -304,7 +304,7 @@ class TrustServiceImpl(TrustPort):
         except Exception:
             return "new"
 
-    async def can(self, user_id: str, action: str) -> Dict[str, Any]:
+    async def can(self, user_id: str, action: str) -> dict[str, Any]:
         """
         Enforces graduated privileges and daily Redis limits per level.
         Actions: send_request, send_message, post_opportunity, host_session.
@@ -548,9 +548,9 @@ class TrustService:
     @staticmethod
     async def get_moderation_queue(
         user: User,
-        status: Optional[str],
-        item_type: Optional[str],
-        cursor: Optional[str],
+        status: str | None,
+        item_type: str | None,
+        cursor: str | None,
         limit: int,
         db: AsyncSession,
     ) -> ModerationQueueResponse:
@@ -561,7 +561,7 @@ class TrustService:
             and "moderator" not in (user.roles or [])
         )
 
-        items: List[ModerationItem] = []
+        items: list[ModerationItem] = []
 
         # 1. Fetch reports
         if not item_type or item_type == "report":
@@ -630,7 +630,7 @@ class TrustService:
         note: str,
         admin: User,
         db: AsyncSession,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         # Try finding in reports
         report_res = await db.execute(select(Report).where(Report.id == item_id))
         report = report_res.scalar_one_or_none()
@@ -713,7 +713,7 @@ class TrustService:
 
     @staticmethod
     async def get_verification_queue(
-        user: User, cursor: Optional[str], limit: int, db: AsyncSession
+        user: User, cursor: str | None, limit: int, db: AsyncSession
     ) -> VerificationQueueResponse:
         stmt = (
             select(VerificationRequest)
@@ -761,11 +761,11 @@ class TrustService:
     async def decide_verification(
         request_id: UUID,
         decision: str,
-        badge: Optional[str],
-        note: Optional[str],
+        badge: str | None,
+        note: str | None,
         admin: User,
         db: AsyncSession,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         res = await db.execute(
             select(VerificationRequest)
             .options(joinedload(VerificationRequest.user))
@@ -845,7 +845,7 @@ class TrustService:
     async def upload_approved_members(
         file: UploadFile,
         admin: User,
-        target_institution_id: Optional[int],
+        target_institution_id: int | None,
         db: AsyncSession,
     ) -> ApprovedMembersUploadResponse:
         institution_id = target_institution_id or admin.institution_id
@@ -878,7 +878,7 @@ class TrustService:
         total = 0
         inserted = 0
         duplicates = 0
-        errors: List[str] = []
+        errors: list[str] = []
 
         # Load existing emails for institution
         existing_res = await db.execute(
@@ -949,13 +949,13 @@ class TrustService:
     @staticmethod
     async def get_audit_log(
         user: User,
-        action: Optional[str],
-        actor_id: Optional[UUID],
-        target_id: Optional[str],
-        cursor: Optional[str],
+        action: str | None,
+        actor_id: UUID | None,
+        target_id: str | None,
+        cursor: str | None,
         limit: int,
         db: AsyncSession,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         stmt = select(AuditLog).order_by(AuditLog.created_at.desc()).limit(limit)
 
         if action:

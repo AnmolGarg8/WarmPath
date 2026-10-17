@@ -18,36 +18,20 @@ Covers the entire WarmPath lifecycle:
 15. Giver no-show triggers automatic credit refund
 """
 
-from datetime import UTC, datetime, timedelta
-import io
-import pytest
-from httpx import ASGITransport, AsyncClient
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response
-from app.core.config import settings
-from app.core.db import ApprovedMember, Institution, OutboxEvent, User, get_db
+import pytest
+from fastapi import APIRouter, Depends, HTTPException
+from httpx import AsyncClient
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.db import ApprovedMember, Institution, User, get_db
 from app.core.deps import get_current_user
 from app.core.errors import AppError
-from app.core.events import event_bus
-from app.core.ports import (
-    CreditsPort,
-    DefaultCreditsPort,
-    DefaultMatchingPort,
-    DefaultPresencePort,
-    DefaultRatingsPort,
-    DefaultSafetyPort,
-    DefaultTrustPort,
-    PortRegistry,
-    ports,
-)
 from app.core.security import create_access_token
 from app.main import app
-from app.modules.auth.service import AuthService
-from app.modules.trust.service import SafetyServiceImpl, TrustServiceImpl
-
+from app.modules.trust.service import SafetyServiceImpl
 
 # --- Scenario Test Harness & Router for Cross-Module Integration ---
 scenario_router = APIRouter(tags=["scenario_test"])

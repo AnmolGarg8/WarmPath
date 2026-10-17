@@ -3,6 +3,7 @@ backend/app/modules/trust/tests/conftest.py - Trust module test fixtures.
 """
 
 import pytest_asyncio
+
 import app.core.db as core_db
 from app.core.ports import ports
 from tests.conftest import *

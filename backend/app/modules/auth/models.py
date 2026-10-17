@@ -6,22 +6,18 @@ import uuid
 from datetime import UTC, datetime
 
 from sqlalchemy import (
-    ARRAY,
     Boolean,
     Column,
     DateTime,
     ForeignKey,
-    Integer,
     String,
-    Text,
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
 from app.core.db import ApprovedMember, Base, VerificationRequest
 
-
-__all__ = ["ApprovedMember", "VerificationRequest", "RefreshToken"]
+__all__ = ["ApprovedMember", "RefreshToken", "VerificationRequest"]
 
 
 class RefreshToken(Base):

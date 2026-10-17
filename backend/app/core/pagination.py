@@ -5,15 +5,16 @@ Contract format: {"items": [...], "next_cursor": "..."}
 
 import base64
 import json
-from typing import Any, Generic, List, Optional, TypeVar
+from typing import Generic, TypeVar
+
 from pydantic import BaseModel
 
 T = TypeVar("T")
 
 
 class PaginatedResponse(BaseModel, Generic[T]):
-    items: List[T]
-    next_cursor: Optional[str] = None
+    items: list[T]
+    next_cursor: str | None = None
 
 
 def encode_cursor(data: dict) -> str:
@@ -21,7 +22,7 @@ def encode_cursor(data: dict) -> str:
     return base64.urlsafe_b64encode(raw.encode("utf-8")).decode("utf-8")
 
 
-def decode_cursor(cursor_str: Optional[str]) -> Optional[dict]:
+def decode_cursor(cursor_str: str | None) -> dict | None:
     if not cursor_str:
         return None
     try:

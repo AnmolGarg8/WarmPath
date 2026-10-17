@@ -2,8 +2,6 @@
 backend/app/core/rate_limit.py - Redis token-bucket rate limiter based on trust level.
 """
 
-from typing import Optional
-from fastapi import Request
 from app.core.config import settings
 from app.core.errors import AppError
 from app.core.redis import get_redis

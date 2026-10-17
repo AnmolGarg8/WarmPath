@@ -4,13 +4,13 @@ Owner: M1
 """
 
 from uuid import UUID
+
 from sqlalchemy import select
 
 from app.core.db import User, async_session_maker
 from app.core.events import (
     BaseEventPayload,
     EventBus,
-    ReportFiledPayload,
     TrustLevelChangedPayload,
     UserVerifiedPayload,
     event_bus,
@@ -23,6 +23,8 @@ from app.modules.trust.service import (
     TrustServiceImpl,
     compute_trust_level,
 )
+
+__all__ = ["ROUTER", "register_events", "register_ports"]
 
 
 def register_ports(registry: PortRegistry):

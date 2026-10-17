@@ -2,25 +2,25 @@
 backend/app/modules/trust/tests/test_trust.py - Comprehensive tests for Trust & Safety module.
 """
 
-from datetime import UTC, datetime, timedelta
 import io
+from datetime import UTC, datetime
+from uuid import uuid4
+
 import pytest
 from httpx import AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from uuid import uuid4
 
 import app.core.redis as core_redis
 from app.core.db import ApprovedMember, Institution, OutboxEvent, User, VerificationRequest
 from app.core.security import create_access_token
-from app.modules.trust.models import AuditLog, Block, FlaggedItem, Report
+from app.modules.trust.models import AuditLog, Report
 from app.modules.trust.service import (
     SafetyServiceImpl,
     TrustFactors,
     TrustServiceImpl,
     compute_trust_level,
 )
-
 
 # --- 1. Scam Rules Table & Benign Message Tests ---
 
@@ -479,10 +479,10 @@ async def test_approved_members_csv_upload(async_client: AsyncClient, db_session
     headers = {"Authorization": f"Bearer {token}"}
 
     csv_data = (
-        "full_name,email,role,batch,department\n"
-        "Sneha Sinha,sneha_upload@vips.edu,student,2024,IT\n"
-        "Ayush Ghanshala,ayush_upload@vips.edu,alumnus,2021,CSE\n"
-    ).encode("utf-8")
+        b"full_name,email,role,batch,department\n"
+        b"Sneha Sinha,sneha_upload@vips.edu,student,2024,IT\n"
+        b"Ayush Ghanshala,ayush_upload@vips.edu,alumnus,2021,CSE\n"
+    )
 
     files = {"file": ("roster.csv", io.BytesIO(csv_data), "text/csv")}
     data = {"institution_id": str(inst.id)}

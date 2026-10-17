@@ -3,19 +3,19 @@ backend/app/modules/trust/schemas.py - Request and response schemas for Trust & 
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import UUID
-from pydantic import BaseModel, ConfigDict, Field
 
+from pydantic import BaseModel, ConfigDict, Field
 
 # --- Reports ---
 
 class CreateReportRequest(BaseModel):
-    target_user_id: Optional[UUID] = None
-    message_id: Optional[str] = None
-    request_id: Optional[str] = None
+    target_user_id: UUID | None = None
+    message_id: str | None = None
+    request_id: str | None = None
     reason: str = Field(..., min_length=2, max_length=100)
-    details: Optional[str] = Field(None, max_length=2000)
+    details: str | None = Field(None, max_length=2000)
 
 
 class ReportResponse(BaseModel):
@@ -23,16 +23,16 @@ class ReportResponse(BaseModel):
 
     id: UUID
     reporter_id: UUID
-    target_user_id: Optional[UUID] = None
-    message_id: Optional[str] = None
-    request_id: Optional[str] = None
+    target_user_id: UUID | None = None
+    message_id: str | None = None
+    request_id: str | None = None
     reason: str
-    details: Optional[str] = None
+    details: str | None = None
     status: str
-    resolution_decision: Optional[str] = None
-    resolution_note: Optional[str] = None
-    resolved_by_id: Optional[UUID] = None
-    resolved_at: Optional[datetime] = None
+    resolution_decision: str | None = None
+    resolution_note: str | None = None
+    resolved_by_id: UUID | None = None
+    resolved_at: datetime | None = None
     created_at: datetime
 
 
@@ -40,7 +40,7 @@ class ReportResponse(BaseModel):
 
 class CreateBlockRequest(BaseModel):
     blocked_user_id: UUID
-    reason: Optional[str] = Field(None, max_length=255)
+    reason: str | None = Field(None, max_length=255)
 
 
 class BlockResponse(BaseModel):
@@ -49,7 +49,7 @@ class BlockResponse(BaseModel):
     id: UUID
     blocker_id: UUID
     blocked_id: UUID
-    reason: Optional[str] = None
+    reason: str | None = None
     created_at: datetime
 
 
@@ -68,7 +68,7 @@ class MeTrustResponse(BaseModel):
     can_post_jobs: bool
     can_host_session: bool
     messages_reviewed_first: bool
-    limits: Dict[str, Any]
+    limits: dict[str, Any]
 
 
 # --- Moderation Queue ---
@@ -78,17 +78,17 @@ class ModerationItem(BaseModel):
     type: str  # "report", "flagged_message", "restricted_account"
     status: str
     severity: str
-    reporter_id: Optional[str] = None
-    target_user_id: Optional[str] = None
-    target_user_email: Optional[str] = None
-    reason: Optional[str] = None
-    details: Optional[str] = None
+    reporter_id: str | None = None
+    target_user_id: str | None = None
+    target_user_email: str | None = None
+    reason: str | None = None
+    details: str | None = None
     created_at: datetime
 
 
 class ModerationQueueResponse(BaseModel):
-    items: List[ModerationItem]
-    next_cursor: Optional[str] = None
+    items: list[ModerationItem]
+    next_cursor: str | None = None
 
 
 class ResolveModerationRequest(BaseModel):
@@ -113,29 +113,29 @@ class VerificationQueueItem(BaseModel):
     user_full_name: str
     kind: str
     evidence_text: str
-    evidence_urls: List[str]
-    company_name: Optional[str] = None
-    company_registration: Optional[str] = None
+    evidence_urls: list[str]
+    company_name: str | None = None
+    company_registration: str | None = None
     status: str
     created_at: datetime
 
 
 class VerificationQueueResponse(BaseModel):
-    items: List[VerificationQueueItem]
-    next_cursor: Optional[str] = None
+    items: list[VerificationQueueItem]
+    next_cursor: str | None = None
 
 
 class VerificationDecideRequest(BaseModel):
     decision: str = Field(..., pattern="^(approve|reject)$")
-    badge: Optional[str] = None
-    note: Optional[str] = None
+    badge: str | None = None
+    note: str | None = None
 
 
 class VerificationDecideResponse(BaseModel):
     request_id: UUID
     decision: str
-    badge_assigned: Optional[str] = None
-    note: Optional[str] = None
+    badge_assigned: str | None = None
+    note: str | None = None
 
 
 # --- Approved Members Upload ---
@@ -144,7 +144,7 @@ class ApprovedMembersUploadResponse(BaseModel):
     total_rows: int
     inserted: int
     duplicates_skipped: int
-    errors: List[str]
+    errors: list[str]
 
 
 # --- Audit Log ---
@@ -156,11 +156,11 @@ class AuditLogItem(BaseModel):
     action: str
     target_type: str
     target_id: str
-    institution_id: Optional[int] = None
-    details: Dict[str, Any]
+    institution_id: int | None = None
+    details: dict[str, Any]
     created_at: datetime
 
 
 class AuditLogResponse(BaseModel):
-    items: List[AuditLogItem]
-    next_cursor: Optional[str] = None
+    items: list[AuditLogItem]
+    next_cursor: str | None = None
