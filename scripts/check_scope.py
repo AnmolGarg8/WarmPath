@@ -128,7 +128,7 @@ def main():
             violations.append(f)
 
     if violations:
-        print(f"\n[check_scope] \u274c SCOPE VIOLATION for role '{target_role}'!")
+        print(f"\n[check_scope] [X] SCOPE VIOLATION for role '{target_role}'!")
         print("You are modifying files outside your designated ownership area:")
         for v in violations:
             print(f"  - {v}")
@@ -140,7 +140,7 @@ def main():
         print("  Run with override: ALLOW_SHARED=1 git commit ...")
         sys.exit(1)
 
-    print(f"[check_scope] \u2705 All {len(files_to_check)} files are within scope for role '{target_role}'.")
+    print(f"[check_scope] [OK] All {len(files_to_check)} files are within scope for role '{target_role}'.")
     sys.exit(0)
 
 

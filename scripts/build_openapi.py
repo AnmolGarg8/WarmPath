@@ -4,9 +4,9 @@ Merges individual module OpenAPI fragments from contracts/modules/*.yaml
 into a single unified contracts/openapi.yaml specification.
 """
 
-import os
 import sys
 from pathlib import Path
+import yaml
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 MODULES_DIR = REPO_ROOT / "contracts" / "modules"
@@ -47,21 +47,6 @@ BASE_OPENAPI = {
 
 
 def main():
-    try:
-        import yaml
-    except ImportError:
-        # Fallback basic dump if pyyaml not yet installed
-        print("[build_openapi] PyYAML not found, using simple serializer...")
-        import json
-
-        merged = dict(BASE_OPENAPI)
-        # Parse simple files
-        OUTPUT_FILE.parent.mkdir(parents=True, exist_ok=True)
-        # We write json or yaml compatible output
-        import yaml if "yaml" in sys.modules else None
-
-    import yaml
-
     merged = dict(BASE_OPENAPI)
     merged["paths"] = dict(BASE_OPENAPI["paths"])
     merged["components"]["schemas"] = dict(BASE_OPENAPI["components"]["schemas"])
