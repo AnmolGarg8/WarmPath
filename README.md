@@ -413,10 +413,15 @@ Being honest about challenges is essential to building a dependable platform:
 
 Built by **Team Unsolved Loop** from **VIPS-TC**:
 
-- **ANMOL GARG** <!-- TODO: add role & GitHub handle -->
-- **TANUSH YADAV** <!-- TODO: add role & GitHub handle -->
-- **AYUSH GHANSHALA** <!-- TODO: add role & GitHub handle -->
-- **SNEHA SINHA** <!-- TODO: add role & GitHub handle -->
+- **ANMOL GARG** (M1 - Platform, Trust & Safety) <!-- TODO: add GitHub handle -->
+- **TANUSH YADAV** (M2 - Resume & Matching) <!-- TODO: add GitHub handle -->
+- **AYUSH GHANSHALA** (M3 - Availability & Sessions) <!-- TODO: add GitHub handle -->
+- **SNEHA SINHA** (M4 - Credits & Dashboards) <!-- TODO: add GitHub handle -->
+
+See [OWNERS.md](OWNERS.md) for directory ownership and [CONTRIBUTING.md](CONTRIBUTING.md) for branch workflow.
+
+### AI Assistance Disclosure
+AI coding assistants were used to accelerate monorepo scaffolding and initial boilerplate generation. Each team member reviews, tests, and validates their own assigned modules.
 
 ---
 
@@ -424,3 +429,4 @@ Built by **Team Unsolved Loop** from **VIPS-TC**:
 
 - **Licence**: Distributed under the MIT Licence. See [LICENSE](LICENSE) for full details.
 - **Acknowledgements**: We thank the faculty and the alumni cell at Vivekananda Institute of Professional Studies - Technical Campus (VIPS-TC) for feedback on our initial assumptions and workflow design.
+
