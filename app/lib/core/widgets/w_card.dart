@@ -21,7 +21,7 @@ class WCard extends StatelessWidget {
         borderRadius: AppRadii.card,
         boxShadow: [
           BoxShadow(
-            color: AppColors.textDark.withOpacity(0.04),
+            color: AppColors.textDark.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),

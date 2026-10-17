@@ -48,8 +48,10 @@ htmlcov/
 .flutter-plugins-dependencies
 .packages
 .pub-cache/
-.pub/
 app/build/
+app/android/local.properties
+app/android/.gradle/
+**/GeneratedPluginRegistrant.java
 ios/Flutter/.last_build_id
 *.g.dart
 *.freezed.dart

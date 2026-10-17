@@ -37,6 +37,7 @@ roles:
       - backend/tests/
       - app/pubspec.yaml
       - app/pubspec.lock
+      - app/analysis_options.yaml
       - app/lib/main.dart
       - app/lib/app_router.dart
       - app/test/

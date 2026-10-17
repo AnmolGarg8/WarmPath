@@ -35,9 +35,9 @@ class BandBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: bg.withOpacity(0.12),
+        color: bg.withValues(alpha: 0.12),
         borderRadius: AppRadii.badge,
-        border: Border.all(color: bg.withOpacity(0.4)),
+        border: Border.all(color: bg.withValues(alpha: 0.4)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
