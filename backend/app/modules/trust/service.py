@@ -810,10 +810,14 @@ class TrustService:
                     )
 
                 # Recompute trust level upon verification
+                user_created_at = user.created_at
+                if user_created_at and user_created_at.tzinfo is None:
+                    user_created_at = user_created_at.replace(tzinfo=UTC)
+                age_days = (datetime.now(UTC) - user_created_at).days if user_created_at else 0
                 user.trust_level = compute_trust_level(
                     TrustFactors(
                         verification_level="verified",
-                        account_age_days=(datetime.now(UTC) - user.created_at).days,
+                        account_age_days=age_days,
                     )
                 )
         else:

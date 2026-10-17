@@ -13,10 +13,18 @@ from sqlalchemy.orm import DeclarativeBase, relationship
 
 from app.core.config import settings
 
+engine_kwargs = {
+    "echo": (settings.ENVIRONMENT == "development"),
+    "future": True,
+}
+if settings.ENVIRONMENT == "test" and "sqlite" not in settings.DATABASE_URL:
+    from sqlalchemy.pool import NullPool
+
+    engine_kwargs["poolclass"] = NullPool
+
 engine = create_async_engine(
     settings.DATABASE_URL,
-    echo=(settings.ENVIRONMENT == "development"),
-    future=True,
+    **engine_kwargs,
 )
 
 async_session_maker = async_sessionmaker(

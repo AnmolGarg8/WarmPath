@@ -10,6 +10,15 @@ import sys
 from contextlib import asynccontextmanager
 from pathlib import Path
 
+_backend_dir = Path(__file__).resolve().parent.parent
+_repo_root = _backend_dir.parent
+if str(_backend_dir) not in sys.path:
+    sys.path.insert(0, str(_backend_dir))
+if str(_repo_root) in sys.path:
+    sys.path.remove(str(_repo_root))
+if "" in sys.path:
+    sys.path.remove("")
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 

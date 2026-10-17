@@ -12,6 +12,7 @@ from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.ext.compiler import compiles
+from sqlalchemy.pool import NullPool
 from sqlalchemy.types import ARRAY
 
 
@@ -73,11 +74,7 @@ TEST_DB_URL = os.environ.get("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
 
 engine_kwargs = {"echo": False}
 if "sqlite" not in TEST_DB_URL:
-    engine_kwargs.update({
-        "pool_size": 20,
-        "max_overflow": 10,
-        "pool_pre_ping": True,
-    })
+    engine_kwargs["poolclass"] = NullPool
 
 test_engine = create_async_engine(TEST_DB_URL, **engine_kwargs)
 test_session_maker = async_sessionmaker(test_engine, class_=AsyncSession, expire_on_commit=False)

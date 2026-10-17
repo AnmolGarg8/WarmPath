@@ -26,6 +26,8 @@ jobs:
   backend:
     name: Backend Lint & Test
     runs-on: ubuntu-latest
+    env:
+      PYTHONPATH: ${{ github.workspace }}/backend
     services:
       postgres:
         image: pgvector/pgvector:pg16
@@ -74,6 +76,8 @@ jobs:
   e2e:
     name: E2E Integration & Contract Tests
     runs-on: ubuntu-latest
+    env:
+      PYTHONPATH: ${{ github.workspace }}/backend
     services:
       postgres:
         image: pgvector/pgvector:pg16

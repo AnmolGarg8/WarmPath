@@ -90,14 +90,18 @@ def build_merged_openapi():
 def verify_backend(merged_contract):
     repo_root = Path(__file__).resolve().parent.parent
     backend_path = repo_root / "backend"
-    if str(repo_root) in sys.path:
-        sys.path.remove(str(repo_root))
-    if "" in sys.path:
-        sys.path.remove("")
+    flutter_path = repo_root / "app"
+    # Ensure root and Flutter app directory do not shadow backend/app
+    sys.path = [p for p in sys.path if Path(p).resolve() not in (repo_root.resolve(), flutter_path.resolve()) and p != ""]
     sys.path.insert(0, str(backend_path))
+    if "app" in sys.modules:
+        app_file = str(getattr(sys.modules["app"], "__file__", ""))
+        if "backend" not in app_file:
+            del sys.modules["app"]
 
     try:
-        from app.main import app
+        import app.main
+        app = app.main.app
     except ImportError as e:
         print(f"Notice: Could not import app.main ({e}). Skipping backend route verification.", file=sys.stderr)
         return True
