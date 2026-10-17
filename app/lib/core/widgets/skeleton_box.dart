@@ -8,7 +8,7 @@ class SkeletonBox extends StatelessWidget {
 
   const SkeletonBox({
     super.key,
-    required this.width,
+    this.width = double.infinity,
     required this.height,
     this.borderRadius = const BorderRadius.all(Radius.circular(8.0)),
   });
@@ -19,7 +19,7 @@ class SkeletonBox extends StatelessWidget {
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: AppColors.slate.withOpacity(0.12),
+        color: AppColors.slate.withValues(alpha: 0.12),
         borderRadius: borderRadius,
       ),
     );
