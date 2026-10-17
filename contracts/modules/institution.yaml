@@ -1,0 +1,32 @@
+paths:
+  /admin/dashboard/overview:
+    get:
+      summary: Key institution metrics, sessions, active mentors and response times
+      tags: [institution]
+      responses:
+        '200':
+          description: Institution dashboard overview
+
+  /admin/dashboard/skill-gap:
+    get:
+      summary: Aggregated skill supply vs demand gap analysis
+      tags: [institution]
+      responses:
+        '200':
+          description: Skill gap analytics
+
+  /admin/dashboard/safety-summary:
+    get:
+      summary: Institution safety metrics, blocked contacts, and report summary
+      tags: [institution]
+      responses:
+        '200':
+          description: Safety summary
+
+  /admin/dashboard/seats:
+    get:
+      summary: Sponsored seats utilization and roster status
+      tags: [institution]
+      responses:
+        '200':
+          description: Seats roster metrics

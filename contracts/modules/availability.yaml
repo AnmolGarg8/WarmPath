@@ -1,0 +1,44 @@
+paths:
+  /me/availability:
+    get:
+      summary: Get giver availability schedule and weekly capacity
+      tags: [availability]
+      responses:
+        '200':
+          description: Availability configuration
+    put:
+      summary: Set recurring schedule and weekly capacity cap
+      tags: [availability]
+      responses:
+        '200':
+          description: Availability updated
+
+  /me/online:
+    post:
+      summary: Activate instant open-window presence
+      tags: [availability]
+      responses:
+        '200':
+          description: Online instant window active
+    delete:
+      summary: Deactivate instant open-window presence
+      tags: [availability]
+      responses:
+        '200':
+          description: Online window deactivated
+
+  /presence:
+    get:
+      summary: Query presence status for giver IDs
+      tags: [availability]
+      responses:
+        '200':
+          description: Presence map
+
+  /ws:
+    get:
+      summary: Real-time WebSocket connection for presence and notifications
+      tags: [availability]
+      responses:
+        '101':
+          description: WebSocket handshake

@@ -1,0 +1,54 @@
+paths:
+  /recommendations:
+    get:
+      summary: Retrieve matched alumni and expert recommendations
+      tags: [matching]
+      responses:
+        '200':
+          description: Ranked recommendations list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        giver_id: { type: string, format: uuid }
+                        full_name: { type: string }
+                        headline: { type: string }
+                        band: { type: string }
+                        match_score: { type: number }
+                        why_lines:
+                          type: array
+                          items: { type: string }
+                  next_cursor: { type: string, nullable: true }
+
+  /givers/{id}:
+    get:
+      summary: Get detailed giver public profile
+      tags: [matching]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Giver profile details
+
+  /me/giver-profile:
+    get:
+      summary: Get own giver profile
+      tags: [matching]
+      responses:
+        '200':
+          description: Own giver profile
+    put:
+      summary: Create or update giver profile and domains
+      tags: [matching]
+      responses:
+        '200':
+          description: Giver profile updated

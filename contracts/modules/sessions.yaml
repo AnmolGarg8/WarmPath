@@ -1,0 +1,145 @@
+paths:
+  /requests:
+    post:
+      summary: Send structured connection request
+      tags: [sessions]
+      responses:
+        '201':
+          description: Request created
+    get:
+      summary: List incoming and outgoing connection requests
+      tags: [sessions]
+      responses:
+        '200':
+          description: List of requests
+
+  /requests/{id}:
+    get:
+      summary: Get details of a single request
+      tags: [sessions]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Request details
+
+  /requests/{id}/accept:
+    post:
+      summary: Accept connection request and confirm slot
+      tags: [sessions]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Request accepted and session booked
+
+  /requests/{id}/decline:
+    post:
+      summary: Decline connection request and release credits
+      tags: [sessions]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Request declined
+
+  /givers/{id}/slots:
+    get:
+      summary: Get open calendar slots for a giver
+      tags: [sessions]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Available slots
+
+  /requests/{id}/messages:
+    get:
+      summary: Get message history for request/session
+      tags: [sessions]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Messages
+    post:
+      summary: Send message within request thread (safety filtered)
+      tags: [sessions]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '201':
+          description: Message posted
+
+  /sessions/{id}:
+    get:
+      summary: Get active session details
+      tags: [sessions]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Session info
+
+  /sessions/{id}/join:
+    post:
+      summary: Mark participant joined in meeting
+      tags: [sessions]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Joined session
+
+  /sessions/{id}/leave:
+    post:
+      summary: Mark participant left meeting
+      tags: [sessions]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Left session
+
+  /me/sessions:
+    get:
+      summary: Get user sessions history
+      tags: [sessions]
+      responses:
+        '200':
+          description: Sessions list
+
+  /notifications/devices:
+    post:
+      summary: Register mobile FCM push device token
+      tags: [sessions]
+      responses:
+        '200':
+          description: Device registered

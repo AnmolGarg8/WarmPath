@@ -1,0 +1,56 @@
+paths:
+  /resume:
+    post:
+      summary: Upload student resume PDF for skill extraction
+      tags: [resume]
+      responses:
+        '202':
+          description: Resume received and queued for parsing
+    delete:
+      summary: Delete stored resume document and extracted data
+      tags: [resume]
+      responses:
+        '204':
+          description: Resume removed
+
+  /resume/profile:
+    get:
+      summary: Retrieve extracted resume profile
+      tags: [resume]
+      responses:
+        '200':
+          description: Extracted profile details
+    put:
+      summary: Update extracted resume profile attributes
+      tags: [resume]
+      responses:
+        '200':
+          description: Profile updated
+
+  /me/intent:
+    get:
+      summary: Get student structured intent
+      tags: [resume]
+      responses:
+        '200':
+          description: Current intent specification
+    put:
+      summary: Set or update student structured intent
+      tags: [resume]
+      responses:
+        '200':
+          description: Intent updated
+
+  /me/consents:
+    get:
+      summary: Get privacy and data processing consents
+      tags: [resume]
+      responses:
+        '200':
+          description: Consents status
+    put:
+      summary: Update consent choices
+      tags: [resume]
+      responses:
+        '200':
+          description: Consents updated

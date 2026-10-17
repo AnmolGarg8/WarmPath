@@ -1,0 +1,161 @@
+paths:
+  /auth/request-otp:
+    post:
+      summary: Request one-time passcode for authentication
+      tags: [auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          description: OTP dispatched
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  expires_in: { type: integer }
+
+  /auth/verify-otp:
+    post:
+      summary: Verify OTP and exchange for session tokens
+      tags: [auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, code]
+              properties:
+                email: { type: string, format: email }
+                code: { type: string }
+      responses:
+        '200':
+          description: Verification successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token: { type: string }
+                  refresh_token: { type: string }
+                  user: { $ref: '#/components/schemas/UserResponse' }
+
+  /auth/refresh:
+    post:
+      summary: Refresh expired access token
+      tags: [auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refresh_token]
+              properties:
+                refresh_token: { type: string }
+      responses:
+        '200':
+          description: Tokens refreshed
+
+  /auth/logout:
+    post:
+      summary: Invalidate user session
+      tags: [auth]
+      responses:
+        '200':
+          description: Logged out successfully
+
+  /me:
+    get:
+      summary: Retrieve authenticated user profile
+      tags: [auth]
+      responses:
+        '200':
+          description: Current user profile
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UserResponse' }
+    patch:
+      summary: Update authenticated user profile
+      tags: [auth]
+      responses:
+        '200':
+          description: Updated user profile
+    delete:
+      summary: Delete user account and initiate data erasure
+      tags: [auth]
+      responses:
+        '204':
+          description: Account scheduled for deletion
+
+  /me/data-export:
+    get:
+      summary: Request comprehensive data export
+      tags: [auth]
+      responses:
+        '200':
+          description: User data export payload
+
+  /institutions:
+    get:
+      summary: List registered educational institutions
+      tags: [auth]
+      responses:
+        '200':
+          description: List of institutions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: string, format: uuid }
+                        name: { type: string }
+                        short_name: { type: string }
+                        city: { type: string }
+                  next_cursor: { type: string, nullable: true }
+
+  /verification/submit:
+    post:
+      summary: Submit institutional identity verification document
+      tags: [auth]
+      responses:
+        '202':
+          description: Verification submitted for review
+
+  /verification/status:
+    get:
+      summary: Check status of institutional verification
+      tags: [auth]
+      responses:
+        '200':
+          description: Current verification status
+
+components:
+  schemas:
+    UserResponse:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string, format: email }
+        full_name: { type: string }
+        institution_id: { type: string, format: uuid, nullable: true }
+        roles:
+          type: array
+          items: { type: string }
+        created_at: { type: string, format: date-time }

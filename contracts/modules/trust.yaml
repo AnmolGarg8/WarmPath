@@ -1,0 +1,95 @@
+paths:
+  /reports:
+    post:
+      summary: Report suspicious message, profile or activity
+      tags: [trust]
+      responses:
+        '201':
+          description: Report logged
+
+  /blocks:
+    post:
+      summary: Block user from future interactions
+      tags: [trust]
+      responses:
+        '201':
+          description: User blocked
+
+  /blocks/{user_id}:
+    delete:
+      summary: Remove block on user
+      tags: [trust]
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Block lifted
+
+  /me/trust:
+    get:
+      summary: View private trust status and daily limits
+      tags: [trust]
+      responses:
+        '200':
+          description: Trust status details
+
+  /admin/moderation/queue:
+    get:
+      summary: List moderation queue items
+      tags: [trust]
+      responses:
+        '200':
+          description: Moderation queue items
+
+  /admin/moderation/{id}/resolve:
+    post:
+      summary: Resolve moderation incident
+      tags: [trust]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Moderation item resolved
+
+  /admin/verification/queue:
+    get:
+      summary: List pending identity verification tasks
+      tags: [trust]
+      responses:
+        '200':
+          description: Pending verification submissions
+
+  /admin/verification/{id}/decide:
+    post:
+      summary: Approve or reject verification request
+      tags: [trust]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Verification decision applied
+
+  /admin/approved-members/upload:
+    post:
+      summary: Upload institution pre-approved roster CSV
+      tags: [trust]
+      responses:
+        '200':
+          description: Roster imported
+
+  /admin/audit-log:
+    get:
+      summary: View administrative audit log entries
+      tags: [trust]
+      responses:
+        '200':
+          description: Audit log items

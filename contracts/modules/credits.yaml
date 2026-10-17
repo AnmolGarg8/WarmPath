@@ -1,0 +1,64 @@
+paths:
+  /plans:
+    get:
+      summary: List available membership tiers and prices
+      tags: [credits]
+      responses:
+        '200':
+          description: Available plans
+
+  /me/subscription:
+    get:
+      summary: Get active subscription details and credit balance
+      tags: [credits]
+      responses:
+        '200':
+          description: Subscription details
+
+  /me/wallet:
+    get:
+      summary: View student and giver credit ledger
+      tags: [credits]
+      responses:
+        '200':
+          description: Wallet balance and transactions
+
+  /me/earnings:
+    get:
+      summary: View earned paid credits and cashout eligibility
+      tags: [credits]
+      responses:
+        '200':
+          description: Earnings breakdown
+
+  /me/cashout:
+    post:
+      summary: Request cashout of earned paid credits (Test Mode)
+      tags: [credits]
+      responses:
+        '200':
+          description: Cashout initiated
+
+  /me/donate-credits:
+    post:
+      summary: Donate earned credits to college scholarship pool
+      tags: [credits]
+      responses:
+        '200':
+          description: Credits donated
+
+  /sponsored-seats:
+    get:
+      summary: Check availability of institution-sponsored seats
+      tags: [credits]
+      responses:
+        '200':
+          description: Sponsored seats info
+
+  /admin/sponsored-seats:
+    post:
+      summary: Allocate sponsored seats to students
+      tags: [credits]
+      responses:
+        '200':
+          description: Seats allocated

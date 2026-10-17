@@ -1,0 +1,81 @@
+paths:
+  /sessions/{id}/rating:
+    post:
+      summary: Submit mandatory two-way rating after session
+      tags: [ratings]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '201':
+          description: Rating recorded
+
+  /sessions/{id}/request-quality:
+    post:
+      summary: Rate clarity and preparation of inbound request
+      tags: [ratings]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Request quality feedback logged
+
+  /sessions/{id}/dispute:
+    post:
+      summary: Open dispute within 48h dispute window
+      tags: [ratings]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '201':
+          description: Dispute opened
+
+  /givers/{id}/rating-summary:
+    get:
+      summary: Get aggregated public rating and band for giver
+      tags: [ratings]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Rating summary
+
+  /me/band:
+    get:
+      summary: Get own smoothed rating, completed sessions, and band
+      tags: [ratings]
+      responses:
+        '200':
+          description: Current rating band
+
+  /admin/disputes:
+    get:
+      summary: List unresolved session disputes
+      tags: [ratings]
+      responses:
+        '200':
+          description: Dispute items
+
+  /admin/disputes/{id}/resolve:
+    post:
+      summary: Resolve dispute and trigger credit release or refund
+      tags: [ratings]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Dispute resolution executed

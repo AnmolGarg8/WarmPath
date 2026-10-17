@@ -1,0 +1,24 @@
+paths:
+  /subscriptions:
+    post:
+      summary: Create Razorpay subscription order (Test Mode)
+      tags: [payments]
+      responses:
+        '201':
+          description: Subscription order initiated
+
+  /subscriptions/cancel:
+    post:
+      summary: Cancel recurring subscription renewal
+      tags: [payments]
+      responses:
+        '200':
+          description: Subscription cancelled
+
+  /webhooks/razorpay:
+    post:
+      summary: Handle Razorpay payment and subscription webhooks
+      tags: [payments]
+      responses:
+        '200':
+          description: Webhook processed
