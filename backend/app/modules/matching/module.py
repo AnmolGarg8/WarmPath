@@ -3,17 +3,19 @@ Module descriptor for 'matching'
 Owner: M2
 """
 
-from typing import List
+
 from app.core.db import async_session_maker
 from app.core.ports import MatchingPort
 from app.modules.matching.router import router as ROUTER
 from app.modules.matching.service import MatchingService
 
+__all__ = ["ROUTER", "register_events", "register_ports"]
+
 
 class MatchingPortAdapter(MatchingPort):
     """Adapter bridging the central MatchingPort interface to the matching service."""
 
-    async def explain(self, student_id: str, giver_id: str) -> List[str]:
+    async def explain(self, student_id: str, giver_id: str) -> list[str]:
         async with async_session_maker() as session:
             service = MatchingService(session)
             return await service.explain(student_id, giver_id)

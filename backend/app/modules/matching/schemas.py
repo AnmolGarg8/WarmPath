@@ -1,47 +1,47 @@
 import uuid
 from datetime import datetime
-from typing import Any, Dict, List, Optional
-from pydantic import BaseModel, Field
+from typing import Any
 
+from pydantic import BaseModel, Field
 
 # --- Giver Profile Schemas ---
 
 class GiverProfileCreateUpdate(BaseModel):
-    offers: List[str] = Field(
+    offers: list[str] = Field(
         default_factory=list,
         description="Help types offered: resume_review, mock_interview, referral_advice, career_guidance, project_feedback, domain_talk",
     )
-    topics: List[str] = Field(default_factory=list)
-    skills: List[Dict[str, Any]] = Field(default_factory=list)
-    domains: List[str] = Field(default_factory=list)
-    company: Optional[str] = Field(None, max_length=255)
-    role_title: Optional[str] = Field(None, max_length=255)
-    bio: Optional[str] = Field(None, max_length=2000)
-    languages: List[str] = Field(default_factory=lambda: ["English"])
+    topics: list[str] = Field(default_factory=list)
+    skills: list[dict[str, Any]] = Field(default_factory=list)
+    domains: list[str] = Field(default_factory=list)
+    company: str | None = Field(None, max_length=255)
+    role_title: str | None = Field(None, max_length=255)
+    bio: str | None = Field(None, max_length=2000)
+    languages: list[str] = Field(default_factory=lambda: ["English"])
     weekly_capacity: int = Field(default=3, ge=1, le=20)
-    institution_id: Optional[int] = None
-    department: Optional[str] = Field(None, max_length=100)
-    batch: Optional[int] = None
-    societies: List[str] = Field(default_factory=list)
+    institution_id: int | None = None
+    department: str | None = Field(None, max_length=100)
+    batch: int | None = None
+    societies: list[str] = Field(default_factory=list)
 
 
 class GiverProfileResponse(BaseModel):
     user_id: uuid.UUID
-    offers: List[str]
-    topics: List[str]
-    skills: List[Dict[str, Any]]
-    domains: List[str]
-    company: Optional[str] = None
-    role_title: Optional[str] = None
-    bio: Optional[str] = None
-    languages: List[str]
+    offers: list[str]
+    topics: list[str]
+    skills: list[dict[str, Any]]
+    domains: list[str]
+    company: str | None = None
+    role_title: str | None = None
+    bio: str | None = None
+    languages: list[str]
     weekly_capacity: int
-    institution_id: Optional[int] = None
-    department: Optional[str] = None
-    batch: Optional[int] = None
-    societies: List[str]
+    institution_id: int | None = None
+    department: str | None = None
+    batch: int | None = None
+    societies: list[str]
     has_embedding: bool
-    response_stats: Dict[str, Any]
+    response_stats: dict[str, Any]
     created_at: datetime
     updated_at: datetime
 
@@ -77,32 +77,32 @@ class GiverPublicCard(BaseModel):
     id: uuid.UUID
     full_name: str
     headline: str
-    company: Optional[str] = None
-    role_title: Optional[str] = None
-    bio: Optional[str] = None
-    offers: List[str] = Field(default_factory=list)
-    topics: List[str] = Field(default_factory=list)
-    skills: List[Dict[str, Any]] = Field(default_factory=list)
-    domains: List[str] = Field(default_factory=list)
-    languages: List[str] = Field(default_factory=list)
-    badges: List[str] = Field(default_factory=list)
+    company: str | None = None
+    role_title: str | None = None
+    bio: str | None = None
+    offers: list[str] = Field(default_factory=list)
+    topics: list[str] = Field(default_factory=list)
+    skills: list[dict[str, Any]] = Field(default_factory=list)
+    domains: list[str] = Field(default_factory=list)
+    languages: list[str] = Field(default_factory=list)
+    badges: list[str] = Field(default_factory=list)
     band: str = "Rising"
     rating_summary: RatingSummary
     availability_summary: AvailabilitySummary
-    why_lines: List[str] = Field(default_factory=list)
+    why_lines: list[str] = Field(default_factory=list)
 
 
 class RecommendationItem(BaseModel):
     giver: GiverPublicCard
     score_components: ScoreComponents
-    why_lines: List[str] = Field(default_factory=list)
+    why_lines: list[str] = Field(default_factory=list)
     locked: bool = False
-    lock_reason: Optional[str] = None
+    lock_reason: str | None = None
 
 
 class RecommendationsResponse(BaseModel):
-    items: List[RecommendationItem]
-    next_cursor: Optional[str] = None
+    items: list[RecommendationItem]
+    next_cursor: str | None = None
     scope: str
     locked: bool = False
-    lock_reason: Optional[str] = None
+    lock_reason: str | None = None

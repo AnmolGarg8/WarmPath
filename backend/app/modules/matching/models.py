@@ -1,16 +1,14 @@
-import uuid
-from datetime import datetime, timezone
-from typing import List, Optional
+from datetime import UTC, datetime
+
 from sqlalchemy import (
     Column,
-    String,
-    Integer,
     DateTime,
     ForeignKey,
+    Integer,
+    String,
     Text,
-    Index,
 )
-from sqlalchemy.dialects.postgresql import UUID, JSONB, ARRAY
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 
 try:
     from pgvector.sqlalchemy import Vector
@@ -29,7 +27,7 @@ from app.core.db import Base
 
 
 def utc_now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 class GiverProfile(Base):

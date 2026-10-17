@@ -8,11 +8,11 @@ import hashlib
 import json
 import math
 import uuid
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Set, Tuple
+from datetime import UTC, datetime
+from typing import Any
 
 import httpx
-from sqlalchemy import func, select, update
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -21,11 +21,7 @@ from app.core.errors import AppError, PortNotReady
 from app.core.events import GiverProfileUpdatedPayload, event_bus
 from app.core.pagination import decode_cursor, encode_cursor
 from app.core.ports import (
-    CreditsPort,
     MatchingPort,
-    PresencePort,
-    RatingsPort,
-    TrustPort,
     ports,
 )
 from app.core.redis import get_redis
@@ -66,10 +62,10 @@ ALLOWED_GIVER_ROLES = {
 
 
 def utc_now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
-def cosine_similarity(v1: Optional[List[float]], v2: Optional[List[float]]) -> float:
+def cosine_similarity(v1: list[float] | None, v2: list[float] | None) -> float:
     """Computes cosine similarity between two float vectors, mapped to [0.0, 1.0]."""
     if not v1 or not v2 or len(v1) != len(v2):
         return 0.5  # neutral fallback if missing
@@ -85,7 +81,7 @@ def cosine_similarity(v1: Optional[List[float]], v2: Optional[List[float]]) -> f
     return max(0.0, min(1.0, (cos + 1.0) / 2.0))
 
 
-def deterministic_dummy_vector(text: str) -> List[float]:
+def deterministic_dummy_vector(text: str) -> list[float]:
     """Generates a stable 768-dimensional unit vector from text hash."""
     seed_bytes = hashlib.sha256(text.encode("utf-8")).digest()
     vec = []
@@ -97,7 +93,7 @@ def deterministic_dummy_vector(text: str) -> List[float]:
     return [x / norm for x in vec]
 
 
-async def generate_embedding(text: str) -> List[float]:
+async def generate_embedding(text: str) -> list[float]:
     """
     Generates 768-dimensional embedding using Gemini text-embedding-004.
     Falls back to deterministic vector if API key is not configured.
@@ -118,7 +114,7 @@ async def generate_embedding(text: str) -> List[float]:
                 values = resp.json().get("embedding", {}).get("values", [])
                 if len(values) == 768:
                     return values
-    except Exception:
+    except Exception:  # noqa: BLE001, S110
         pass
     return deterministic_dummy_vector(text)
 
@@ -168,6 +164,22 @@ class MatchingService(MatchingPort):
                         message="Only users with an approved giver role can create a giver profile.",
                         status_code=403,
                     )
+        else:
+            # Check trust level when user record is not directly in DB
+            try:
+                level = await ports.trust.get_level(str(user_id))
+                if level not in ["verified", "established"]:
+                    raise AppError(
+                        code="giver_role_required",
+                        message="Only users with an approved giver role or pending giver verification can create a giver profile.",
+                        status_code=403,
+                    )
+            except PortNotReady:
+                raise AppError(
+                    code="giver_role_required",
+                    message="Only users with an approved giver role can create a giver profile.",
+                    status_code=403,
+                )
 
         # 2. Embed offers plus skills plus bio
         skills_str = ", ".join(
@@ -290,8 +302,8 @@ class MatchingService(MatchingPort):
         self,
         student: StudentMatchProfile,
         giver: GiverProfile,
-        band_info: Dict[str, Any],
-        presence_info: Dict[str, Any],
+        band_info: dict[str, Any],
+        presence_info: dict[str, Any],
     ) -> ScoreComponents:
         """
         Calculates honest Heuristic Score v1 components (Section 6 & Requirement 4):
@@ -419,14 +431,14 @@ class MatchingService(MatchingPort):
         student: StudentMatchProfile,
         giver: GiverProfile,
         scores: ScoreComponents,
-        presence_info: Dict[str, Any],
-        band_info: Dict[str, Any],
-    ) -> List[str]:
+        presence_info: dict[str, Any],
+        band_info: dict[str, Any],
+    ) -> list[str]:
         """
         Generates deterministic plain-language why_lines from score components.
         Never exposes raw embeddings or formulas to students.
         """
-        why_lines: List[str] = []
+        why_lines: list[str] = []
 
         # 1. Expertise overlap explanation
         student_skills = {
@@ -485,7 +497,7 @@ class MatchingService(MatchingPort):
             why_lines.append("Rising alumni mentor eager to guide")
 
         # Deterministic deduplication while maintaining order
-        seen: Set[str] = set()
+        seen: set[str] = set()
         deduped = []
         for line in why_lines:
             if line not in seen:
@@ -496,7 +508,7 @@ class MatchingService(MatchingPort):
 
     # --- MatchingPort Implementation ---
 
-    async def explain(self, student_id: str, giver_id: str) -> List[str]:
+    async def explain(self, student_id: str, giver_id: str) -> list[str]:
         """MatchingPort implementation for the sessions module."""
         s_uuid = uuid.UUID(student_id)
         g_uuid = uuid.UUID(giver_id)
@@ -507,13 +519,13 @@ class MatchingService(MatchingPort):
         # Query ports safely
         try:
             band_info = await ports.ratings.get_band(str(g_uuid))
-        except Exception:
+        except Exception:  # noqa: BLE001
             band_info = {"band": "Rising", "smoothed_avg": 4.0, "n": 0, "completion_rate": 1.0}
 
         try:
             p_map = await ports.presence.status([str(g_uuid)])
             presence_info = p_map.get(str(g_uuid), {"online": False, "capacity_left": 3})
-        except Exception:
+        except Exception:  # noqa: BLE001
             presence_info = {"online": False, "capacity_left": 3}
 
         scores = self.calculate_score_components(student, giver, band_info, presence_info)
@@ -526,9 +538,9 @@ class MatchingService(MatchingPort):
         student_id: uuid.UUID,
         scope: str = "own_college",
         limit: int = 10,
-        cursor: Optional[str] = None,
-        filter_domain: Optional[str] = None,
-        filter_help_type: Optional[str] = None,
+        cursor: str | None = None,
+        filter_domain: str | None = None,
+        filter_help_type: str | None = None,
     ) -> RecommendationsResponse:
         # 1. Hard Gate on Student: must be verified
         try:
@@ -547,7 +559,7 @@ class MatchingService(MatchingPort):
 
         # 2. Redis Cache Check
         filter_hash = hashlib.sha256(
-            f"{student.profile_version}:{scope}:{filter_domain}:{filter_help_type}".encode("utf-8")
+            f"{student.profile_version}:{scope}:{filter_domain}:{filter_help_type}".encode()
         ).hexdigest()[:12]
         cache_key = f"wp:rec:{student_id}:{scope}:{filter_hash}"
 
@@ -560,7 +572,7 @@ class MatchingService(MatchingPort):
                 return await self._paginate_cached_recommendations(
                     cached_obj, student, limit, cursor, scope
                 )
-        except Exception:
+        except Exception:  # noqa: BLE001, S110
             pass
 
         # 3. Retrieve Top Candidates (pgvector HNSW cosine query)
@@ -580,19 +592,19 @@ class MatchingService(MatchingPort):
         for cid in candidate_ids:
             try:
                 trust_levels[cid] = await ports.trust.get_level(cid)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 trust_levels[cid] = "verified"
 
             try:
                 if await ports.trust.is_blocked(str(student_id), cid):
                     blocked_set.add(cid)
-            except Exception:
+            except Exception:  # noqa: BLE001, S110
                 pass
 
         # PresencePort
         try:
             presence_map = await ports.presence.status(candidate_ids)
-        except Exception:
+        except Exception:  # noqa: BLE001
             presence_map = {cid: {"online": False, "capacity_left": 3} for cid in candidate_ids}
 
         # RatingsPort
@@ -600,7 +612,7 @@ class MatchingService(MatchingPort):
         for cid in candidate_ids:
             try:
                 ratings_map[cid] = await ports.ratings.get_band(cid)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 ratings_map[cid] = {
                     "band": "Rising",
                     "smoothed_avg": 4.0,
@@ -620,7 +632,7 @@ class MatchingService(MatchingPort):
                 if not access_check.get("allowed", False):
                     is_scope_locked = True
                     lock_reason = access_check.get("reason", "plan_required")
-            except Exception:
+            except Exception:  # noqa: BLE001
                 # If credits port denied or plan required
                 is_scope_locked = True
                 lock_reason = "plan_required"
@@ -652,9 +664,13 @@ class MatchingService(MatchingPort):
             if scope == "own_college":
                 if giver.institution_id and student.institution_id and giver.institution_id != student.institution_id:
                     continue
-            elif scope == "cross_college":
-                if giver.institution_id and student.institution_id and giver.institution_id == student.institution_id:
-                    continue
+            elif (
+                scope == "cross_college"
+                and giver.institution_id
+                and student.institution_id
+                and giver.institution_id == student.institution_id
+            ):
+                continue
 
             # Filter by domain or help type if provided
             if filter_domain and filter_domain.lower() not in [d.lower() for d in (giver.domains or [])]:
@@ -663,7 +679,7 @@ class MatchingService(MatchingPort):
                 continue
 
             # Gate F: Daily exposure cap
-            if giver.daily_impressions_count >= MAX_DAILY_EXPOSURE:
+            if (giver.daily_impressions_count or 0) >= MAX_DAILY_EXPOSURE:
                 continue
 
             # Compute Score Components
@@ -692,7 +708,7 @@ class MatchingService(MatchingPort):
                 await redis_client.setex(
                     cache_key, CACHE_TTL_SECONDS, json.dumps(cache_payload)
                 )
-            except Exception:
+            except Exception:  # noqa: BLE001, S110
                 pass
 
         # 7. Cursor Pagination
@@ -702,12 +718,12 @@ class MatchingService(MatchingPort):
 
     async def _build_recommendations_response(
         self,
-        ranked_items: List[Tuple[GiverProfile, ScoreComponents, List[str], Dict[str, Any], Dict[str, Any]]],
+        ranked_items: list[tuple[GiverProfile, ScoreComponents, list[str], dict[str, Any], dict[str, Any]]],
         limit: int,
-        cursor: Optional[str],
+        cursor: str | None,
         scope: str,
         is_locked: bool,
-        lock_reason: Optional[str],
+        lock_reason: str | None,
     ) -> RecommendationsResponse:
         start_idx = 0
         if cursor:
@@ -741,11 +757,11 @@ class MatchingService(MatchingPort):
                 company=giver.company,
                 role_title=giver.role_title,
                 bio=bio,
-                offers=giver.offers,
-                topics=giver.topics,
-                skills=giver.skills,
-                domains=giver.domains,
-                languages=giver.languages,
+                offers=giver.offers or [],
+                topics=giver.topics or [],
+                skills=giver.skills or [],
+                domains=giver.domains or [],
+                languages=giver.languages or ["English"],
                 badges=[band_info.get("band", "Rising"), "Verified"],
                 band=band_info.get("band", "Rising"),
                 rating_summary=RatingSummary(
@@ -786,10 +802,10 @@ class MatchingService(MatchingPort):
 
     async def _paginate_cached_recommendations(
         self,
-        cached_obj: List[Dict[str, Any]],
+        cached_obj: list[dict[str, Any]],
         student: StudentMatchProfile,
         limit: int,
-        cursor: Optional[str],
+        cursor: str | None,
         scope: str,
     ) -> RecommendationsResponse:
         start_idx = 0
@@ -842,7 +858,7 @@ class MatchingService(MatchingPort):
     # --- Public Giver Card (Requirement 6) ---
 
     async def get_giver_public_card(
-        self, giver_id: uuid.UUID, requesting_student_id: Optional[uuid.UUID] = None, why_lines: Optional[List[str]] = None
+        self, giver_id: uuid.UUID, requesting_student_id: uuid.UUID | None = None, why_lines: list[str] | None = None
     ) -> GiverPublicCard:
         giver = await self.get_giver_profile(giver_id)
 
@@ -855,14 +871,14 @@ class MatchingService(MatchingPort):
         # Query RatingsPort
         try:
             band_info = await ports.ratings.get_band(str(giver_id))
-        except Exception:
+        except Exception:  # noqa: BLE001
             band_info = {"band": "Rising", "smoothed_avg": 4.0, "n": 0, "completion_rate": 1.0}
 
         # Query PresencePort
         try:
             p_map = await ports.presence.status([str(giver_id)])
             pres = p_map.get(str(giver_id), {"online": False, "capacity_left": giver.weekly_capacity})
-        except Exception:
+        except Exception:  # noqa: BLE001
             pres = {"online": False, "capacity_left": giver.weekly_capacity}
 
         # Calculate why_lines if requesting_student_id provided and why_lines not passed
@@ -870,7 +886,7 @@ class MatchingService(MatchingPort):
             if requesting_student_id:
                 try:
                     why_lines = await self.explain(str(requesting_student_id), str(giver_id))
-                except Exception:
+                except Exception:  # noqa: BLE001
                     why_lines = ["Verified alumni mentor in your field"]
             else:
                 why_lines = ["Experienced alumni mentor ready to assist"]
@@ -882,11 +898,11 @@ class MatchingService(MatchingPort):
             company=giver.company,
             role_title=giver.role_title,
             bio=giver.bio,
-            offers=giver.offers,
-            topics=giver.topics,
-            skills=giver.skills,
-            domains=giver.domains,
-            languages=giver.languages,
+            offers=giver.offers or [],
+            topics=giver.topics or [],
+            skills=giver.skills or [],
+            domains=giver.domains or [],
+            languages=giver.languages or ["English"],
             badges=[band_info.get("band", "Rising"), "Verified"],
             band=band_info.get("band", "Rising"),
             rating_summary=RatingSummary(
@@ -905,7 +921,7 @@ class MatchingService(MatchingPort):
     # --- Cache Invalidation Helpers (Requirement 8) ---
 
     @staticmethod
-    async def invalidate_recommendation_caches(student_id: Optional[str] = None):
+    async def invalidate_recommendation_caches(student_id: str | None = None):
         """Invalidates matching recommendations cache in Redis."""
         try:
             redis_client = await get_redis()
@@ -913,5 +929,5 @@ class MatchingService(MatchingPort):
             keys = await redis_client.keys(pattern)
             if keys:
                 await redis_client.delete(*keys)
-        except Exception:
+        except Exception:  # noqa: BLE001, S110
             pass

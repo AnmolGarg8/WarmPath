@@ -1,5 +1,6 @@
 import uuid
-from typing import Optional
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -25,7 +26,7 @@ async def get_current_user_id(request: Request) -> uuid.UUID:
         try:
             payload = decode_token(token)
             return uuid.UUID(payload.get("sub"))
-        except Exception:
+        except Exception:  # noqa: BLE001
             raise AppError(code="unauthorized", message="Invalid or expired token", status_code=401)
 
     x_user_id = request.headers.get("X-User-Id")
@@ -38,11 +39,11 @@ async def get_current_user_id(request: Request) -> uuid.UUID:
     raise AppError(code="unauthorized", message="Authentication required", status_code=401)
 
 
-async def get_optional_user_id(request: Request) -> Optional[uuid.UUID]:
+async def get_optional_user_id(request: Request) -> uuid.UUID | None:
     """Extracts optional authenticated user UUID if present."""
     try:
         return await get_current_user_id(request)
-    except Exception:
+    except Exception:  # noqa: BLE001
         return None
 
 
@@ -54,7 +55,7 @@ async def get_optional_user_id(request: Request) -> Optional[uuid.UUID]:
 async def put_me_giver_profile(
     body: GiverProfileCreateUpdate,
     request: Request,
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     user_id = await get_current_user_id(request)
     service = MatchingService(db)
@@ -89,7 +90,7 @@ async def put_me_giver_profile(
 )
 async def get_me_giver_profile(
     request: Request,
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     user_id = await get_current_user_id(request)
     service = MatchingService(db)
@@ -124,12 +125,12 @@ async def get_me_giver_profile(
 )
 async def get_recommendations(
     request: Request,
-    scope: str = Query("own_college", regex="^(own_college|cross_college|experts)$"),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    scope: str = Query("own_college", pattern="^(own_college|cross_college|experts)$"),
     limit: int = Query(10, ge=1, le=50),
-    cursor: Optional[str] = Query(None),
-    filter_domain: Optional[str] = Query(None),
-    filter_help_type: Optional[str] = Query(None),
-    db: AsyncSession = Depends(get_db),
+    cursor: str | None = Query(None),
+    filter_domain: str | None = Query(None),
+    filter_help_type: str | None = Query(None),
 ):
     student_id = await get_current_user_id(request)
     service = MatchingService(db)
@@ -151,7 +152,7 @@ async def get_recommendations(
 async def get_givers_id(
     id: uuid.UUID,
     request: Request,
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     requesting_student_id = await get_optional_user_id(request)
     service = MatchingService(db)

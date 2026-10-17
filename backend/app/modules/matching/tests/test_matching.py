@@ -6,18 +6,16 @@ cold-start boost, daily exposure cap, locked cross-college scope, and cache inva
 
 import math
 import uuid
-from datetime import datetime, timezone
-from typing import Any, Dict, List
-from unittest.mock import AsyncMock, patch
+from typing import Any
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from httpx import ASGITransport, AsyncClient
 
-from app.core.errors import AppError
 from app.core.ports import ports
 from app.main import app
 from app.modules.matching.models import GiverProfile, StudentMatchProfile
-from app.modules.matching.schemas import GiverProfileCreateUpdate, ScoreComponents
+from app.modules.matching.schemas import ScoreComponents
 from app.modules.matching.service import (
     COLD_START_BOOST,
     MAX_DAILY_EXPOSURE,
@@ -29,21 +27,19 @@ from app.modules.matching.service import (
     WEIGHT_RESPONSE_ODDS,
     MatchingService,
     cosine_similarity,
-    deterministic_dummy_vector,
 )
-
 
 # --- Mock Port Classes for Testing ---
 
 class MockTrustPort:
-    def __init__(self, levels: Dict[str, str] = None, blocked: set = None):
+    def __init__(self, levels: dict[str, str] | None = None, blocked: set | None = None):
         self.levels = levels or {}
         self.blocked = blocked or set()
 
     async def get_level(self, user_id: str) -> str:
         return self.levels.get(user_id, "verified")
 
-    async def can(self, user_id: str, action: str) -> Dict[str, Any]:
+    async def can(self, user_id: str, action: str) -> dict[str, Any]:
         return {"allowed": True, "reason": "ok"}
 
     async def is_blocked(self, user_a: str, user_b: str) -> bool:
@@ -51,10 +47,10 @@ class MockTrustPort:
 
 
 class MockPresencePort:
-    def __init__(self, mapping: Dict[str, Dict[str, Any]] = None):
+    def __init__(self, mapping: dict[str, dict[str, Any]] | None = None):
         self.mapping = mapping or {}
 
-    async def status(self, user_ids: List[str]) -> Dict[str, Any]:
+    async def status(self, user_ids: list[str]) -> dict[str, Any]:
         result = {}
         for uid in user_ids:
             result[uid] = self.mapping.get(uid, {"online": True, "capacity_left": 3})
@@ -62,10 +58,10 @@ class MockPresencePort:
 
 
 class MockRatingsPort:
-    def __init__(self, mapping: Dict[str, Dict[str, Any]] = None):
+    def __init__(self, mapping: dict[str, dict[str, Any]] | None = None):
         self.mapping = mapping or {}
 
-    async def get_band(self, giver_id: str) -> Dict[str, Any]:
+    async def get_band(self, giver_id: str) -> dict[str, Any]:
         return self.mapping.get(
             giver_id,
             {"band": "Trusted", "smoothed_avg": 4.5, "n": 10, "completion_rate": 0.95},
@@ -77,7 +73,7 @@ class MockCreditsPort:
         self.can_access_allowed = can_access_allowed
         self.reason = reason
 
-    async def can_access(self, student_id: str, giver_id: str) -> Dict[str, Any]:
+    async def can_access(self, student_id: str, giver_id: str) -> dict[str, Any]:
         return {
             "allowed": self.can_access_allowed,
             "reason": self.reason,
@@ -259,11 +255,24 @@ def test_deterministic_why_lines_explainability():
 @pytest.mark.asyncio
 async def test_hard_gates_exclude_unverified_and_restricted_givers():
     mock_session = AsyncMock()
+    mock_result = MagicMock()
+    mock_session.execute.return_value = mock_result
+    mock_result.scalar_one_or_none.return_value = None
 
     student_id = uuid.uuid4()
     giver_unverified_id = uuid.uuid4()
     giver_restricted_id = uuid.uuid4()
     giver_valid_id = uuid.uuid4()
+
+    mock_student = StudentMatchProfile(
+        user_id=student_id,
+        institution_id=1,
+        department="Computer Science",
+        batch=2026,
+        societies=["ACM"],
+        skills=[{"name": "Python"}],
+        profile_version=1,
+    )
 
     # Create dummy givers
     g_unverified = GiverProfile(user_id=giver_unverified_id, institution_id=1, offers=["career_guidance"])
@@ -271,14 +280,14 @@ async def test_hard_gates_exclude_unverified_and_restricted_givers():
     g_valid = GiverProfile(user_id=giver_valid_id, institution_id=1, offers=["career_guidance"])
 
     service = MatchingService(session=mock_session)
+    service.get_or_create_student_match_profile = AsyncMock(return_value=mock_student)
 
     # Stub DB queries
-    mock_session.execute.return_value.scalars.return_value.all.return_value = [
+    mock_result.scalars.return_value.all.return_value = [
         g_unverified,
         g_restricted,
         g_valid,
     ]
-    mock_session.execute.return_value.scalar_one_or_none.return_value = None
 
     # Set TrustPort: unverified is "new", restricted is "restricted", valid is "verified"
     trust_levels = {
@@ -303,23 +312,36 @@ async def test_hard_gates_exclude_unverified_and_restricted_givers():
 @pytest.mark.asyncio
 async def test_hard_gates_exclude_blocked_and_zero_capacity_givers():
     mock_session = AsyncMock()
+    mock_result = MagicMock()
+    mock_session.execute.return_value = mock_result
+    mock_result.scalar_one_or_none.return_value = None
 
     student_id = uuid.uuid4()
     giver_blocked_id = uuid.uuid4()
     giver_zero_cap_id = uuid.uuid4()
     giver_valid_id = uuid.uuid4()
 
+    mock_student = StudentMatchProfile(
+        user_id=student_id,
+        institution_id=1,
+        department="Computer Science",
+        batch=2026,
+        societies=["ACM"],
+        skills=[{"name": "Python"}],
+        profile_version=1,
+    )
+
     g_blocked = GiverProfile(user_id=giver_blocked_id, institution_id=1, offers=["domain_talk"])
     g_zero_cap = GiverProfile(user_id=giver_zero_cap_id, institution_id=1, offers=["domain_talk"])
     g_valid = GiverProfile(user_id=giver_valid_id, institution_id=1, offers=["domain_talk"])
 
     service = MatchingService(session=mock_session)
-    mock_session.execute.return_value.scalars.return_value.all.return_value = [
+    service.get_or_create_student_match_profile = AsyncMock(return_value=mock_student)
+    mock_result.scalars.return_value.all.return_value = [
         g_blocked,
         g_zero_cap,
         g_valid,
     ]
-    mock_session.execute.return_value.scalar_one_or_none.return_value = None
 
     # Block giver_blocked_id
     ports.trust = MockTrustPort(blocked={(str(student_id), str(giver_blocked_id))})
@@ -344,9 +366,23 @@ async def test_hard_gates_exclude_blocked_and_zero_capacity_givers():
 @pytest.mark.asyncio
 async def test_exposure_cap_excludes_flooded_givers():
     mock_session = AsyncMock()
+    mock_result = MagicMock()
+    mock_session.execute.return_value = mock_result
+    mock_result.scalar_one_or_none.return_value = None
+
     student_id = uuid.uuid4()
     flooded_giver_id = uuid.uuid4()
     normal_giver_id = uuid.uuid4()
+
+    mock_student = StudentMatchProfile(
+        user_id=student_id,
+        institution_id=1,
+        department="Computer Science",
+        batch=2026,
+        societies=["ACM"],
+        skills=[{"name": "Python"}],
+        profile_version=1,
+    )
 
     g_flooded = GiverProfile(
         user_id=flooded_giver_id,
@@ -362,8 +398,8 @@ async def test_exposure_cap_excludes_flooded_givers():
     )
 
     service = MatchingService(session=mock_session)
-    mock_session.execute.return_value.scalars.return_value.all.return_value = [g_flooded, g_normal]
-    mock_session.execute.return_value.scalar_one_or_none.return_value = None
+    service.get_or_create_student_match_profile = AsyncMock(return_value=mock_student)
+    mock_result.scalars.return_value.all.return_value = [g_flooded, g_normal]
 
     ports.trust = MockTrustPort()
     ports.presence = MockPresencePort()
@@ -380,8 +416,22 @@ async def test_exposure_cap_excludes_flooded_givers():
 @pytest.mark.asyncio
 async def test_locked_cross_college_results_when_plan_required():
     mock_session = AsyncMock()
+    mock_result = MagicMock()
+    mock_session.execute.return_value = mock_result
+    mock_result.scalar_one_or_none.return_value = None
+
     student_id = uuid.uuid4()
     cross_giver_id = uuid.uuid4()
+
+    mock_student = StudentMatchProfile(
+        user_id=student_id,
+        institution_id=1,
+        department="Computer Science",
+        batch=2026,
+        societies=["ACM"],
+        skills=[{"name": "Python"}],
+        profile_version=1,
+    )
 
     # Different institution
     g_cross = GiverProfile(
@@ -394,8 +444,8 @@ async def test_locked_cross_college_results_when_plan_required():
     )
 
     service = MatchingService(session=mock_session)
-    mock_session.execute.return_value.scalars.return_value.all.return_value = [g_cross]
-    mock_session.execute.return_value.scalar_one_or_none.return_value = None
+    service.get_or_create_student_match_profile = AsyncMock(return_value=mock_student)
+    mock_result.scalars.return_value.all.return_value = [g_cross]
 
     # CreditsPort denies access (plan required)
     ports.trust = MockTrustPort()
@@ -413,6 +463,7 @@ async def test_locked_cross_college_results_when_plan_required():
     assert item.lock_reason == "plan_required"
     # Contact info masked
     assert "Subscribe" in item.giver.bio
+
 
 
 # --- Integration HTTP Router Tests ---

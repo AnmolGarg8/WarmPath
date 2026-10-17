@@ -5,11 +5,12 @@ Revises:
 Create Date: 2026-10-17 20:30:00.000000
 
 """
-from typing import Sequence, Union
+from collections.abc import Sequence
 
-from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
+
+from alembic import op
 
 try:
     from pgvector.sqlalchemy import Vector
@@ -25,9 +26,9 @@ except ImportError:
 
 
 revision: str = "0001_matching_base"
-down_revision: Union[str, None] = None
-branch_labels: Union[str, Sequence[str], None] = ("matching",)
-depends_on: Union[str, Sequence[str], None] = ("0001_core_base",)
+down_revision: str | None = None
+branch_labels: str | Sequence[str] | None = ("matching",)
+depends_on: str | Sequence[str] | None = ("0001_core_base",)
 
 
 def upgrade() -> None:
@@ -35,16 +36,16 @@ def upgrade() -> None:
     op.create_table(
         "giver_profiles",
         sa.Column("user_id", postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column("offers", postgresql.JSONB(as_json=True), nullable=False),
+        sa.Column("offers", postgresql.JSONB(), nullable=False),
         sa.Column("topics", postgresql.ARRAY(sa.String()), nullable=False),
-        sa.Column("skills", postgresql.JSONB(as_json=True), nullable=False),
+        sa.Column("skills", postgresql.JSONB(), nullable=False),
         sa.Column("domains", postgresql.ARRAY(sa.String()), nullable=False),
         sa.Column("company", sa.String(length=255), nullable=True),
         sa.Column("role_title", sa.String(length=255), nullable=True),
         sa.Column("bio", sa.Text(), nullable=True),
         sa.Column("languages", postgresql.ARRAY(sa.String()), nullable=False),
         sa.Column("embedding", Vector(768), nullable=True),
-        sa.Column("response_stats", postgresql.JSONB(as_json=True), nullable=False),
+        sa.Column("response_stats", postgresql.JSONB(), nullable=False),
         sa.Column("weekly_capacity", sa.Integer(), nullable=False, server_default="3"),
         sa.Column("institution_id", sa.Integer(), nullable=True),
         sa.Column("department", sa.String(length=100), nullable=True),
@@ -73,7 +74,7 @@ def upgrade() -> None:
         sa.Column("department", sa.String(length=100), nullable=True),
         sa.Column("batch", sa.Integer(), nullable=True),
         sa.Column("societies", postgresql.ARRAY(sa.String()), nullable=False),
-        sa.Column("skills", postgresql.JSONB(as_json=True), nullable=False),
+        sa.Column("skills", postgresql.JSONB(), nullable=False),
         sa.Column("domains", postgresql.ARRAY(sa.String()), nullable=False),
         sa.Column("profile_embedding", Vector(768), nullable=True),
         sa.Column("intent_goal", sa.Text(), nullable=True),
