@@ -2,100 +2,358 @@ paths:
   /reports:
     post:
       summary: "Submit a report against a user, message, or session"
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - reason
+              properties:
+                target_user_id:
+                  type: string
+                  format: uuid
+                message_id:
+                  type: string
+                request_id:
+                  type: string
+                reason:
+                  type: string
+                details:
+                  type: string
       responses:
-        "501":
-          description: Module not implemented
+        "201":
+          description: Report created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  reporter_id:
+                    type: string
+                    format: uuid
+                  reason:
+                    type: string
+                  status:
+                    type: string
+
   /blocks:
     post:
       summary: "Block a user from contacting or booking"
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - blocked_user_id
+              properties:
+                blocked_user_id:
+                  type: string
+                  format: uuid
+                reason:
+                  type: string
       responses:
-        "501":
-          description: Module not implemented
+        "201":
+          description: User blocked successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  blocker_id:
+                    type: string
+                    format: uuid
+                  blocked_id:
+                    type: string
+                    format: uuid
+
   /blocks/{user_id}:
     delete:
       summary: "Unblock a previously blocked user"
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
-        "501":
-          description: Module not implemented
+        "200":
+          description: User unblocked successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                type: object
+                properties:
+                  message:
+                    type: string
+                  unblocked_user_id:
+                    type: string
+                    format: uuid
+
   /me/trust:
     get:
       summary: "Retrieve current private trust score and safety limits"
+      security:
+        - BearerAuth: []
       responses:
-        "501":
-          description: Module not implemented
+        "200":
+          description: Current trust score and safety limits
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                type: object
+                properties:
+                  trust_level:
+                    type: string
+                  verification_level:
+                    type: string
+                  requests_per_day_limit:
+                    type: integer
+                  requests_per_day_remaining:
+                    type: integer
+                  can_post_jobs:
+                    type: boolean
+                  messages_reviewed_first:
+                    type: boolean
+
   /admin/moderation/queue:
     get:
       summary: "List pending moderation reports"
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: type
+          in: query
+          schema:
+            type: string
+        - name: cursor
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
       responses:
-        "501":
-          description: Module not implemented
+        "200":
+          description: Moderation queue items
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                  next_cursor:
+                    type: string
+
   /admin/moderation/{id}/resolve:
     post:
       summary: "Resolve a moderation report"
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - decision
+                - note
+              properties:
+                decision:
+                  type: string
+                  enum: [dismiss, warn, restrict, suspend, ban]
+                note:
+                  type: string
       responses:
-        "501":
-          description: Module not implemented
+        "200":
+          description: Report resolved
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                type: object
+                properties:
+                  report_id:
+                    type: string
+                  decision:
+                    type: string
+                  note:
+                    type: string
+
   /admin/verification/queue:
     get:
       summary: "List pending verification submissions"
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: cursor
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
       responses:
-        "501":
-          description: Module not implemented
+        "200":
+          description: Pending verification queue
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                  next_cursor:
+                    type: string
+
   /admin/verification/{id}/decide:
     post:
       summary: "Approve or reject a verification request"
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - decision
+              properties:
+                decision:
+                  type: string
+                  enum: [approve, reject]
+                badge:
+                  type: string
+                note:
+                  type: string
       responses:
-        "501":
-          description: Module not implemented
+        "200":
+          description: Verification decided
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                type: object
+                properties:
+                  request_id:
+                    type: string
+                    format: uuid
+                  decision:
+                    type: string
+
   /admin/approved-members/upload:
     post:
       summary: "Upload institutional roster CSV"
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                institution_id:
+                  type: integer
       responses:
-        "501":
-          description: Module not implemented
+        "200":
+          description: Upload summary
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                type: object
+                properties:
+                  total_rows:
+                    type: integer
+                  inserted:
+                    type: integer
+                  duplicates_skipped:
+                    type: integer
+
   /admin/audit-log:
     get:
       summary: "Retrieve security audit trail"
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: action
+          in: query
+          schema:
+            type: string
+        - name: actor_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: target_id
+          in: query
+          schema:
+            type: string
+        - name: cursor
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
       responses:
-        "501":
-          description: Module not implemented
+        "200":
+          description: Audit log items
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                  next_cursor:
+                    type: string
