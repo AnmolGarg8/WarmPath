@@ -2,10 +2,10 @@
 backend/app/modules/auth/router.py - Endpoints for authentication, profiles, and verification.
 """
 
-
 from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.core.db import User, get_db
 from app.core.deps import get_current_user
 from app.modules.auth.schemas import (
@@ -118,3 +118,21 @@ async def get_verification_status(
     db: AsyncSession = Depends(get_db),
 ):
     return await AuthService.get_verification_status(user, db)
+
+
+@router.get("/config/public", summary="Retrieve public deployment configuration and demo/test mode flags")
+async def get_config_public():
+    return {
+        "demo_profile": settings.DEMO_PROFILE,
+        "test_mode": settings.TEST_MODE,
+        "windows": {
+            "dispute_minutes": settings.DISPUTE_WINDOW_MINUTES,
+            "no_reply_minutes": settings.NO_REPLY_EXPIRY_MINUTES,
+            "min_call_seconds": settings.MIN_CALL_SECONDS,
+        },
+        "band_thresholds": {
+            "trusted_min_sessions": settings.TRUSTED_MIN_SESSIONS,
+            "top_rated_min_sessions": settings.TOP_RATED_MIN_SESSIONS,
+            "lowered": (settings.TRUSTED_MIN_SESSIONS < 5 or settings.TOP_RATED_MIN_SESSIONS < 10),
+        },
+    }

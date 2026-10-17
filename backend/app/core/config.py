@@ -81,10 +81,18 @@ class Settings(BaseSettings):
     BOOKING_HORIZON_HIGH: int = 14
     BOOKING_HORIZON_PREMIUM: int = 30
 
-    # Session Rules
+    # Demo Profile & Test Mode
+    DEMO_PROFILE: bool = False
+    TEST_MODE: bool = True
+
+    # Session Rules & Window Overrides (Production defaults vs Demo profile)
     MIN_CALL_DURATION_MINUTES: int = 5
     DISPUTE_WINDOW_HOURS: int = 48
     AUTO_REFUND_HOURS: int = 72
+    DISPUTE_WINDOW_MINUTES: int = 48 * 60  # 2880 mins in prod, overridable to 2 mins in demo
+    NO_REPLY_EXPIRY_MINUTES: int = 72 * 60  # 4320 mins in prod, overridable to 5 mins in demo
+    MIN_CALL_SECONDS: int = 5 * 60  # 300 secs in prod, overridable to 60 secs in demo
+    SCHEDULER_INTERVAL_SECONDS: int = 60  # 60 secs in prod, overridable to 15 secs in demo
 
     # Daily Request Limits by Trust Level
     REQUEST_LIMIT_NEW: int = 3

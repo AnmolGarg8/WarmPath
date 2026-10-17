@@ -5,7 +5,6 @@ export interface ApiError {
     details?: Record<string, unknown>;
   };
 }
-
 export interface User {
   id: string;
   email: string;
@@ -202,3 +201,23 @@ export async function fetchApi<T>(endpoint: string, options: RequestInit = {}): 
 
   return response.json();
 }
+
+export interface PublicConfig {
+  demo_profile: boolean;
+  test_mode: boolean;
+  windows: {
+    dispute_minutes: number;
+    no_reply_minutes: number;
+    min_call_seconds: number;
+  };
+  band_thresholds?: {
+    trusted_min_sessions: number;
+    top_rated_min_sessions: number;
+    lowered: boolean;
+  };
+}
+
+export async function fetchPublicConfig(): Promise<PublicConfig> {
+  return fetchApi<PublicConfig>('/config/public');
+}
+

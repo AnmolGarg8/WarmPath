@@ -224,7 +224,47 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+  /config/public:
+    get:
+      summary: "Retrieve public deployment configuration and demo/test mode flags"
+      responses:
+        "200":
+          description: Public deployment flags and timing windows
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - demo_profile
+                  - test_mode
+                  - windows
+                properties:
+                  demo_profile:
+                    type: boolean
+                  test_mode:
+                    type: boolean
+                  windows:
+                    type: object
+                    required:
+                      - dispute_minutes
+                      - no_reply_minutes
+                      - min_call_seconds
+                    properties:
+                      dispute_minutes:
+                        type: integer
+                      no_reply_minutes:
+                        type: integer
+                      min_call_seconds:
+                        type: integer
+                  band_thresholds:
+                    type: object
+                    properties:
+                      trusted_min_sessions:
+                        type: integer
+                      top_rated_min_sessions:
+                        type: integer
+                      lowered:
+                        type: boolean
 
 components:
   schemas:
