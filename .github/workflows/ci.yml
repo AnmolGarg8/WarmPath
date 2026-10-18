@@ -81,7 +81,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install ruff mypy pytest pytest-asyncio httpx email-validator python-multipart
+          pip install ruff mypy pytest pytest-asyncio httpx email-validator python-multipart aiosqlite
           if [ -f backend/pyproject.toml ]; then pip install -e "backend/[dev]"; fi
       - name: Ruff Lint
         run: ruff check backend/
@@ -139,7 +139,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install ruff mypy pytest pytest-asyncio httpx email-validator python-multipart
+          pip install ruff mypy pytest pytest-asyncio httpx email-validator python-multipart aiosqlite
           if [ -f backend/pyproject.toml ]; then pip install -e "backend/[dev]"; fi
       - name: Build OpenAPI Contract
         run: python scripts/build_openapi.py

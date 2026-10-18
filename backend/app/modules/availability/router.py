@@ -137,6 +137,11 @@ async def get_presence(
     statuses = await AvailabilityService.get_presence_status(db, raw_ids)
     return [PresenceStatus(**s) for s in statuses]
 
+@router.get("/ws", status_code=status.HTTP_101_SWITCHING_PROTOCOLS, include_in_schema=True)
+async def websocket_handshake():
+    """WebSocket presence connection endpoint descriptor."""
+    return {"message": "Switching protocols to WebSocket"}
+
 @router.websocket("/ws")
 async def websocket_endpoint(
     websocket: WebSocket,
