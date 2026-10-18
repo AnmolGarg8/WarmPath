@@ -164,6 +164,19 @@ async def mock_rzp_client():
     set_razorpay_client(None)
 
 
+from app.core.security import create_access_token
+
+
+class AuthClient(AsyncClient):
+    async def request(self, method, url, **kwargs):
+        headers = dict(kwargs.get("headers") or {})
+        if "Authorization" not in headers:
+            uid = headers.get("X-User-Id") or "00000000-0000-0000-0000-000000000001"
+            headers["Authorization"] = f"Bearer {create_access_token(uid)}"
+        kwargs["headers"] = headers
+        return await super().request(method, url, **kwargs)
+
+
 @pytest_asyncio.fixture
 async def client(db_session: AsyncSession, mock_rzp_client: MockRazorpayClient):
     async def _get_db_override():
@@ -171,7 +184,7 @@ async def client(db_session: AsyncSession, mock_rzp_client: MockRazorpayClient):
 
     app.dependency_overrides[get_db] = _get_db_override
     transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as c:
+    async with AuthClient(transport=transport, base_url="http://test") as c:
         yield c
     app.dependency_overrides.clear()
 

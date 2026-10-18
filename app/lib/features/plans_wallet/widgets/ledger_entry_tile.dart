@@ -86,7 +86,10 @@ class LedgerEntryTile extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Row(
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 2,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     if (entry.plainDate.isNotEmpty) ...[
                       Text(
@@ -96,9 +99,7 @@ class LedgerEntryTile extends StatelessWidget {
                           color: AppColors.slate,
                         ),
                       ),
-                      const SizedBox(width: 8),
                       const Text('•', style: TextStyle(color: AppColors.slate)),
-                      const SizedBox(width: 8),
                     ],
                     Text(
                       'Txn: ${entry.shortTxnId}',
@@ -109,9 +110,7 @@ class LedgerEntryTile extends StatelessWidget {
                       ),
                     ),
                     if (entry.runningBalance != null) ...[
-                      const SizedBox(width: 8),
                       const Text('•', style: TextStyle(color: AppColors.slate)),
-                      const SizedBox(width: 8),
                       Text(
                         'Bal: ${entry.runningBalance} cr',
                         style: const TextStyle(
