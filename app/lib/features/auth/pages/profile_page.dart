@@ -273,6 +273,14 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
               child: Column(
                 children: [
                   ListTile(
+                    leading: const Icon(Icons.slideshow_rounded, color: AppColors.deepIndigo),
+                    title: const Text('Guided Demo Walkthrough', style: TextStyle(fontWeight: FontWeight.bold)),
+                    subtitle: const Text('Simulated honest tour of all six WarmPath pillars'),
+                    trailing: const Icon(Icons.chevron_right, color: AppColors.slate),
+                    onTap: () => context.go('/demo'),
+                  ),
+                  const Divider(height: 1),
+                  ListTile(
                     leading: const Icon(Icons.shield_outlined, color: AppColors.deepIndigo),
                     title: const Text('Safety & Why am I limited?'),
                     subtitle: const Text('Understand trust rules and community safeguards'),

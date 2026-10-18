@@ -216,6 +216,22 @@ class _EmailPageState extends ConsumerState<EmailPage> {
                     onPressed: _submit,
                   ),
                 ),
+                const SizedBox(height: 20),
+                Center(
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.deepIndigo,
+                      side: const BorderSide(color: AppColors.deepIndigo),
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    ),
+                    icon: const Icon(Icons.slideshow_rounded, size: 20),
+                    label: const Text(
+                      'Try guided demo',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                    ),
+                    onPressed: () => context.go('/demo'),
+                  ),
+                ),
               ],
             ),
           ),

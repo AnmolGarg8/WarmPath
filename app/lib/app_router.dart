@@ -12,6 +12,7 @@ import 'features/availability/routes.dart';
 import 'features/discover/discover_page.dart';
 import 'features/discover/routes.dart';
 import 'features/onboarding/routes.dart';
+import 'features/demo/routes.dart';
 import 'features/plans_wallet/routes.dart';
 import 'features/ratings/routes.dart';
 import 'features/safety/routes.dart';
@@ -25,6 +26,7 @@ const Set<String> _publicExactRoutes = {
   '/auth/otp',
   '/onboarding',
   '/onboarding/giver-profile',
+  '/demo',
 };
 
 bool isPublicRoute(String location) {
@@ -35,6 +37,7 @@ bool isPublicRoute(String location) {
   if (normalized.startsWith('/auth/intro')) return true;
   if (normalized.startsWith('/auth/email')) return true;
   if (normalized.startsWith('/auth/otp')) return true;
+  if (normalized.startsWith('/demo')) return true;
   return false;
 }
 
@@ -107,6 +110,7 @@ final GoRouter appRouter = () {
       ...sessionsRoutes,
       ...ratingsRoutes,
       ...plansWalletRoutes,
+      ...demoRoutes,
     ],
   );
 }();
