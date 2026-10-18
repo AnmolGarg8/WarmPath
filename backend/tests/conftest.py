@@ -9,11 +9,12 @@ import sqlite3
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import select
-from sqlalchemy.dialects.postgresql import JSONB
+import uuid
+from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.pool import NullPool
-from sqlalchemy.types import ARRAY
+from sqlalchemy.types import ARRAY, Uuid
 
 
 # Register SQLite DDL fallbacks for PostgreSQL types
@@ -24,6 +25,11 @@ def compile_array_sqlite(type_, compiler, **kw):
 @compiles(JSONB, "sqlite")
 def compile_jsonb_sqlite(type_, compiler, **kw):
     return "JSON"
+
+@compiles(PG_UUID, "sqlite")
+@compiles(Uuid, "sqlite")
+def compile_uuid_sqlite(type_, compiler, **kw):
+    return "TEXT"
 
 # SQLite bind/result processors for ARRAY and JSONB
 orig_array_bp = ARRAY.bind_processor
@@ -55,6 +61,7 @@ def custom_jsonb_rp(self, dialect, coltype):
 JSONB.result_processor = custom_jsonb_rp
 
 sqlite3.register_adapter(list, json.dumps)
+sqlite3.register_adapter(uuid.UUID, lambda u: str(u))
 
 import app.core.redis as core_redis
 from app.core.db import Base, Institution, get_db

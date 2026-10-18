@@ -49,7 +49,7 @@ async def test_all_routes_require_auth_except_allowlist():
             if norm_path in PUBLIC_ALLOWLIST or any(norm_path.startswith(prefix) for prefix in ("/docs", "/redoc", "/openapi")):
                 continue
 
-            for method in path_item.keys():
+            for method in path_item:
                 method_upper = method.upper()
                 if method_upper not in ("GET", "POST", "PUT", "PATCH", "DELETE"):
                     continue
@@ -66,7 +66,7 @@ async def test_all_routes_require_auth_except_allowlist():
                         f"Offender: {method_upper} {path} (called: {test_path}) returned {res.status_code} instead of 401"
                     )
 
-    assert not offenders, f"The following endpoints failed to require authentication:\n" + "\n".join(offenders)
+    assert not offenders, "The following endpoints failed to require authentication:\n" + "\n".join(offenders)
 
 
 @pytest.mark.asyncio

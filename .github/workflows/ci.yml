@@ -92,7 +92,16 @@ jobs:
         # remove when issues #5, #6, #7 are closed
         continue-on-error: true
         run: python scripts/build_openapi.py --verify-backend
-      - name: Run Pytest
+      - name: Run Core & Auth Pytest
+        env:
+          DATABASE_URL: postgresql+asyncpg://warmpath:secretpassword@localhost:5432/warmpath_test
+          REDIS_URL: redis://localhost:6379/0
+          ENVIRONMENT: test
+        run: |
+          pytest -v backend/tests/security/ backend/app/modules/auth/tests/ backend/app/modules/trust/tests/
+      - name: Run Module Pytest
+        # remove when issues #5, #6, #7 are closed
+        continue-on-error: true
         env:
           DATABASE_URL: postgresql+asyncpg://warmpath:secretpassword@localhost:5432/warmpath_test
           REDIS_URL: redis://localhost:6379/0
