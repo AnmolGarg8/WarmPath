@@ -13,6 +13,7 @@ class DemoScaffold extends ConsumerWidget {
   void _showExitConfirmation(BuildContext context) {
     showDialog(
       context: context,
+      useRootNavigator: true,
       builder: (ctx) => AlertDialog(
         title: const Text('Exit Guided Demo?'),
         content: const Text(
@@ -42,6 +43,7 @@ class DemoScaffold extends ConsumerWidget {
   void _showResetConfirmation(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
+      useRootNavigator: true,
       builder: (ctx) => AlertDialog(
         title: const Text('Reset Demo Walkthrough?'),
         content: const Text(

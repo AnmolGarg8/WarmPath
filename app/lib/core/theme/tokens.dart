@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class AppColors {
   static const Color textDark = Color(0xFF16163A);      // Indigo
@@ -34,6 +33,6 @@ ThemeData getAppTheme() {
       surface: AppColors.surface,
       onSurface: AppColors.textDark,
     ),
-    textTheme: GoogleFonts.interTextTheme(),
+    fontFamily: 'Inter',
   );
 }
