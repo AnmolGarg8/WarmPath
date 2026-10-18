@@ -52,12 +52,16 @@ class PlanModel {
   String get plainPriority {
     switch (priority) {
       case 3:
-        return 'VIP Priority (3x faster responses)';
       case 2:
-        return 'High Priority (2x faster responses)';
+        return 'Higher priority in mentors\' inboxes';
       default:
         return 'Standard Priority';
     }
+  }
+
+  int get creditValueInr {
+    if (creditsPerMonth <= 0) return 0;
+    return (priceInr / creditsPerMonth).round();
   }
 
   factory PlanModel.fromJson(Map<String, dynamic> json) {
@@ -66,11 +70,19 @@ class PlanModel {
       code: json['code']?.toString().toLowerCase() ?? 'standard',
       name: json['name']?.toString() ?? 'Plan',
       priceInr: (json['price_inr'] as num?)?.toInt() ?? 0,
-      creditsPerMonth: (json['credits_per_month'] as num?)?.toInt() ?? (json['credits'] as num?)?.toInt() ?? 0,
-      reachBands: (json['reach_bands'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+      creditsPerMonth: (json['credits_per_month'] as num?)?.toInt() ??
+          (json['credits'] as num?)?.toInt() ??
+          0,
+      reachBands: (json['reach_bands'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
       bookingHorizonDays: (json['booking_horizon_days'] as num?)?.toInt() ?? 7,
       priority: (json['priority'] as num?)?.toInt() ?? 1,
-      features: (json['features'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+      features: (json['features'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
       active: json['active'] as bool? ?? true,
     );
   }
@@ -84,12 +96,13 @@ class PlanModel {
         priceInr: 0,
         creditsPerMonth: 0,
         reachBands: ['Rising'],
-        bookingHorizonDays: 0,
-        priority: 1,
+        bookingHorizonDays: 3,
+        priority: 0,
         features: [
-          'Unlimited own-college alumni mentorship',
-          'Instant messaging & slot booking',
-          'Always 100% Free on campus',
+          'Own-college alumni: free, within each mentor\'s capacity and your daily limit',
+          'No monthly credits',
+          '3-day booking horizon',
+          'Credit returned if no reply in 72 hours',
         ],
       ),
       PlanModel(
@@ -102,10 +115,11 @@ class PlanModel {
         bookingHorizonDays: 3,
         priority: 1,
         features: [
-          '1 Cross-College Credit per month',
-          'Reach Rising alumni mentors anywhere',
-          '3-day advance booking window',
-          'Own-college access remains 100% free',
+          '1 cross-college credit/month',
+          'Credit value: Rs 299 per session',
+          'Reach Rising alumni mentors',
+          'Higher priority in mentors\' inboxes',
+          'Credit returned if no reply in 72 hours',
         ],
       ),
       PlanModel(
@@ -118,11 +132,11 @@ class PlanModel {
         bookingHorizonDays: 14,
         priority: 2,
         features: [
-          '2 Cross-College Credits per month',
+          '2 cross-college credits/month',
+          'Credit value: Rs 250 per session',
           'Reach Rising & Trusted rating bands',
-          '14-day advance booking window',
-          'High priority queue placement',
-          'Own-college access remains 100% free',
+          'Higher priority in mentors\' inboxes',
+          'Credit returned if no reply in 72 hours',
         ],
       ),
       PlanModel(
@@ -135,12 +149,11 @@ class PlanModel {
         bookingHorizonDays: 30,
         priority: 3,
         features: [
-          '4 Cross-College Credits per month',
-          'Reach Top-Rated alumni, Recruiters, Founders & Experts',
-          '30-day advance booking window',
-          'VIP Priority inbox delivery',
-          'Dedicated dispute protection',
-          'Own-college access remains 100% free',
+          '4 cross-college credits/month',
+          'Credit value: Rs 225 per session',
+          'Reach all alumni mentors, recruiters, founders, faculty & experts',
+          'Higher priority in mentors\' inboxes',
+          'Credit returned if no reply in 72 hours',
         ],
       ),
     ];

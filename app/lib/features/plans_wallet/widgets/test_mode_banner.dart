@@ -10,7 +10,8 @@ class TestModeBanner extends StatelessWidget {
 
   const TestModeBanner({
     super.key,
-    this.message = 'Test mode: no real money moves',
+    this.message =
+        "Test mode: payments use Razorpay's test environment. No real money moves.",
   });
 
   @override

@@ -5,6 +5,7 @@ library;
 import 'package:flutter/material.dart';
 import '../../../core/theme/tokens.dart';
 import '../../../core/widgets/w_button.dart';
+import '../utils/money_formatter.dart';
 
 class CashoutDialog extends StatefulWidget {
   final int availableInr;
@@ -48,7 +49,7 @@ class _CashoutDialogState extends State<CashoutDialog> {
 
     if (amount > widget.availableInr) {
       setState(() => _errorMessage =
-          'Amount cannot exceed available earnings (₹${widget.availableInr})');
+          'Amount cannot exceed available earnings (${formatInr(widget.availableInr)})');
       return;
     }
 
@@ -94,83 +95,98 @@ class _CashoutDialogState extends State<CashoutDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: AppColors.amber.withOpacity(0.12),
-              borderRadius: AppRadii.badge,
-              border: Border.all(color: AppColors.amber.withOpacity(0.3)),
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppColors.amber.withOpacity(0.12),
+                borderRadius: AppRadii.badge,
+                border: Border.all(color: AppColors.amber.withOpacity(0.3)),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.science, size: 16, color: AppColors.amber),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Test mode: payments use Razorpay\'s test environment. No real money moves.',
+                      style: TextStyle(fontSize: 12, color: Color(0xFF92400E)),
+                    ),
+                  ),
+                ],
+              ),
             ),
-            child: const Row(
+            const SizedBox(height: 14),
+            Text(
+              'Available for Cash-Out: ${formatInr(widget.availableInr)}',
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textDark,
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _amountController,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                prefixText: 'Rs ',
+                labelText: 'Cash-out Amount',
+                border: OutlineInputBorder(borderRadius: AppRadii.button),
+                errorText: _errorMessage,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
               children: [
-                Icon(Icons.science, size: 16, color: AppColors.amber),
-                SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Test Mode: Payout simulation. No real money moves from or to your bank account.',
-                    style: TextStyle(fontSize: 12, color: Color(0xFF92400E)),
+                if (widget.availableInr >= 250)
+                  ActionChip(
+                    label: Text(formatInr(250)),
+                    onPressed: () =>
+                        setState(() => _amountController.text = '250'),
+                  ),
+                if (widget.availableInr >= 500)
+                  ActionChip(
+                    label: Text(formatInr(500)),
+                    onPressed: () =>
+                        setState(() => _amountController.text = '500'),
+                  ),
+                if (widget.availableInr >= 1000)
+                  ActionChip(
+                    label: Text(formatInr(1000)),
+                    onPressed: () =>
+                        setState(() => _amountController.text = '1000'),
+                  ),
+                ActionChip(
+                  label: const Text('Max'),
+                  onPressed: () => setState(
+                    () => _amountController.text = widget.availableInr.toString(),
                   ),
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 14),
-          Text(
-            'Available for Cash-Out: ₹${widget.availableInr}',
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textDark,
+            const SizedBox(height: 12),
+            const Text(
+              'Payouts are recorded to your credit ledger in test mode. UPI handle: giver@upi',
+              style: TextStyle(fontSize: 11, color: AppColors.slate),
             ),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _amountController,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(
-              prefixText: '₹ ',
-              labelText: 'Cash-out Amount',
-              border: OutlineInputBorder(borderRadius: AppRadii.button),
-              errorText: _errorMessage,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            children: [
-              if (widget.availableInr >= 250)
-                ActionChip(
-                  label: const Text('₹250'),
-                  onPressed: () =>
-                      setState(() => _amountController.text = '250'),
-                ),
-              if (widget.availableInr >= 500)
-                ActionChip(
-                  label: const Text('₹500'),
-                  onPressed: () =>
-                      setState(() => _amountController.text = '500'),
-                ),
-              ActionChip(
-                label: const Text('All Available'),
-                onPressed: () => setState(
-                    () => _amountController.text = widget.availableInr.toString()),
-              ),
-            ],
-          ),
-        ],
-      ),
+          ],
+        ),
       ),
       actions: [
         TextButton(
           onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
           child: const Text('Cancel', style: TextStyle(color: AppColors.slate)),
         ),
-        WButton(
-          label: 'Request Cash-Out',
-          isLoading: _isLoading,
-          onPressed: _validateAndSubmit,
-          backgroundColor: AppColors.teal,
+        SizedBox(
+          width: 130,
+          child: WButton(
+            label: 'Cash Out',
+            backgroundColor: AppColors.teal,
+            isLoading: _isLoading,
+            onPressed: _validateAndSubmit,
+          ),
         ),
       ],
     );

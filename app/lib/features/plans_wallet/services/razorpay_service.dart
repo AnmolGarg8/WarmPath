@@ -1,4 +1,6 @@
 /// Safe wrapper for Razorpay Flutter checkout in test mode.
+/// WarmPath uses real Razorpay TEST checkout; simulated payment shortcuts are prohibited.
+/// Plan activations occur ONLY via backend signed webhook verification.
 /// Owner: M4
 library;
 
@@ -40,8 +42,7 @@ class WarmPathRazorpayService {
 
   void _handleSuccess(PaymentSuccessResponse response) {
     debugPrint('Razorpay checkout success callback received: ${response.paymentId}');
-    // IMPORTANT: In WarmPath, client success is NEVER trusted to activate plans.
-    // The Polling Controller will verify via GET /me/subscription signed webhook activation.
+    // Client-side checkout callback: WarmPath waits for signed webhook verification.
     onSuccess?.call(response);
   }
 
@@ -55,9 +56,7 @@ class WarmPathRazorpayService {
     onExternalWallet?.call(response);
   }
 
-  /// Opens the Razorpay checkout overlay.
-  /// If native platform channels are unavailable (e.g. desktop/web or tests),
-  /// triggers simulated success so testing can proceed smoothly.
+  /// Opens the real Razorpay native checkout in test mode.
   Future<void> openCheckout({
     required String subscriptionId,
     required String keyId,
@@ -66,8 +65,19 @@ class WarmPathRazorpayService {
     String? userEmail,
     String? userContact,
   }) async {
+    if (keyId.isEmpty) {
+      _handleError(
+        PaymentFailureResponse(
+          Razorpay.INVALID_OPTIONS,
+          'Payment gateway key missing from checkout response.',
+          null,
+        ),
+      );
+      return;
+    }
+
     final options = {
-      'key': keyId.isNotEmpty ? keyId : 'rzp_test_WarmPathDev',
+      'key': keyId,
       'subscription_id': subscriptionId,
       'name': 'WarmPath ($planName)',
       'description': 'WarmPath Mentorship Subscription (Test Mode)',
@@ -89,14 +99,11 @@ class WarmPathRazorpayService {
     };
 
     if (!_initialized || _razorpay == null) {
-      debugPrint('Razorpay running in fallback simulation mode.');
-      // Simulate successful checkout response for web/desktop/testing
-      await Future.delayed(const Duration(milliseconds: 600)); // allow-delay: payment gateway simulation delay for desktop/emulator
-      _handleSuccess(
-        PaymentSuccessResponse(
-          'pay_simulated_${DateTime.now().millisecondsSinceEpoch}',
-          'order_simulated_${DateTime.now().millisecondsSinceEpoch}',
-          'sig_simulated_${DateTime.now().millisecondsSinceEpoch}',
+      debugPrint('Razorpay native plugin not initialized on this platform.');
+      _handleError(
+        PaymentFailureResponse(
+          Razorpay.UNKNOWN_ERROR,
+          'Razorpay checkout requires Android/iOS device support in test mode.',
           null,
         ),
       );
@@ -107,13 +114,10 @@ class WarmPathRazorpayService {
       _razorpay!.open(options);
     } catch (e) {
       debugPrint('Error invoking Razorpay native checkout: $e');
-      // Graceful fallback for non-mobile platforms
-      await Future.delayed(const Duration(milliseconds: 600)); // allow-delay: payment gateway fallback delay for non-mobile
-      _handleSuccess(
-        PaymentSuccessResponse(
-          'pay_fallback_${DateTime.now().millisecondsSinceEpoch}',
-          'order_fallback_${DateTime.now().millisecondsSinceEpoch}',
-          'sig_fallback_${DateTime.now().millisecondsSinceEpoch}',
+      _handleError(
+        PaymentFailureResponse(
+          Razorpay.UNKNOWN_ERROR,
+          'Failed to open checkout: $e',
           null,
         ),
       );
@@ -124,7 +128,6 @@ class WarmPathRazorpayService {
     try {
       _razorpay?.clear();
     } catch (_) {}
-    _razorpay = null;
     _initialized = false;
   }
 }

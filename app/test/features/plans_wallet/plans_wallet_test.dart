@@ -1,6 +1,7 @@
 // Unit and widget tests for WarmPath Plans & Wallet feature.
 // Tests plan card models, subscription polling controller state machine,
-// wallet ledger plain language formatting, earnings shares, and credit cost widgets.
+// wallet ledger plain language formatting, money formatting, earnings shares,
+// CTA states, sponsored seat claims, and credit cost widgets.
 // Owner: M4
 
 import 'package:flutter/material.dart';
@@ -8,8 +9,28 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:warmpath_app/features/plans_wallet/plans_wallet.dart';
 
 void main() {
+  group('Money & Window Formatting Tests', () {
+    test('formatInr formats in Indian Rupees with Rs prefix and comma grouping', () {
+      expect(formatInr(0), 'Rs 0');
+      expect(formatInr(299), 'Rs 299');
+      expect(formatInr(1200), 'Rs 1,200');
+      expect(formatInr(50000), 'Rs 50,000');
+      expect(formatInr(100000), 'Rs 1,00,000');
+      expect(formatInr(250.50), 'Rs 250.50');
+    });
+
+    test('formatWindowMinutes formats hours and minutes cleanly', () {
+      expect(formatWindowMinutes(2880), '48 hours');
+      expect(formatWindowMinutes(120), '2 hours');
+      expect(formatWindowMinutes(60), '1 hour');
+      expect(formatWindowMinutes(2), '2 minutes');
+      expect(formatWindowMinutes(1), '1 minute');
+      expect(formatWindowMinutes(0), '0 minutes');
+    });
+  });
+
   group('PlanModel Tests', () {
-    test('Default plans contains Campus, Standard, High, and Premium', () {
+    test('Default plans contains Campus, Standard, High, and Premium with honest claims', () {
       final plans = PlanModel.defaultPlans();
       expect(plans.length, 4);
 
@@ -34,7 +55,7 @@ void main() {
       final premium = plans.firstWhere((p) => p.code == 'premium');
       expect(premium.priceInr, 899);
       expect(premium.creditsPerMonth, 4);
-      expect(premium.plainPriority, contains('VIP Priority'));
+      expect(premium.plainPriority, contains("Higher priority in mentors' inboxes"));
     });
 
     test('PlanModel.fromJson handles missing or partial fields gracefully', () {
@@ -50,6 +71,72 @@ void main() {
       expect(plan.priceInr, 299);
       expect(plan.creditsPerMonth, 1);
       expect(plan.active, isTrue);
+    });
+  });
+
+  group('PlanCard CTA States & Copy Tests', () {
+    final standardPlan = const PlanModel(
+      id: 'plan_std',
+      code: 'standard',
+      name: 'Standard Plan',
+      priceInr: 299,
+      creditsPerMonth: 1,
+      reachBands: ['Rising'],
+      bookingHorizonDays: 3,
+      priority: 1,
+      features: ['1 cross-college credit/month'],
+      active: true,
+    );
+
+    testWidgets('Renders Current plan button when isCurrentPlan is true and button is disabled', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: PlanCard(
+              plan: standardPlan,
+              isCurrentPlan: true,
+              currentPlanPriority: 1,
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Current plan'), findsOneWidget);
+      expect(find.text('CURRENT PLAN'), findsOneWidget);
+      expect(find.text('Rs 299'), findsOneWidget);
+      expect(find.text('Credit returned if no reply in 72 hours'), findsOneWidget);
+    });
+
+    testWidgets('Renders Upgrade button when plan.priority > currentPlanPriority', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: PlanCard(
+              plan: standardPlan,
+              isCurrentPlan: false,
+              currentPlanPriority: 0, // currently on Campus (priority 0)
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Upgrade'), findsOneWidget);
+    });
+
+    testWidgets('Renders Downgrade button when plan.priority < currentPlanPriority', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: PlanCard(
+              plan: standardPlan,
+              isCurrentPlan: false,
+              currentPlanPriority: 2, // currently on High (priority 2)
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Downgrade'), findsOneWidget);
     });
   });
 
@@ -108,7 +195,6 @@ void main() {
         maxAttempts: 3,
       );
 
-      // Backend still shows campus (webhook hasn't processed yet)
       Future<UserSubscriptionModel?> mockFetch() async {
         return const UserSubscriptionModel(
           planCode: 'campus',
@@ -144,35 +230,39 @@ void main() {
   });
 
   group('Wallet & LedgerEntryModel Tests', () {
-    test('LedgerEntry formats plain language descriptions correctly', () {
+    test('LedgerEntry formats reservations with negative sign and correct copy', () {
       final reserveEntry = const LedgerEntryModel(
         id: '1',
-        txnId: 'txn_1',
+        txnId: '00000000-0000-0000-0000-0000000000a1',
         amountCredits: 1,
         amountInr: 250,
         direction: 'out',
         reason: 'reserve',
       );
-      expect(reserveEntry.plainReason, 'Reserved for mentorship session');
+      expect(reserveEntry.plainReason, 'Reserved for a session: -1 credit');
       expect(reserveEntry.displayCredits, '-1 Credit');
       expect(reserveEntry.isPositive, isFalse);
+      expect(reserveEntry.shortTxnId, '000000a1');
+    });
 
+    test('LedgerEntry formats refunds and grants with positive sign', () {
       final refundEntry = const LedgerEntryModel(
         id: '2',
-        txnId: 'txn_2',
+        txnId: '00000000-0000-0000-0000-0000000000b2',
         amountCredits: 1,
         amountInr: 250,
         direction: 'in',
         reason: 'refund',
         notes: 'Giver did not reply in 72 hours',
       );
-      expect(refundEntry.plainReason, contains('Refunded: Giver did not reply in 72 hours'));
+      expect(refundEntry.plainReason, contains('Giver did not reply in 72 hours'));
       expect(refundEntry.displayCredits, '+1 Credit');
       expect(refundEntry.isPositive, isTrue);
+      expect(refundEntry.shortTxnId, '000000b2');
 
       final donateEntry = const LedgerEntryModel(
         id: '3',
-        txnId: 'txn_3',
+        txnId: '00000000-0000-0000-0000-0000000000c3',
         amountCredits: 2,
         amountInr: 500,
         direction: 'out',
@@ -182,26 +272,63 @@ void main() {
       expect(donateEntry.displayCredits, '-2 Credits');
     });
 
-    test('WalletModel correctly sums credits from entries', () {
+    test('WalletModel computes running balances for ledger entries', () {
       final wallet = WalletModel.fromJson({
-        'paid_credits': 3,
-        'affinity_credits': 2,
-        'total_credits': 5,
-        'ledger': [
+        'available_credits': 3,
+        'affinity_credits': 1,
+        'total_credits': 4,
+        'items': [
           {
             'id': 'ent_1',
-            'txn_id': 'txn_10',
-            'amount_credits': 3,
+            'txn_id': '00000000-0000-0000-0000-000000000001',
+            'amount_credits': 2,
             'direction': 'in',
-            'reason': 'purchase',
-          }
+            'reason': 'grant',
+          },
+          {
+            'id': 'ent_2',
+            'txn_id': '00000000-0000-0000-0000-000000000002',
+            'amount_credits': 1,
+            'direction': 'out',
+            'reason': 'reserve',
+          },
         ],
       });
 
       expect(wallet.paidCredits, 3);
-      expect(wallet.affinityCredits, 2);
-      expect(wallet.totalCredits, 5);
-      expect(wallet.ledger.length, 1);
+      expect(wallet.affinityCredits, 1);
+      expect(wallet.totalCredits, 4);
+      expect(wallet.ledger.length, 2);
+
+      // Latest entry has current total balance (4)
+      expect(wallet.ledger[0].runningBalance, 4);
+      // Entry before was balance before the grant (4 - 2 = 2)
+      expect(wallet.ledger[1].runningBalance, 2);
+    });
+
+    testWidgets('LedgerEntryTile displays short Txn ID and running balance', (tester) async {
+      const entry = LedgerEntryModel(
+        id: '1',
+        txnId: '12345678-1234-1234-1234-abcdef123456',
+        amountCredits: 1,
+        amountInr: 250,
+        direction: 'out',
+        reason: 'reserve',
+        runningBalance: 3,
+      );
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: LedgerEntryTile(entry: entry),
+          ),
+        ),
+      );
+
+      expect(find.text('Txn: ef123456'), findsOneWidget);
+      expect(find.text('Bal: 3 cr'), findsOneWidget);
+      expect(find.text('-1 Credit'), findsOneWidget);
+      expect(find.textContaining('#txn_'), findsNothing);
     });
   });
 
@@ -233,6 +360,26 @@ void main() {
     test('canCashout returns false when availableInr is zero', () {
       final emptyEarnings = EarningsModel.empty();
       expect(emptyEarnings.canCashout, isFalse);
+    });
+  });
+
+  group('SponsoredSeatModel Tests', () {
+    test('SponsoredSeatModel parses canClaim and credits properly', () {
+      final seat = SponsoredSeatModel.fromJson({
+        'id': 'seat_1',
+        'sponsor_name': 'VIPS Alumni Fund',
+        'funded_by': 'institution_grant',
+        'status': 'available',
+        'credits_granted': 2,
+        'credits_remaining': 2,
+        'can_claim': true,
+      });
+
+      expect(seat.id, 'seat_1');
+      expect(seat.institutionName, 'VIPS Alumni Fund');
+      expect(seat.canClaim, isTrue);
+      expect(seat.creditsRemaining, 2);
+      expect(seat.creditsGranted, 2);
     });
   });
 

@@ -14,12 +14,17 @@ class LedgerEntryTile extends StatelessWidget {
   IconData _iconForReason() {
     switch (entry.reason.toLowerCase()) {
       case 'reserve':
+      case 'session_reservation':
         return Icons.lock_clock;
       case 'refund':
+      case 'session_refund_no_reply_72h':
+      case 'session_refund_giver_no_show':
+      case 'session_refund_dispute_outcome':
         return Icons.replay_circle_filled;
       case 'purchase':
       case 'subscription':
       case 'grant':
+      case 'plan_credit_grant':
         return Icons.add_card;
       case 'donate':
         return Icons.volunteer_activism;
@@ -37,7 +42,7 @@ class LedgerEntryTile extends StatelessWidget {
     if (entry.isPositive) {
       return AppColors.teal;
     }
-    if (entry.reason.toLowerCase() == 'reserve') {
+    if (entry.reason.toLowerCase() == 'reserve' || entry.reason.toLowerCase() == 'session_reservation') {
       return AppColors.amber;
     }
     return AppColors.primaryAction;
@@ -96,13 +101,26 @@ class LedgerEntryTile extends StatelessWidget {
                       const SizedBox(width: 8),
                     ],
                     Text(
-                      'Txn #${entry.txnId.length > 8 ? entry.txnId.substring(0, 8) : entry.txnId}',
+                      'Txn: ${entry.shortTxnId}',
                       style: const TextStyle(
                         fontSize: 12,
                         color: AppColors.slate,
                         fontFamily: 'monospace',
                       ),
                     ),
+                    if (entry.runningBalance != null) ...[
+                      const SizedBox(width: 8),
+                      const Text('•', style: TextStyle(color: AppColors.slate)),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Bal: ${entry.runningBalance} cr',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.slate,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ],

@@ -83,11 +83,21 @@ class DonateCreditsResponse(BaseModel):
 class SponsoredSeatInfo(BaseModel):
     id: str
     institution_id: Optional[int] = None
-    student_id: str
+    student_id: Optional[str] = None
     plan_tier: str
     sponsor_name: Optional[str] = None
     funded_by: str
     created_at: datetime
+    status: str = "available"
+    credits_granted: int = 1
+    credits_remaining: int = 1
+    can_claim: bool = False
+
+
+class ClaimSponsoredSeatResponse(BaseModel):
+    success: bool
+    message: str
+    credits_granted: int
 
 
 class SponsoredSeatsEligibilityResponse(BaseModel):

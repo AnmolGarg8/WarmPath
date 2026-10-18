@@ -42,6 +42,7 @@ class _PlansPageState extends State<PlansPage> {
   List<PlanModel> _plans = [];
   UserSubscriptionModel? _currentSubscription;
   bool _isLoading = true;
+  bool _testMode = true;
   String? _errorMessage;
   String? _subscribingPlanCode;
 
@@ -60,7 +61,7 @@ class _PlansPageState extends State<PlansPage> {
     _razorpay.initialize(
       onSuccess: (response) {
         // NOTE: Never trust client success alone!
-        // Start polling the backend for webhook confirmation.
+        // Start polling the backend for signed webhook confirmation.
         if (_subscribingPlanCode != null) {
           _showVerificationModal(_subscribingPlanCode!);
         }
@@ -89,12 +90,15 @@ class _PlansPageState extends State<PlansPage> {
       final results = await Future.wait([
         _api.getPlans(),
         _api.getSubscription(),
+        _api.getPublicConfig(),
       ]);
 
       if (mounted) {
+        final cfg = results[2] as Map<String, dynamic>;
         setState(() {
           _plans = results[0] as List<PlanModel>;
           _currentSubscription = results[1] as UserSubscriptionModel;
+          _testMode = cfg['test_mode'] as bool? ?? true;
           _isLoading = false;
         });
       }
@@ -103,6 +107,7 @@ class _PlansPageState extends State<PlansPage> {
         setState(() {
           _plans = PlanModel.defaultPlans();
           _currentSubscription = UserSubscriptionModel.defaultCampus();
+          _testMode = true;
           _isLoading = false;
         });
       }
@@ -113,7 +118,7 @@ class _PlansPageState extends State<PlansPage> {
     if (plan.isFree) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('You are already eligible for unlimited free campus connects!'),
+          content: Text('Own-college alumni: free, within each mentor\'s capacity and your daily limit.'),
         ),
       );
       return;
@@ -315,18 +320,57 @@ class _PlansPageState extends State<PlansPage> {
       );
     }
 
+    int currentPriority = 0;
+    if (_currentSubscription != null) {
+      for (final p in _plans) {
+        if (p.code.toLowerCase() == _currentSubscription!.planCode.toLowerCase()) {
+          currentPriority = p.priority;
+          break;
+        }
+      }
+    }
+
     return RefreshIndicator(
       onRefresh: _loadData,
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.only(top: 24, left: 16, right: 16, bottom: 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Test Mode Banner
-            const TestModeBanner(
-              message: 'Test mode: no real money moves. Payment gateway is simulated.',
+            // Test Mode Banner (shown only when /config/public reports test_mode)
+            if (_testMode) ...[
+              const TestModeBanner(
+                message: "Test mode: payments use Razorpay's test environment. No real money moves.",
+              ),
+              const SizedBox(height: 12),
+            ],
+
+            // Own-college free guarantee displayed ONCE at top
+            Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.teal.withOpacity(0.08),
+                borderRadius: AppRadii.card,
+                border: Border.all(color: AppColors.teal.withOpacity(0.2)),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.check_circle_outline, color: AppColors.teal, size: 20),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Own-college alumni: free on every plan, within each mentor\'s capacity and your daily limit.',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.teal,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 12),
 
             // Upgrade Reason prompt (if navigated from another feature)
             if (widget.reason != null && widget.reason!.isNotEmpty) ...[
@@ -429,7 +473,9 @@ class _PlansPageState extends State<PlansPage> {
                           style: const TextStyle(fontSize: 13, color: AppColors.slate),
                         ),
                         Text(
-                          '${_currentSubscription!.creditsLeft} Credits left',
+                          _currentSubscription!.isPaidPlan
+                              ? '${_currentSubscription!.creditsLeft} Credits left'
+                              : 'No monthly credits',
                           style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
@@ -486,6 +532,7 @@ class _PlansPageState extends State<PlansPage> {
               return PlanCard(
                 plan: p,
                 isCurrentPlan: isCurrent,
+                currentPlanPriority: currentPriority,
                 isSubscribing: _subscribingPlanCode == p.code,
                 onSubscribe: () => _onSubscribe(p),
               );
