@@ -34,9 +34,10 @@ class DiscoverService {
         queryParameters: queryParams,
       );
       return RecommendationsData.fromJson(res.data as Map<String, dynamic>);
-    } catch (_) {
-      // Offline / demo fallback with authentic VIPS-TC alumni data
-      return _getFallbackRecommendations(scope);
+    } on AppException {
+      rethrow;
+    } on DioException catch (e) {
+      throw AppException.fromDioError(e);
     }
   }
 
@@ -44,19 +45,10 @@ class DiscoverService {
     try {
       final res = await _dio.get('/givers/$id');
       return GiverCardData.fromJson(res.data as Map<String, dynamic>);
-    } catch (_) {
-      return _getFallbackGiver(id);
+    } on AppException {
+      rethrow;
+    } on DioException catch (e) {
+      throw AppException.fromDioError(e);
     }
-  }
-
-  RecommendationsData _getFallbackRecommendations(String scope) {
-    return RecommendationsData(
-      scope: scope,
-      items: const [],
-    );
-  }
-
-  GiverCardData _getFallbackGiver(String id) {
-    throw Exception('Giver not found');
   }
 }

@@ -10,7 +10,8 @@ import 'services/discover_service.dart';
 import 'widgets/giver_card.dart';
 
 class DiscoverPage extends StatefulWidget {
-  const DiscoverPage({super.key});
+  final DiscoverService? service;
+  const DiscoverPage({super.key, this.service});
 
   @override
   State<DiscoverPage> createState() => _DiscoverPageState();
@@ -28,7 +29,7 @@ class _DiscoverPageState extends State<DiscoverPage> with SingleTickerProviderSt
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    _service = DiscoverService();
+    _service = widget.service ?? DiscoverService();
 
     _ownCollegeController = PaginationController(service: _service, scope: 'own_college');
     _crossCollegeController = PaginationController(service: _service, scope: 'cross_college');
@@ -69,17 +70,20 @@ class _DiscoverPageState extends State<DiscoverPage> with SingleTickerProviderSt
         if (controller.error != null && controller.items.isEmpty) {
           final isMissingResume = controller.error!.contains('profile_not_found') ||
               controller.error!.contains('intent_not_found') ||
-              controller.error!.contains('student_verification_required');
+              controller.error!.contains('student_verification_required') ||
+              controller.error!.contains('unauthorized') ||
+              controller.error!.contains('401') ||
+              controller.error!.contains('403');
 
           if (isMissingResume) {
             return Center(
-              child: Padding(
+              child: SingleChildScrollView(
                 padding: const EdgeInsets.all(24.0),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const EmptyState(
-                      title: 'Add Your Resume to Get Matches',
+                      title: 'Upload your resume to get matches',
                       message: 'Upload your resume and state your career intent to unlock personalized alumni recommendations.',
                       icon: Icons.upload_file_outlined,
                     ),
@@ -99,22 +103,27 @@ class _DiscoverPageState extends State<DiscoverPage> with SingleTickerProviderSt
             );
           }
 
-          return ErrorState(
-            title: 'Recommendations Unavailable',
-            message: controller.error!,
-            onRetry: () => controller.loadInitial(),
+          return Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24.0),
+              child: ErrorState(
+                title: 'Recommendations Unavailable',
+                message: controller.error!,
+                onRetry: () => controller.loadInitial(),
+              ),
+            ),
           );
         }
 
         if (controller.items.isEmpty) {
           return Center(
-            child: Padding(
+            child: SingleChildScrollView(
               padding: const EdgeInsets.all(24.0),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const EmptyState(
-                    title: 'No Matches Yet',
+                    title: 'Upload your resume to get matches',
                     message: 'Add your resume to get matches from your alumni network.',
                     icon: Icons.people_outline,
                   ),
@@ -397,22 +406,51 @@ class _DiscoverPageState extends State<DiscoverPage> with SingleTickerProviderSt
             tooltip: 'Live Demo Tour',
             onPressed: () => _showDemoTourSheet(context),
           ),
-          IconButton(
-            icon: const Icon(Icons.person_add_alt_1_outlined),
-            tooltip: 'Resume & Intent',
-            onPressed: () => context.push('/onboarding'),
+          Semantics(
+            label: 'Set Up Giver Profile',
+            button: true,
+            child: IconButton(
+              icon: const Icon(Icons.person_add_alt_1_outlined),
+              tooltip: 'Set Up Giver Profile',
+              onPressed: () => context.push('/onboarding/giver-profile'),
+            ),
           ),
         ],
         bottom: TabBar(
           controller: _tabController,
+          isScrollable: true,
+          tabAlignment: TabAlignment.start,
           labelColor: AppColors.primaryAction,
           unselectedLabelColor: AppColors.slate,
           indicatorColor: AppColors.primaryAction,
           indicatorWeight: 3,
-          tabs: const [
-            Tab(text: 'Own College (Free)'),
-            Tab(text: 'Other Colleges'),
-            Tab(text: 'Experts'),
+          tabs: [
+            Tab(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('Own college'),
+                  const SizedBox(width: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: AppColors.successGreen.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Text(
+                      'Free',
+                      style: TextStyle(
+                        color: AppColors.successGreen,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Tab(text: 'Other colleges'),
+            const Tab(text: 'Experts'),
           ],
         ),
       ),

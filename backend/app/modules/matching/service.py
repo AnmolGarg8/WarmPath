@@ -70,6 +70,71 @@ def utc_now() -> datetime:
     return datetime.now(timezone.utc)
 
 
+def resolve_verification_badges(user: Optional[User]) -> List[str]:
+    """Returns official verification badges: Verified Alumnus, Verified Employer, Verified Expert, Verified Faculty."""
+    if not user:
+        return []
+    valid_badges = {"Verified Alumnus", "Verified Employer", "Verified Expert", "Verified Faculty"}
+    found_badges = [b for b in (user.badges or []) if b in valid_badges]
+    if found_badges:
+        return found_badges
+
+    user_roles = [r.lower() for r in (user.roles or [])]
+    badges = []
+    if "faculty" in user_roles:
+        badges.append("Verified Faculty")
+    elif "recruiter" in user_roles or "employer" in user_roles or "founder" in user_roles:
+        badges.append("Verified Employer")
+    elif "expert" in user_roles:
+        badges.append("Verified Expert")
+    elif "alumnus" in user_roles:
+        badges.append("Verified Alumnus")
+
+    return badges
+
+
+def is_giver_locked_for_student(
+    student_plan: str,
+    scope: str,
+    giver_roles: List[str],
+    giver_band: str,
+    credits_check: Optional[Dict[str, Any]] = None,
+) -> Tuple[bool, Optional[str]]:
+    if scope == "own_college":
+        return False, None
+
+    plan = student_plan.lower()
+    if plan in ["campus", "free", "none"]:
+        return True, "plan_required"
+
+    # If credits port explicitly returned a decision for this giver
+    if credits_check is not None:
+        if not credits_check.get("allowed", False):
+            return True, credits_check.get("reason", "plan_required")
+        return False, None
+
+    is_premium_target = any(r in {"expert", "recruiter", "founder", "faculty"} for r in giver_roles) or (scope == "experts")
+
+    if plan == "standard":
+        if is_premium_target:
+            return True, "giver_requires_premium"
+        if giver_band in ["Trusted", "Top Rated"]:
+            return True, "plan_required"
+        return False, None
+
+    elif plan == "high":
+        if is_premium_target:
+            return True, "giver_requires_premium"
+        if giver_band == "Top Rated":
+            return True, "plan_required"
+        return False, None
+
+    elif plan == "premium":
+        return False, None
+
+    return True, "plan_required"
+
+
 def cosine_similarity(v1: Optional[List[float]], v2: Optional[List[float]]) -> float:
     """Computes cosine similarity between two float vectors, mapped to [0.0, 1.0]."""
     if not v1 or not v2 or len(v1) != len(v2):
@@ -174,9 +239,13 @@ class MatchingService(MatchingPort):
         self, user_id: uuid.UUID, data: GiverProfileCreateUpdate
     ) -> GiverProfile:
         # 1. Gate: only users with a giver role or pending verification may create one
-        stmt_user = select(User).where(User.id == user_id)
-        res_user = await self.session.execute(stmt_user)
-        user = res_user.scalar_one_or_none()
+        user = None
+        try:
+            stmt_user = select(User).where(User.id == user_id)
+            res_user = await self.session.execute(stmt_user)
+            user = res_user.scalar_one_or_none()
+        except Exception:
+            user = None
 
         if user:
             user_roles = set(user.roles or [])
@@ -197,6 +266,21 @@ class MatchingService(MatchingPort):
                         message="Only users with an approved giver role can create a giver profile.",
                         status_code=403,
                     )
+        else:
+            try:
+                level = await ports.trust.get_level(str(user_id))
+                if level not in ["verified", "established"]:
+                    raise AppError(
+                        code="giver_role_required",
+                        message="Only users with an approved giver role can create a giver profile.",
+                        status_code=403,
+                    )
+            except PortNotReady:
+                raise AppError(
+                    code="giver_role_required",
+                    message="Only users with an approved giver role can create a giver profile.",
+                    status_code=403,
+                )
 
         # 2. Embed offers plus skills plus bio
         skills_str = ", ".join(
@@ -290,11 +374,15 @@ class MatchingService(MatchingPort):
 
         if not match_profile:
             # Query User table for default institution/affinity attributes
-            stmt_user = select(User).where(User.id == student_id)
-            res_user = await self.session.execute(stmt_user)
-            user = res_user.scalar_one_or_none()
-            if asyncio.iscoroutine(user):
-                user = await user
+            user = None
+            try:
+                stmt_user = select(User).where(User.id == student_id)
+                res_user = await self.session.execute(stmt_user)
+                user = res_user.scalar_one_or_none()
+                if asyncio.iscoroutine(user):
+                    user = await user
+            except Exception:
+                user = None
 
             match_profile = StudentMatchProfile(
                 user_id=student_id,
@@ -508,13 +596,14 @@ class MatchingService(MatchingPort):
 
         # 5. Rating & Band explanation
         band = band_info.get("band", "Rising")
-        if band == "Top Rated":
+        n_sessions = band_info.get("n", 0)
+        if band == "Top Rated" and n_sessions >= 5:
             why_lines.append(
                 f"Top Rated mentor with {band_info.get('smoothed_avg', 4.8):.1f} smoothed rating"
             )
-        elif band == "Trusted":
+        elif band == "Trusted" and n_sessions >= 5:
             why_lines.append("Trusted alumni mentor with consistent positive reviews")
-        elif scores.cold_start_boost > 0:
+        elif scores.cold_start_boost > 0 or n_sessions < 5:
             why_lines.append("Rising alumni mentor eager to guide")
 
         # Deterministic deduplication while maintaining order
@@ -604,7 +693,7 @@ class MatchingService(MatchingPort):
             pass
 
         stmt = select(GiverProfile).where(GiverProfile.weekly_capacity > 0)
-        stmt = stmt.where(GiverProfile.daily_impressions_count < MAX_DAILY_EXPOSURE)
+        stmt = stmt.where(func.coalesce(GiverProfile.daily_impressions_count, 0) < MAX_DAILY_EXPOSURE)
 
         # Pre-filter by scope to leverage ix_giver_profiles_inst_cap index
         if scope == "own_college" and student.institution_id:
@@ -616,10 +705,33 @@ class MatchingService(MatchingPort):
         res = await self.session.execute(stmt)
         all_candidates = res.scalars().all()
 
-        if not all_candidates:
-            return RecommendationsResponse(items=[], next_cursor=None, scope=scope)
-
         candidate_ids = [str(c.user_id) for c in all_candidates]
+
+        # Check student plan via CreditsPort
+        student_plan = "campus"
+        is_scope_locked = False
+        scope_lock_reason = None
+        if scope in ["cross_college", "experts"]:
+            try:
+                probe_target = candidate_ids[0] if candidate_ids else str(uuid.uuid4())
+                access_check = await ports.credits.can_access(str(student_id), probe_target)
+                student_plan = str(access_check.get("plan", "campus")).lower()
+                if student_plan in ["campus", "free", "none"] or not access_check.get("allowed", False):
+                    if student_plan in ["campus", "free", "none"]:
+                        is_scope_locked = True
+                        scope_lock_reason = "plan_required"
+            except Exception:
+                is_scope_locked = True
+                scope_lock_reason = "plan_required"
+
+        if not all_candidates:
+            return RecommendationsResponse(
+                items=[],
+                next_cursor=None,
+                scope=scope,
+                locked=is_scope_locked,
+                lock_reason=scope_lock_reason,
+            )
 
         # 4. Batch Port Queries
         # TrustPort
@@ -656,23 +768,6 @@ class MatchingService(MatchingPort):
                     "completion_rate": 1.0,
                 }
 
-        # CreditsPort: check scope permission
-        is_scope_locked = False
-        lock_reason = None
-        if scope in ["cross_college", "experts"]:
-            # Check representative access
-            try:
-                access_check = await ports.credits.can_access(
-                    str(student_id), candidate_ids[0] if candidate_ids else str(student_id)
-                )
-                if not access_check.get("allowed", False):
-                    is_scope_locked = True
-                    lock_reason = access_check.get("reason", "plan_required")
-            except Exception:
-                # If credits port denied or plan required
-                is_scope_locked = True
-                lock_reason = "plan_required"
-
         # 5. Apply Hard Gates & Score Candidates
         ranked_items = []
         for giver in all_candidates:
@@ -707,15 +802,43 @@ class MatchingService(MatchingPort):
                 continue
 
             # Gate F: Daily exposure cap
-            if giver.daily_impressions_count >= MAX_DAILY_EXPOSURE:
+            if (giver.daily_impressions_count or 0) >= MAX_DAILY_EXPOSURE:
                 continue
 
             # Compute Score Components
-            band_info = ratings_map.get(gid, {"band": "Rising", "smoothed_avg": 4.0, "n": 0})
+            band_info = dict(ratings_map.get(gid, {"band": "Rising", "smoothed_avg": 4.0, "n": 0, "completion_rate": 1.0}))
+            n_sessions = band_info.get("n", 0)
+            if n_sessions < 5 and band_info.get("band") == "Top Rated":
+                band_info["band"] = "Rising"
+
             scores = self.calculate_score_components(student, giver, band_info, pres)
             why_lines = self.generate_why_lines(student, giver, scores, pres, band_info)
 
-            ranked_items.append((giver, scores, why_lines, pres, band_info))
+            # Query User for roles and verification badges
+            giver_user = None
+            try:
+                res_user = await self.session.execute(select(User).where(User.id == giver.user_id))
+                giver_user = res_user.scalar_one_or_none()
+            except Exception:
+                giver_user = None
+            giver_roles = [r.lower() for r in (giver_user.roles or [])] if giver_user else []
+
+            access_check_for_giver = None
+            if scope in ["cross_college", "experts"]:
+                try:
+                    access_check_for_giver = await ports.credits.can_access(str(student_id), gid)
+                except Exception:
+                    pass
+
+            item_locked, item_lock_reason = is_giver_locked_for_student(
+                student_plan=student_plan,
+                scope=scope,
+                giver_roles=giver_roles,
+                giver_band=band_info.get("band", "Rising"),
+                credits_check=access_check_for_giver,
+            )
+
+            ranked_items.append((giver, scores, why_lines, pres, band_info, item_locked, item_lock_reason, giver_user))
 
         # Sort by total_score descending
         ranked_items.sort(key=lambda x: x[1].total_score, reverse=True)
@@ -728,8 +851,8 @@ class MatchingService(MatchingPort):
                         "giver_id": str(item[0].user_id),
                         "score_components": item[1].model_dump(),
                         "why_lines": item[2],
-                        "locked": is_scope_locked,
-                        "lock_reason": lock_reason,
+                        "locked": item[5],
+                        "lock_reason": item[6],
                     }
                     for item in ranked_items
                 ]
@@ -741,12 +864,12 @@ class MatchingService(MatchingPort):
 
         # 7. Cursor Pagination
         return await self._build_recommendations_response(
-            ranked_items, limit, cursor, scope, is_scope_locked, lock_reason
+            ranked_items, limit, cursor, scope, is_scope_locked, scope_lock_reason
         )
 
     async def _build_recommendations_response(
         self,
-        ranked_items: List[Tuple[GiverProfile, ScoreComponents, List[str], Dict[str, Any], Dict[str, Any]]],
+        ranked_items: List[Tuple[GiverProfile, ScoreComponents, List[str], Dict[str, Any], Dict[str, Any], bool, Optional[str], Optional[User]]],
         limit: int,
         cursor: Optional[str],
         scope: str,
@@ -765,18 +888,28 @@ class MatchingService(MatchingPort):
             next_cursor = encode_cursor({"offset": start_idx + limit})
 
         results = []
-        for giver, scores, why_lines, pres, band_info in page_items:
-            # Query user name for card
-            res_user = await self.session.execute(select(User).where(User.id == giver.user_id))
-            user = res_user.scalar_one_or_none()
-            full_name = user.full_name if user else "Verified Alumni"
+        for giver, scores, why_lines, pres, band_info, item_locked, item_lock_reason, user in page_items:
+            if user is None:
+                try:
+                    res_user = await self.session.execute(select(User).where(User.id == giver.user_id))
+                    user = res_user.scalar_one_or_none()
+                except Exception:
+                    user = None
 
-            if is_locked:
-                # Mask sensitive info when locked
-                full_name = f"{full_name.split()[0]} (Verified Giver)"
+            full_name = user.full_name if user and user.full_name else "Verified Giver"
+
+            if item_locked:
+                # Mask sensitive info when locked - show initial only
+                initial = full_name[0].upper() if full_name else "M"
+                full_name = f"{initial}."
                 bio = "Subscribe to unlock direct access, calendar booking, and 1-on-1 calls."
             else:
                 bio = giver.bio
+
+            badges = resolve_verification_badges(user)
+            band = band_info.get("band", "Rising")
+            if band_info.get("n", 0) < 5 and band == "Top Rated":
+                band = "Rising"
 
             card = GiverPublicCard(
                 id=giver.user_id,
@@ -785,15 +918,15 @@ class MatchingService(MatchingPort):
                 company=giver.company,
                 role_title=giver.role_title,
                 bio=bio,
-                offers=giver.offers,
-                topics=giver.topics,
-                skills=giver.skills,
-                domains=giver.domains,
-                languages=giver.languages,
-                badges=[band_info.get("band", "Rising"), "Verified"],
-                band=band_info.get("band", "Rising"),
+                offers=giver.offers or [],
+                topics=giver.topics or [],
+                skills=giver.skills or [],
+                domains=giver.domains or [],
+                languages=giver.languages or ["English"],
+                badges=badges,
+                band=band,
                 rating_summary=RatingSummary(
-                    band=band_info.get("band", "Rising"),
+                    band=band,
                     smoothed_avg=band_info.get("smoothed_avg", 4.0),
                     total_sessions=band_info.get("n", 0),
                     completion_rate=band_info.get("completion_rate", 1.0),
@@ -810,8 +943,8 @@ class MatchingService(MatchingPort):
                     giver=card,
                     score_components=scores,
                     why_lines=why_lines,
-                    locked=is_locked,
-                    lock_reason=lock_reason,
+                    locked=item_locked,
+                    lock_reason=item_lock_reason,
                 )
             )
 
@@ -848,8 +981,19 @@ class MatchingService(MatchingPort):
             next_cursor = encode_cursor({"offset": start_idx + limit})
 
         results = []
-        is_locked = False
-        lock_reason = None
+        is_scope_locked = False
+        scope_lock_reason = None
+
+        if scope in ["cross_college", "experts"]:
+            try:
+                probe = await ports.credits.can_access(str(student.user_id), str(uuid.uuid4()))
+                plan = str(probe.get("plan", "campus")).lower()
+                if plan in ["campus", "free", "none"]:
+                    is_scope_locked = True
+                    scope_lock_reason = "plan_required"
+            except Exception:
+                is_scope_locked = True
+                scope_lock_reason = "plan_required"
 
         for item in page_data:
             g_uuid = uuid.UUID(item["giver_id"])
@@ -861,17 +1005,24 @@ class MatchingService(MatchingPort):
 
             scores = ScoreComponents(**item["score_components"])
             why_lines = item["why_lines"]
-            is_locked = item.get("locked", False)
-            lock_reason = item.get("lock_reason")
+            item_locked = item.get("locked", False)
+            item_lock_reason = item.get("lock_reason")
 
             card = await self.get_giver_public_card(giver.user_id, student.user_id, why_lines)
+            if item_locked:
+                initial = card.full_name[0].upper() if card.full_name else "M"
+                card = card.model_copy(update={
+                    "full_name": f"{initial}.",
+                    "bio": "Subscribe to unlock direct access, calendar booking, and 1-on-1 calls."
+                })
+
             results.append(
                 RecommendationItem(
                     giver=card,
                     score_components=scores,
                     why_lines=why_lines,
-                    locked=is_locked,
-                    lock_reason=lock_reason,
+                    locked=item_locked,
+                    lock_reason=item_lock_reason,
                 )
             )
 
@@ -879,8 +1030,8 @@ class MatchingService(MatchingPort):
             items=results,
             next_cursor=next_cursor,
             scope=scope,
-            locked=is_locked,
-            lock_reason=lock_reason,
+            locked=is_scope_locked,
+            lock_reason=scope_lock_reason,
         )
 
     # --- Public Giver Card (Requirement 6) ---
@@ -891,10 +1042,14 @@ class MatchingService(MatchingPort):
         giver = await self.get_giver_profile(giver_id)
 
         # Get full name from User table
-        stmt_user = select(User).where(User.id == giver_id)
-        res_user = await self.session.execute(stmt_user)
-        user = res_user.scalar_one_or_none()
-        full_name = user.full_name if user else "Verified Giver"
+        user = None
+        try:
+            stmt_user = select(User).where(User.id == giver_id)
+            res_user = await self.session.execute(stmt_user)
+            user = res_user.scalar_one_or_none()
+        except Exception:
+            user = None
+        full_name = user.full_name if user and user.full_name else "Verified Giver"
 
         # Query RatingsPort
         try:
@@ -931,6 +1086,11 @@ class MatchingService(MatchingPort):
             except Exception:
                 pass
 
+        badges = resolve_verification_badges(user)
+        n_sessions = band_info.get("n", 0)
+        raw_band = band_info.get("band", "Rising")
+        band = "Rising" if (n_sessions < 5 and raw_band == "Top Rated") else raw_band
+
         card = GiverPublicCard(
             id=giver.user_id,
             full_name=full_name,
@@ -938,17 +1098,17 @@ class MatchingService(MatchingPort):
             company=giver.company,
             role_title=giver.role_title,
             bio=getattr(giver, "bio", "") or (user.headline if user else "") or "",
-            offers=giver.offers,
-            topics=giver.topics,
-            skills=giver.skills,
-            domains=giver.domains,
-            languages=giver.languages,
-            badges=[band_info.get("band", "Rising"), "Verified"],
-            band=band_info.get("band", "Rising"),
+            offers=giver.offers or [],
+            topics=giver.topics or [],
+            skills=giver.skills or [],
+            domains=giver.domains or [],
+            languages=giver.languages or ["English"],
+            badges=badges,
+            band=band,
             rating_summary=RatingSummary(
-                band=band_info.get("band", "Rising"),
+                band=band,
                 smoothed_avg=band_info.get("smoothed_avg", 4.0),
-                total_sessions=band_info.get("n", 0),
+                total_sessions=n_sessions,
                 completion_rate=band_info.get("completion_rate", 1.0),
             ),
             availability_summary=AvailabilitySummary(
