@@ -242,7 +242,7 @@ class _EarningsPageState extends State<EarningsPage> {
             color: AppColors.deepIndigo,
             subtitle: _testMode
                 ? 'Test-mode payout, no real transfer'
-                : 'Successfully transferred to bank account',
+                : 'Transferred to registered bank account',
           ),
           const SizedBox(height: 16),
 

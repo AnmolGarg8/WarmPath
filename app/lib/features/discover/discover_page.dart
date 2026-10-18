@@ -260,8 +260,8 @@ class _DiscoverPageState extends State<DiscoverPage> with SingleTickerProviderSt
               onTap: () {
                 Navigator.pop(ctx);
                 context.push('/connect', extra: {
-                  'giver_id': 'giver_aarav_01',
-                  'giver_name': 'Aarav Sharma',
+                  'giver_id': 'giver_mentor_01',
+                  'giver_name': 'Verified Mentor',
                   'is_online_now': true,
                   'is_own_college': true,
                   'student_plan': 'Standard',
