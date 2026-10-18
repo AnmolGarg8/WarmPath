@@ -61,6 +61,7 @@ async def refresh_token(
 @router.post("/auth/logout", summary="Revoke active session token")
 async def logout(
     payload: LogoutRequest,
+    user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     await AuthService.logout(payload.refresh_token, db)

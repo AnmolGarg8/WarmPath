@@ -189,7 +189,10 @@ class AuthRepository {
   /// Logout user and clear credentials
   Future<void> logout() async {
     try {
-      await _dio.post('/auth/logout');
+      final refresh = await SecureStorageService.getRefreshToken();
+      if (refresh != null && refresh.isNotEmpty) {
+        await _dio.post('/auth/logout', data: {'refresh_token': refresh});
+      }
     } catch (_) {
       // Ignore network errors on logout
     } finally {

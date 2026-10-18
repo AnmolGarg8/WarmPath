@@ -85,7 +85,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
               try {
                 await ref.read(authStateProvider.notifier).deleteAccount();
                 if (mounted) {
-                  context.go('/auth');
+                  context.go('/auth/email');
                 }
               } catch (e) {
                 if (mounted) {
@@ -109,7 +109,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   void _handleLogout() async {
     await ref.read(authStateProvider.notifier).logout();
     if (mounted) {
-      context.go('/auth');
+      context.go('/auth/email');
     }
   }
 
@@ -118,43 +118,17 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     final authState = ref.watch(authStateProvider);
     final user = authState.user;
 
-    // If not authenticated, prompt login
-    if (!authState.isAuthenticated || user == null) {
+    // Show clean loading state while user profile is loading
+    if (user == null) {
       return Scaffold(
         backgroundColor: AppColors.surface,
-        appBar: AppBar(title: const Text('Profile')),
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: WCard(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.lock_outline, size: 48, color: AppColors.slate),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Sign In to WarmPath',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textDark,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Access your profile, verify credentials, and manage your account.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: AppColors.slate, fontSize: 14),
-                  ),
-                  const SizedBox(height: 20),
-                  WButton(
-                    label: 'Sign In / Register',
-                    onPressed: () => context.go('/auth/email'),
-                  ),
-                ],
-              ),
-            ),
-          ),
+        appBar: AppBar(
+          title: const Text('Profile & Settings'),
+          backgroundColor: AppColors.white,
+          elevation: 0,
+        ),
+        body: const Center(
+          child: CircularProgressIndicator(color: AppColors.primaryAction),
         ),
         bottomNavigationBar: const MainBottomNav(currentIndex: 3),
       );

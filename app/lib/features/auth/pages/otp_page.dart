@@ -139,7 +139,7 @@ class _OtpPageState extends ConsumerState<OtpPage> with SingleTickerProviderStat
         if (isNew) {
           context.go('/auth/profile-basics');
         } else {
-          context.go('/profile');
+          context.go('/discover');
         }
       }
     } on AppException catch (e) {

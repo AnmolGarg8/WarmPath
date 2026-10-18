@@ -1,6 +1,24 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/storage/secure_storage.dart';
+import '../../core/api/websocket_service.dart';
 import 'auth_repository.dart';
+
+/// Bridge between Riverpod auth state and GoRouter refreshListenable
+class AuthNotifierBridge extends ChangeNotifier {
+  static final AuthNotifierBridge instance = AuthNotifierBridge._();
+  AuthNotifierBridge._();
+
+  bool _isAuthenticated = false;
+  bool get isAuthenticated => _isAuthenticated;
+
+  void setAuthenticated(bool value) {
+    if (_isAuthenticated != value) {
+      _isAuthenticated = value;
+      notifyListeners();
+    }
+  }
+}
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return AuthRepository();
@@ -40,8 +58,9 @@ class AuthState {
 
 class AuthNotifier extends StateNotifier<AuthState> {
   final AuthRepository _repository;
+  final Ref? _ref;
 
-  AuthNotifier(this._repository) : super(const AuthState()) {
+  AuthNotifier(this._repository, [this._ref]) : super(const AuthState()) {
     checkAuth();
   }
 
@@ -50,16 +69,19 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       final token = await SecureStorageService.getAccessToken();
       if (token == null || token.isEmpty) {
+        AuthNotifierBridge.instance.setAuthenticated(false);
         state = state.copyWith(isLoading: false, isAuthenticated: false, user: null);
         return;
       }
 
       final cachedUser = await SecureStorageService.getUser();
       if (cachedUser != null) {
+        AuthNotifierBridge.instance.setAuthenticated(true);
         state = state.copyWith(isAuthenticated: true, user: cachedUser);
       }
 
       final freshUser = await _repository.getMe();
+      AuthNotifierBridge.instance.setAuthenticated(true);
       state = state.copyWith(
         isLoading: false,
         isAuthenticated: true,
@@ -67,11 +89,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
         errorMessage: null,
       );
     } catch (_) {
-      // If fetching me fails, check if refresh worked or token invalid
       final token = await SecureStorageService.getAccessToken();
       if (token == null) {
+        AuthNotifierBridge.instance.setAuthenticated(false);
         state = state.copyWith(isLoading: false, isAuthenticated: false, user: null);
       } else {
+        AuthNotifierBridge.instance.setAuthenticated(true);
         state = state.copyWith(isLoading: false);
       }
     }
@@ -95,6 +118,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final isNew = result['is_new'] == true;
       final user = result['user'] as Map<String, dynamic>;
 
+      AuthNotifierBridge.instance.setAuthenticated(true);
       state = state.copyWith(
         isLoading: false,
         isAuthenticated: true,
@@ -123,16 +147,37 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  void _invalidateUserData() {
+    if (_ref != null) {
+      try {
+        _ref.invalidate(verificationStatusProvider);
+      } catch (_) {}
+    }
+  }
+
   Future<void> logout() async {
     state = state.copyWith(isLoading: true);
+    WebSocketService().disconnect();
     await _repository.logout();
+    AuthNotifierBridge.instance.setAuthenticated(false);
+    _invalidateUserData();
+    state = const AuthState(isLoading: false, isAuthenticated: false, user: null);
+  }
+
+  void onSessionExpired() {
+    WebSocketService().disconnect();
+    AuthNotifierBridge.instance.setAuthenticated(false);
+    _invalidateUserData();
     state = const AuthState(isLoading: false, isAuthenticated: false, user: null);
   }
 
   Future<void> deleteAccount() async {
     state = state.copyWith(isLoading: true);
+    WebSocketService().disconnect();
     try {
       await _repository.deleteAccount();
+      AuthNotifierBridge.instance.setAuthenticated(false);
+      _invalidateUserData();
       state = const AuthState(isLoading: false, isAuthenticated: false, user: null);
     } catch (e) {
       state = state.copyWith(isLoading: false, errorMessage: e.toString());
@@ -142,7 +187,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
 }
 
 final authStateProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
-  return AuthNotifier(ref.watch(authRepositoryProvider));
+  return AuthNotifier(ref.watch(authRepositoryProvider), ref);
 });
 
 final verificationStatusProvider = FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
