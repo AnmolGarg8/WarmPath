@@ -21,7 +21,7 @@ def upgrade() -> None:
         sa.Column('user_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('users.id', ondelete='CASCADE'), primary_key=True),
         sa.Column('weekly_capacity', sa.Integer(), nullable=False, server_default='5'),
         sa.Column('timezone', sa.String(length=50), nullable=False, server_default='UTC'),
-        sa.Column('windows', postgresql.JSONB(as_json=True), nullable=False, server_default='[]'),
+        sa.Column('windows', postgresql.JSONB(), nullable=False, server_default='[]'),
         sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
     )
 

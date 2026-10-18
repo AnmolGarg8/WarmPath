@@ -66,7 +66,7 @@ def upgrade() -> None:
         sa.Column('sender_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('users.id', ondelete='CASCADE'), nullable=False),
         sa.Column('content', sa.Text(), nullable=False),
         sa.Column('safety_action', sa.String(length=20), server_default='allow', nullable=False),
-        sa.Column('flags', postgresql.JSONB(as_json=True), server_default='[]', nullable=False),
+        sa.Column('flags', postgresql.JSONB(), server_default='[]', nullable=False),
         sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
     )
     op.create_index(op.f('ix_thread_messages_request_id'), 'thread_messages', ['request_id'], unique=False)

@@ -24,10 +24,10 @@ def upgrade() -> None:
         sa.Column('giver_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('users.id', ondelete='CASCADE'), nullable=False),
         sa.Column('stars', sa.Integer(), nullable=False),
         sa.Column('reason', sa.Text(), nullable=True),
-        sa.Column('tags', postgresql.JSONB(as_json=True), server_default='[]', nullable=False),
+        sa.Column('tags', postgresql.JSONB(), server_default='[]', nullable=False),
         sa.Column('weight', sa.Float(), server_default='1.0', nullable=False),
         sa.Column('is_suspicious', sa.Boolean(), server_default='false', nullable=False),
-        sa.Column('suspicion_flags', postgresql.JSONB(as_json=True), server_default='[]', nullable=False),
+        sa.Column('suspicion_flags', postgresql.JSONB(), server_default='[]', nullable=False),
         sa.Column('safety_approved', sa.Boolean(), server_default='true', nullable=False),
         sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
     )
