@@ -1,4 +1,6 @@
 import uuid
+from datetime import datetime, timedelta, timezone
+from unittest.mock import AsyncMock, MagicMock
 import pytest
 from app.modules.ratings.service import RatingsService
 
@@ -69,3 +71,98 @@ def test_band_hysteresis():
         completion_rate=0.95
     )
     assert band_demote == "Trusted"
+
+@pytest.mark.asyncio
+async def test_student_rating_fails_when_caller_not_student():
+    from app.modules.ratings.router import post_session_rating
+    from app.modules.ratings.schemas import StudentRatingCreate
+    from app.modules.sessions.models import CallSession
+    from app.core.errors import AppError
+
+    mock_db = AsyncMock()
+    session_id = uuid.uuid4()
+    student_id = uuid.uuid4()
+    giver_id = uuid.uuid4()
+    other_user_id = uuid.uuid4()
+
+    call = CallSession(
+        id=session_id,
+        request_id=uuid.uuid4(),
+        student_id=student_id,
+        giver_id=giver_id,
+        scheduled_at=datetime.now(timezone.utc),
+        duration_minutes=20,
+        room_url="https://meet.jit.si/test",
+        status="completed"
+    )
+    mock_execute = MagicMock()
+    mock_execute.scalar_one_or_none.return_value = call
+    mock_db.execute = AsyncMock(return_value=mock_execute)
+
+    data = StudentRatingCreate(stars=5, reason="Great")
+    with pytest.raises(AppError) as exc_info:
+        await post_session_rating(id=str(session_id), data=data, db=mock_db, user_id=str(other_user_id))
+    assert exc_info.value.code == "unauthorized"
+
+@pytest.mark.asyncio
+async def test_student_rating_fails_when_session_not_completed():
+    from app.modules.ratings.router import post_session_rating
+    from app.modules.ratings.schemas import StudentRatingCreate
+    from app.modules.sessions.models import CallSession
+    from app.core.errors import AppError
+
+    mock_db = AsyncMock()
+    session_id = uuid.uuid4()
+    student_id = uuid.uuid4()
+    giver_id = uuid.uuid4()
+
+    call = CallSession(
+        id=session_id,
+        request_id=uuid.uuid4(),
+        student_id=student_id,
+        giver_id=giver_id,
+        scheduled_at=datetime.now(timezone.utc),
+        duration_minutes=20,
+        room_url="https://meet.jit.si/test",
+        status="scheduled"
+    )
+    mock_execute = MagicMock()
+    mock_execute.scalar_one_or_none.return_value = call
+    mock_db.execute = AsyncMock(return_value=mock_execute)
+
+    data = StudentRatingCreate(stars=5)
+    with pytest.raises(AppError) as exc_info:
+        await post_session_rating(id=str(session_id), data=data, db=mock_db, user_id=str(student_id))
+    assert exc_info.value.code == "session_not_completed"
+
+@pytest.mark.asyncio
+async def test_student_rating_fails_after_14_days():
+    from app.modules.ratings.router import post_session_rating
+    from app.modules.ratings.schemas import StudentRatingCreate
+    from app.modules.sessions.models import CallSession
+    from app.core.errors import AppError
+
+    mock_db = AsyncMock()
+    session_id = uuid.uuid4()
+    student_id = uuid.uuid4()
+    giver_id = uuid.uuid4()
+
+    call = CallSession(
+        id=session_id,
+        request_id=uuid.uuid4(),
+        student_id=student_id,
+        giver_id=giver_id,
+        scheduled_at=datetime.now(timezone.utc) - timedelta(days=15),
+        student_left_at=datetime.now(timezone.utc) - timedelta(days=15),
+        duration_minutes=20,
+        room_url="https://meet.jit.si/test",
+        status="completed"
+    )
+    mock_execute = MagicMock()
+    mock_execute.scalar_one_or_none.return_value = call
+    mock_db.execute = AsyncMock(return_value=mock_execute)
+
+    data = StudentRatingCreate(stars=5)
+    with pytest.raises(AppError) as exc_info:
+        await post_session_rating(id=str(session_id), data=data, db=mock_db, user_id=str(student_id))
+    assert exc_info.value.code == "rating_window_expired"

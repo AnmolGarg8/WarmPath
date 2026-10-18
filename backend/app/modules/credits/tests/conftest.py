@@ -30,6 +30,7 @@ sqlite3.register_adapter(uuid.UUID, lambda u: str(u))
 sqlite3.register_adapter(list, lambda l: json.dumps(l))
 sqlite3.register_converter("UUID", lambda b: uuid.UUID(b.decode("utf-8")))
 SQLiteTypeCompiler.visit_ARRAY = lambda self, type_, **kw: "TEXT"
+SQLiteTypeCompiler.visit_UUID = lambda self, type_, **kw: "TEXT"
 
 TEST_DB_URL = "sqlite+aiosqlite:///:memory:"
 

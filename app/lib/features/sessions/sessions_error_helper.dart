@@ -18,6 +18,10 @@ String translateSessionError(String code, [String? fallback]) {
       return 'Daily connection request limit reached. Please try again tomorrow.';
     case 'outside_booking_horizon':
       return 'This slot is beyond the booking window permitted for your plan.';
+    case 'session_not_open':
+      return 'This video call is not open yet. Video calls open 10 minutes before the scheduled start time.';
+    case 'rating_window_expired':
+      return 'The rating window for this session has expired (ratings must be submitted within 14 days).';
     default:
       return fallback ?? 'An unexpected error occurred. Please try again.';
   }

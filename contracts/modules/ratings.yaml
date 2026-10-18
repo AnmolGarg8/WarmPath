@@ -27,6 +27,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/StudentRatingResponse'
+        '400':
+          description: Rating window expired or already rated
+        '403':
+          description: Only the student in the session can submit session rating
   /sessions/{id}/request-quality:
     post:
       summary: Giver rates student preparation and request clarity

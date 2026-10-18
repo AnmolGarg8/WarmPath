@@ -15,7 +15,7 @@ class MainBottomNav extends StatelessWidget {
 
     switch (index) {
       case 0:
-        context.go('/');
+        context.go('/discover');
         break;
       case 1:
         context.go('/sessions');

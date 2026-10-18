@@ -30,17 +30,17 @@ class _SplashPageState extends ConsumerState<SplashPage> {
         if (mounted) {
           final authState = ref.read(authStateProvider);
           if (authState.isAuthenticated) {
-            context.go('/profile');
+            context.go('/discover');
             return;
           }
         }
       } catch (_) {
-        // Fall through to intro on check failure
+        // Fall through to email on check failure
       }
     }
 
     if (mounted) {
-      context.go('/auth/intro');
+      context.go('/auth/email');
     }
   }
 

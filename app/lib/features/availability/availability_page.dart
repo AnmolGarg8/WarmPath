@@ -83,7 +83,7 @@ class _AvailabilityPageState extends ConsumerState<AvailabilityPage> {
                 const SizedBox(height: 8),
                 Text(
                   isOnline
-                      ? 'Closing in \${minsLeft.toString().padLeft(2, "0")}:\${secsLeft.toString().padLeft(2, "0")}. Students can connect instantly.'
+                      ? 'Closing in ${minsLeft.toString().padLeft(2, "0")}:${secsLeft.toString().padLeft(2, "0")}. Students can connect instantly.'
                       : 'Open an instant connect window for incoming student requests without prior scheduling.',
                   style: const TextStyle(fontSize: 14, color: AppColors.slate),
                 ),
@@ -100,7 +100,7 @@ class _AvailabilityPageState extends ConsumerState<AvailabilityPage> {
                     children: [15, 30, 60].map((mins) {
                       final selected = _selectedOnlineMinutes == mins;
                       return ChoiceChip(
-                        label: Text('\$mins mins'),
+                        label: Text('$mins mins'),
                         selected: selected,
                         selectedColor: AppColors.teal.withOpacity(0.2),
                         labelStyle: TextStyle(
@@ -115,7 +115,7 @@ class _AvailabilityPageState extends ConsumerState<AvailabilityPage> {
                   ),
                   const SizedBox(height: 12),
                   WButton(
-                    label: 'Go Online for \$_selectedOnlineMinutes Minutes',
+                    label: 'Go Online for $_selectedOnlineMinutes Minutes',
                     backgroundColor: AppColors.teal,
                     isLoading: state.isLoading,
                     onPressed: () => ref.read(availabilityProvider.notifier).goOnline(_selectedOnlineMinutes),
@@ -137,7 +137,7 @@ class _AvailabilityPageState extends ConsumerState<AvailabilityPage> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Used this week: \${data.usedThisWeek} of \${data.weeklyCapacity} sessions (\${data.capacityLeft} slots remaining)',
+                  'Used this week: ${data.usedThisWeek} of ${data.weeklyCapacity} sessions (${data.capacityLeft} slots remaining)',
                   style: const TextStyle(fontSize: 14, color: AppColors.slate),
                 ),
                 const SizedBox(height: 16),
@@ -152,7 +152,7 @@ class _AvailabilityPageState extends ConsumerState<AvailabilityPage> {
                           : null,
                     ),
                     Text(
-                      '\${data.weeklyCapacity} sessions / week',
+                      '${data.weeklyCapacity} sessions / week',
                       style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textDark),
                     ),
                     IconButton(
@@ -187,7 +187,7 @@ class _AvailabilityPageState extends ConsumerState<AvailabilityPage> {
                   ],
                 ),
                 Text(
-                  'Timezone: \${data.timezone}',
+                  'Timezone: ${data.timezone}',
                   style: const TextStyle(fontSize: 13, color: AppColors.slate, fontWeight: FontWeight.w500),
                 ),
                 const Divider(height: 24),
@@ -234,7 +234,7 @@ class _AvailabilityPageState extends ConsumerState<AvailabilityPage> {
                               ),
                               const SizedBox(width: 12),
                               Text(
-                                '\${w.startTime} - \${w.endTime}',
+                                '${w.startTime} - ${w.endTime}',
                                 style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
                               ),
                             ],
@@ -264,8 +264,8 @@ class _AvailabilityPageState extends ConsumerState<AvailabilityPage> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) {
-          final startStr = '\${startTime.hour.toString().padLeft(2, "0")}:\${startTime.minute.toString().padLeft(2, "0")}';
-          final endStr = '\${endTime.hour.toString().padLeft(2, "0")}:\${endTime.minute.toString().padLeft(2, "0")}';
+          final startStr = '${startTime.hour.toString().padLeft(2, "0")}:${startTime.minute.toString().padLeft(2, "0")}';
+          final endStr = '${endTime.hour.toString().padLeft(2, "0")}:${endTime.minute.toString().padLeft(2, "0")}';
 
           return AlertDialog(
             title: const Text('Add Availability Window'),
@@ -297,7 +297,7 @@ class _AvailabilityPageState extends ConsumerState<AvailabilityPage> {
                           final picked = await showTimePicker(context: ctx, initialTime: startTime);
                           if (picked != null) setDialogState(() => startTime = picked);
                         },
-                        child: Text('Start: \$startStr'),
+                        child: Text('Start: $startStr'),
                       ),
                     ),
                     Expanded(
@@ -306,7 +306,7 @@ class _AvailabilityPageState extends ConsumerState<AvailabilityPage> {
                           final picked = await showTimePicker(context: ctx, initialTime: endTime);
                           if (picked != null) setDialogState(() => endTime = picked);
                         },
-                        child: Text('End: \$endStr'),
+                        child: Text('End: $endStr'),
                       ),
                     ),
                   ],

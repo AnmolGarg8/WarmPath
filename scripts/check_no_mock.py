@@ -109,7 +109,86 @@ def scan_file_lines(
         return violations, allow_logs
 
     lines = content.splitlines()
+
+    # Check for guided demo allow-mock-file rule
+    posix_path = rel_path.as_posix()
+    if posix_path.startswith("app/lib/features/demo/"):
+        first_line = lines[0].strip() if lines else ""
+        if not first_line.startswith("// allow-mock-file: guided demo, simulated and labelled"):
+            violations.append(
+                Violation(
+                    file_path=rel_path,
+                    line_number=1,
+                    message="Every file in app/lib/features/demo must start with '// allow-mock-file: guided demo, simulated and labelled'",
+                    line_text=first_line,
+                )
+            )
+            return violations, allow_logs
+
+        allow_logs.append(f"[ALLOW-DEMO-FILE] {rel_path}: guided demo, simulated and labelled")
+
+        # Isolation checks for demo files: no API, dio, secure storage or other live feature imports
+        forbidden_imports = [
+            ("dio", "dio package"),
+            ("dio_client", "DioClient"),
+            ("api_client", "ApiClient"),
+            ("secure_storage", "SecureStorageService"),
+            ("core/api", "core API client"),
+            ("core/storage", "core storage"),
+        ]
+        for idx, line in enumerate(lines, start=1):
+            trimmed = line.strip()
+            if trimmed.startswith("import ") or trimmed.startswith("export "):
+                for pattern, name in forbidden_imports:
+                    if pattern in trimmed:
+                        violations.append(
+                            Violation(
+                                file_path=rel_path,
+                                line_number=idx,
+                                message=f"Isolation violation in demo file: forbidden import of {name}",
+                                line_text=trimmed,
+                            )
+                        )
+                # Check live feature imports (only demo feature can be imported)
+                if "features/" in trimmed and "features/demo" not in trimmed:
+                    violations.append(
+                        Violation(
+                            file_path=rel_path,
+                            line_number=idx,
+                            message="Isolation violation in demo file: demo cannot import live features",
+                            line_text=trimmed,
+                        )
+                    )
+
+            # Still check against banned strings
+            for banned_str in banned_strings:
+                if banned_str.lower() in line.lower():
+                    violations.append(
+                        Violation(
+                            file_path=rel_path,
+                            line_number=idx,
+                            message=f"Banned string found in demo file: '{banned_str}'",
+                            line_text=line.strip(),
+                        )
+                    )
+        return violations, allow_logs
+
     for idx, line in enumerate(lines, start=1):
+        # Isolation check for non-demo files: no other feature may import demo
+        if not posix_path.startswith("app/lib/features/demo/"):
+            trimmed = line.strip()
+            if (trimmed.startswith("import ") or trimmed.startswith("export ")) and "features/demo" in trimmed:
+                allowed_callers = ("app/lib/app_router.dart", "app/lib/features/auth/pages/email_page.dart", "app/lib/features/auth/pages/profile_page.dart")
+                if posix_path not in allowed_callers:
+                    violations.append(
+                        Violation(
+                            file_path=rel_path,
+                            line_number=idx,
+                            message="Isolation violation: live feature must not import demo feature",
+                            line_text=trimmed,
+                        )
+                    )
+
         # 1. Check for explicit allow-mock comment
         allow_mock_match = ALLOW_MOCK_RE.search(line)
         if allow_mock_match:

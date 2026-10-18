@@ -45,8 +45,11 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+from app.core.auth_middleware import AuthMiddleware
+
 # Global Middlewares
 app.add_middleware(RequestIdMiddleware)
+app.add_middleware(AuthMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],

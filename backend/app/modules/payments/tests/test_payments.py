@@ -12,6 +12,7 @@ Covers:
   8. Nightly reconciliation job
 """
 
+from datetime import datetime, timedelta, timezone
 import json
 import uuid
 import pytest
@@ -649,3 +650,106 @@ async def test_reconciliation_job(db_session: AsyncSession, mock_rzp_client: Moc
     # Verify DB subscription was updated
     await db_session.refresh(sub)
     assert sub.status == "active"
+
+
+@pytest.mark.asyncio
+async def test_plan_activates_only_from_valid_signed_webhook(
+    client: AsyncClient,
+    db_session: AsyncSession,
+):
+    """
+    Verify payment honesty requirement:
+    A subscription plan CANNOT activate from checkout creation alone,
+    CANNOT activate from an unsigned or invalidly signed webhook,
+    and activates ONLY from a validly signed Razorpay webhook.
+    """
+    idem_key = f"idem_honesty_{uuid.uuid4().hex}"
+    create_res = await client.post(
+        "/subscriptions",
+        json={"plan_code": "high"},
+        headers={"X-User-Id": STUDENT_ID, "Idempotency-Key": idem_key},
+    )
+    assert create_res.status_code == 200
+    rzp_sub_id = create_res.json()["subscription_id"]
+
+    # 1. Verify checkout alone leaves status strictly 'created', never 'active'
+    sub_query = select(Subscription).where(Subscription.razorpay_subscription_id == rzp_sub_id)
+    sub = (await db_session.execute(sub_query)).scalar_one_or_none()
+    assert sub is not None
+    assert sub.status == "created"
+
+    # Verify no activation event exists yet
+    act_events = (
+        await db_session.execute(
+            select(OutboxEvent).where(
+                OutboxEvent.topic == "subscription.activated",
+                OutboxEvent.payload["subscription_id"].astext == str(sub.id),
+            )
+        )
+    ).scalars().all()
+    assert len(act_events) == 0
+
+    # 2. Attempting webhook with invalid signature must fail and NOT activate
+    payload = {
+        "event_id": f"evt_fake_{uuid.uuid4().hex}",
+        "event": "subscription.activated",
+        "payload": {
+            "subscription": {
+                "entity": {
+                    "id": rzp_sub_id,
+                    "status": "active",
+                    "current_start": int(datetime.now(timezone.utc).timestamp()),
+                    "current_end": int((datetime.now(timezone.utc) + timedelta(days=30)).timestamp()),
+                }
+            },
+            "payment": {
+                "entity": {
+                    "id": f"pay_fake_{uuid.uuid4().hex[:8]}",
+                    "amount": 49900,
+                    "subscription_id": rzp_sub_id,
+                }
+            },
+        },
+    }
+    raw_body = json.dumps(payload).encode("utf-8")
+    bad_sig = "bad_forged_hmac_signature"
+
+    bad_res = await client.post(
+        "/webhooks/razorpay",
+        content=raw_body,
+        headers={"Content-Type": "application/json", "X-Razorpay-Signature": bad_sig},
+    )
+    assert bad_res.status_code == 400
+    assert bad_res.json()["error"]["code"] == "invalid_signature"
+
+    # Verify subscription is STILL 'created'
+    await db_session.refresh(sub)
+    assert sub.status == "created"
+
+    # 3. Webhook with valid HMAC signature succeeds and activates plan
+    valid_sig = generate_webhook_signature(raw_body)
+    good_res = await client.post(
+        "/webhooks/razorpay",
+        content=raw_body,
+        headers={"Content-Type": "application/json", "X-Razorpay-Signature": valid_sig},
+    )
+    assert good_res.status_code == 200
+    assert good_res.json()["status"] == "processed"
+
+    # Verify DB subscription is now active with period dates
+    await db_session.refresh(sub)
+    assert sub.status == "active"
+    assert sub.current_period_start is not None
+    assert sub.current_period_end is not None
+
+    # Verify outbox event published
+    act_events_after = (
+        await db_session.execute(
+            select(OutboxEvent).where(
+                OutboxEvent.topic == "subscription.activated",
+                OutboxEvent.payload["subscription_id"].astext == str(sub.id),
+            )
+        )
+    ).scalars().all()
+    assert len(act_events_after) == 1
+

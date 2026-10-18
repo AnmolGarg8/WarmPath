@@ -108,12 +108,12 @@ class _RequestDetailPageState extends ConsumerState<RequestDetailPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Status: \${widget.request.status.toUpperCase()}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                    Text('Status: ${widget.request.status.toUpperCase()}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                     Text(df.format(widget.request.createdAt.toLocal()), style: const TextStyle(color: AppColors.slate, fontSize: 12)),
                   ],
                 ),
                 const SizedBox(height: 6),
-                Text('Agenda: \${widget.request.intentText}', style: const TextStyle(fontSize: 13, color: AppColors.textDark)),
+                Text('Agenda: ${widget.request.intentText}', style: const TextStyle(fontSize: 13, color: AppColors.textDark)),
               ],
             ),
           ),

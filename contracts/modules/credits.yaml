@@ -107,6 +107,24 @@ paths:
               schema:
                 $ref: '#/components/schemas/SponsoredSeatsEligibilityResponse'
 
+  /sponsored-seats/{id}/claim:
+    post:
+      tags: [credits]
+      summary: Claim an eligible sponsored seat
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Sponsored seat claimed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClaimSponsoredSeatResponse'
+
   /admin/sponsored-seats:
     post:
       tags: [credits]
@@ -229,15 +247,27 @@ components:
 
     SponsoredSeatInfo:
       type: object
-      required: [id, student_id, plan_tier, funded_by, created_at]
+      required: [id, plan_tier, funded_by, created_at]
       properties:
         id: {type: string, format: uuid}
         institution_id: {type: integer, nullable: true}
-        student_id: {type: string, format: uuid}
+        student_id: {type: string, format: uuid, nullable: true}
         plan_tier: {type: string}
         sponsor_name: {type: string, nullable: true}
         funded_by: {type: string}
+        status: {type: string}
+        credits_granted: {type: integer}
+        credits_remaining: {type: integer}
+        can_claim: {type: boolean}
         created_at: {type: string, format: date-time}
+
+    ClaimSponsoredSeatResponse:
+      type: object
+      required: [success, message, credits_granted]
+      properties:
+        success: {type: boolean}
+        message: {type: string}
+        credits_granted: {type: integer}
 
     SponsoredSeatsEligibilityResponse:
       type: object

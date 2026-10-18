@@ -34,7 +34,7 @@ from app.modules.credits.models import (
 
 PLAIN_REASONS = {
     "plan_credit_grant": "Monthly subscription credits issued",
-    "session_reservation": "Credit reserved for session request",
+    "session_reservation": "Reserved for a session: -1 credit",
     "session_release": "Reserved credit released",
     "session_refund_giver_no_show": "Refunded: Giver was absent",
     "session_refund_no_reply_72h": "Refunded: No reply within 72 hours",
@@ -79,10 +79,10 @@ class CreditsService:
                 booking_horizon_days=3,
                 priority=0,
                 features=[
-                    "Own-college alumni access",
-                    "0 paid credits/month",
+                    "Own-college alumni: free, within each mentor's capacity and your daily limit",
+                    "No monthly credits",
                     "3-day booking horizon",
-                    "Free 1-on-1 sessions",
+                    "Credit returned if no reply in 72 hours",
                 ],
                 active=True,
             ),
@@ -96,9 +96,10 @@ class CreditsService:
                 priority=1,
                 features=[
                     "1 cross-college credit/month",
+                    "Credit value: Rs 299 per session",
                     "Reach Rising alumni",
-                    "3-day booking horizon",
-                    "Priority 1 in giver inbox",
+                    "Higher priority in mentors' inboxes",
+                    "Credit returned if no reply in 72 hours",
                 ],
                 active=True,
             ),
@@ -112,9 +113,10 @@ class CreditsService:
                 priority=2,
                 features=[
                     "2 cross-college credits/month",
+                    "Credit value: Rs 250 per session",
                     "Reach Rising and Trusted alumni",
-                    "14-day booking horizon",
-                    "Priority 2 in giver inbox",
+                    "Higher priority in mentors' inboxes",
+                    "Credit returned if no reply in 72 hours",
                 ],
                 active=True,
             ),
@@ -128,9 +130,10 @@ class CreditsService:
                 priority=3,
                 features=[
                     "4 cross-college credits/month",
+                    "Credit value: Rs 225 per session",
                     "Reach all bands, experts, recruiters, founders and faculty",
-                    "30-day booking horizon",
-                    "Highest priority (3) in giver inbox",
+                    "Higher priority in mentors' inboxes",
+                    "Credit returned if no reply in 72 hours",
                 ],
                 active=True,
             ),
@@ -984,6 +987,8 @@ class CreditsService:
         if not plan:
             raise AppError(code="plan_not_found", message=f"Plan '{plan_tier}' not found", status_code=404)
 
+        credits_to_grant = plan.credits_per_month
+        grant_inr = float(plan.price_inr)
         now = datetime.now(timezone.utc)
         seat = SponsoredSeat(
             id=uuid.uuid4(),
@@ -992,12 +997,12 @@ class CreditsService:
             plan_tier=plan.code,
             sponsor_name=sponsor_name,
             funded_by=funded_by,
+            status="active",
+            credits_granted=credits_to_grant if credits_to_grant > 0 else 1,
+            credits_remaining=credits_to_grant if credits_to_grant > 0 else 1,
             created_at=now,
         )
         session.add(seat)
-
-        credits_to_grant = plan.credits_per_month
-        grant_inr = float(plan.price_inr)
         student_paid = await CreditsService.get_or_create_account(session, s_uid, "user_paid")
 
         if funded_by == "scholarship_pool":
@@ -1138,6 +1143,28 @@ class CreditsService:
             last = items[-1]
             next_cursor = encode_cursor({"created_at": last.created_at.isoformat()})
 
+        lots_stmt = select(func.coalesce(func.sum(CreditLot.credits_remaining), 0)).where(
+            CreditLot.account_id == paid_acc.id,
+            CreditLot.credits_remaining > 0,
+        )
+        lots_sum = (await session.execute(lots_stmt)).scalar() or 0
+        paid_credits = int(lots_sum)
+
+        if paid_acc.balance_credits != paid_credits:
+            paid_acc.balance_credits = paid_credits
+            session.add(paid_acc)
+            await session.flush()
+
+        def _format_plain_reason(e: LedgerEntry) -> str:
+            if e.reason in ("session_reservation", "reserve"):
+                return f"Reserved for a session: -{abs(e.amount_credits)} {'credit' if abs(e.amount_credits) == 1 else 'credits'}"
+            elif e.reason in ("session_refund_no_reply_72h", "session_refund_giver_no_show", "session_refund_dispute_outcome", "refund"):
+                base = PLAIN_REASONS.get(e.reason, "Refunded")
+                return f"{base}: +{abs(e.amount_credits)} {'credit' if abs(e.amount_credits) == 1 else 'credits'}"
+            elif e.reason in ("plan_credit_grant", "purchase", "subscription"):
+                return f"Monthly subscription credit allowance: +{abs(e.amount_credits)} {'credit' if abs(e.amount_credits) == 1 else 'credits'}"
+            return PLAIN_REASONS.get(e.reason, e.reason.replace("_", " ").title())
+
         items_dto = [
             {
                 "id": str(e.id),
@@ -1146,7 +1173,7 @@ class CreditsService:
                 "amount_inr": e.amount_inr,
                 "direction": e.direction,
                 "reason": e.reason,
-                "plain_reason": PLAIN_REASONS.get(e.reason, e.reason.replace("_", " ").title()),
+                "plain_reason": _format_plain_reason(e),
                 "ref_type": e.ref_type,
                 "ref_id": e.ref_id,
                 "created_at": e.created_at,
@@ -1155,7 +1182,7 @@ class CreditsService:
         ]
 
         return {
-            "available_credits": paid_acc.balance_credits,
+            "available_credits": paid_credits,
             "affinity_credits": aff_acc.balance_credits,
             "items": items_dto,
             "next_cursor": next_cursor,
@@ -1212,6 +1239,12 @@ class CreditsService:
         sub = res.scalar_one_or_none()
 
         paid_acc = await CreditsService.get_or_create_account(session, u_uid, "user_paid")
+        lots_stmt = select(func.coalesce(func.sum(CreditLot.credits_remaining), 0)).where(
+            CreditLot.account_id == paid_acc.id,
+            CreditLot.credits_remaining > 0,
+        )
+        lots_sum = (await session.execute(lots_stmt)).scalar() or 0
+        paid_credits = int(lots_sum)
 
         if not sub:
             return {
@@ -1220,7 +1253,7 @@ class CreditsService:
                 "renews_at": None,
                 "period_start": None,
                 "period_end": None,
-                "credits_remaining": paid_acc.balance_credits,
+                "credits_remaining": paid_credits,
             }
 
         return {
@@ -1229,5 +1262,96 @@ class CreditsService:
             "renews_at": sub.renews_at,
             "period_start": sub.period_start,
             "period_end": sub.period_end,
-            "credits_remaining": paid_acc.balance_credits,
+            "credits_remaining": paid_credits,
+        }
+
+    @staticmethod
+    async def claim_sponsored_seat(
+        session: AsyncSession,
+        user_id: str,
+        seat_id: str,
+    ) -> Dict[str, Any]:
+        """Claim an available sponsored seat for the authenticated student."""
+        u_uid = to_uuid(user_id)
+        if not u_uid:
+            raise AppError(code="invalid_user_id", message="Invalid user ID", status_code=400)
+
+        s_uid = to_uuid(seat_id)
+        stmt = select(SponsoredSeat).where(SponsoredSeat.id == s_uid)
+        res = await session.execute(stmt)
+        seat = res.scalar_one_or_none()
+        if not seat:
+            raise AppError(code="seat_not_found", message="Sponsored seat not found", status_code=404)
+
+        if seat.student_id is not None and seat.student_id != u_uid:
+            raise AppError(code="seat_already_claimed", message="This seat has already been claimed", status_code=409)
+
+        if seat.status in ("used", "expired"):
+            raise AppError(code="seat_unavailable", message=f"Sponsored seat is {seat.status}", status_code=400)
+
+        plan = await CreditsService.get_plan_by_code(session, seat.plan_tier)
+        if not plan:
+            raise AppError(code="plan_not_found", message=f"Plan {seat.plan_tier} not found", status_code=404)
+
+        now = datetime.now(timezone.utc)
+        credits_to_grant = plan.credits_per_month if plan.credits_per_month > 0 else 1
+
+        student_paid = await CreditsService.get_or_create_account(session, u_uid, "user_paid")
+        source_acc = await CreditsService.get_or_create_account(
+            session, None, "scholarship_pool" if seat.funded_by == "scholarship_pool" else "platform_revenue"
+        )
+
+        drafts = [
+            {
+                "account_id": source_acc.id,
+                "amount_credits": -credits_to_grant,
+                "amount_inr": 0.0,
+            },
+            {
+                "account_id": student_paid.id,
+                "amount_credits": credits_to_grant,
+                "amount_inr": 0.0,
+            },
+        ]
+        await CreditsService.post_transaction(
+            session=session,
+            drafts=drafts,
+            ref_type="sponsored_seat",
+            ref_id=str(seat.id),
+            reason="sponsored_seat_grant",
+        )
+
+        lot = CreditLot(
+            id=uuid.uuid4(),
+            account_id=student_paid.id,
+            credits_remaining=credits_to_grant,
+            unit_price_inr=round((plan.price_inr or 299) / credits_to_grant, 2),
+            created_at=now,
+            expires_at=now + timedelta(days=30),
+        )
+        session.add(lot)
+
+        sub = UserSubscription(
+            id=uuid.uuid4(),
+            user_id=u_uid,
+            plan_code=plan.code,
+            status="active",
+            period_start=now,
+            period_end=now + timedelta(days=30),
+            renews_at=now + timedelta(days=30),
+            created_at=now,
+        )
+        session.add(sub)
+
+        seat.student_id = u_uid
+        seat.status = "active"
+        seat.credits_granted = credits_to_grant
+        seat.credits_remaining = credits_to_grant
+        session.add(seat)
+        await session.flush()
+
+        return {
+            "success": True,
+            "message": f"Sponsored seat '{plan.name}' claimed successfully. {credits_to_grant} credit(s) added to wallet.",
+            "credits_granted": credits_to_grant,
         }

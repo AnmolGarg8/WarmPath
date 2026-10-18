@@ -162,10 +162,13 @@ class SponsoredSeat(Base):
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     institution_id = Column(Integer, nullable=True, index=True)
-    student_id = Column(GUID(), nullable=False, index=True)
+    student_id = Column(GUID(), nullable=True, index=True)
     plan_tier = Column(String(50), nullable=False)
     sponsor_name = Column(String(255), nullable=True)
     funded_by = Column(String(50), nullable=False, default="scholarship_pool")  # sponsor, institution_budget, scholarship_pool
+    status = Column(String(50), nullable=False, default="available")  # available, active, used, expired
+    credits_granted = Column(Integer, nullable=False, default=1)
+    credits_remaining = Column(Integer, nullable=False, default=1)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
 
 

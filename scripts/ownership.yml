@@ -13,6 +13,7 @@ roles:
       - app/lib/core/
       - app/lib/features/auth/
       - app/lib/features/safety/
+      - app/lib/features/demo/
       - admin/src/core/
       - admin/src/pages/moderation/
       - admin/src/pages/verification/

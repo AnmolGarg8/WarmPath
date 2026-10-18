@@ -15,6 +15,7 @@ import '../services/plans_wallet_api_service.dart';
 import '../widgets/test_mode_banner.dart';
 import '../widgets/cashout_dialog.dart';
 import '../widgets/donate_dialog.dart';
+import '../utils/money_formatter.dart';
 
 class EarningsPage extends StatefulWidget {
   final PlansWalletApiService? apiService;
@@ -30,8 +31,12 @@ class _EarningsPageState extends State<EarningsPage> {
 
   EarningsModel? _earnings;
   List<SponsoredSeatModel> _sponsoredSeats = [];
+  Map<String, dynamic>? _bandInfo;
   bool _isLoading = true;
+  bool _testMode = true;
+  int _disputeMinutes = 2880;
   String? _errorMessage;
+  String? _claimingSeatId;
 
   @override
   void initState() {
@@ -50,12 +55,23 @@ class _EarningsPageState extends State<EarningsPage> {
       final results = await Future.wait([
         _api.getEarnings(),
         _api.getSponsoredSeats(),
+        _api.getPublicConfig(),
+        _api.getMeBand(),
       ]);
 
       if (mounted) {
+        final config = results[2] as Map<String, dynamic>;
+        final windows = config['windows'] as Map<String, dynamic>? ?? {};
+        final dispMin = (windows['dispute_minutes'] as num?)?.toInt() ??
+            (config['dispute_minutes'] as num?)?.toInt() ??
+            2880;
+
         setState(() {
           _earnings = results[0] as EarningsModel;
           _sponsoredSeats = results[1] as List<SponsoredSeatModel>;
+          _testMode = config['test_mode'] as bool? ?? true;
+          _disputeMinutes = dispMin;
+          _bandInfo = results[3] as Map<String, dynamic>?;
           _isLoading = false;
         });
       }
@@ -87,7 +103,7 @@ class _EarningsPageState extends State<EarningsPage> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
-                  'Cash-out of ₹$amount requested (Test Mode). Balance updated.',
+                  'Cash-out of ${formatInr(amount)} requested (Test Mode). Balance updated.',
                 ),
                 backgroundColor: AppColors.teal,
               ),
@@ -132,6 +148,39 @@ class _EarningsPageState extends State<EarningsPage> {
     );
   }
 
+  Future<void> _claimSeat(SponsoredSeatModel seat) async {
+    setState(() => _claimingSeatId = seat.id);
+
+    try {
+      final res = await _api.claimSponsoredSeat(seat.id);
+      if (mounted) {
+        final granted = res['credits_granted'] ?? seat.creditsGranted;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Sponsored seat claimed! $granted cross-college credit(s) added to your wallet.',
+            ),
+            backgroundColor: AppColors.teal,
+          ),
+        );
+        _loadData();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to claim sponsored seat: $e'),
+            backgroundColor: AppColors.primaryAction,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _claimingSeatId = null);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -146,16 +195,23 @@ class _EarningsPageState extends State<EarningsPage> {
     }
 
     final earnings = _earnings ?? EarningsModel.empty();
+    final disputeWindowText = formatWindowMinutes(_disputeMinutes);
+
+    // Band progress from GET /me/band
+    final nextBandNotes = _bandInfo?['progress_notes']?.toString() ??
+        earnings.plainRatingBandShare;
 
     return RefreshIndicator(
       onRefresh: _loadData,
       child: ListView(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.only(top: 24, left: 16, right: 16, bottom: 40),
         children: [
-          const TestModeBanner(
-            message: 'Test mode: Cash-out requests and transfers are simulated.',
-          ),
-          const SizedBox(height: 16),
+          if (_testMode) ...[
+            const TestModeBanner(
+              message: "Test mode: payments use Razorpay's test environment. No real money moves.",
+            ),
+            const SizedBox(height: 16),
+          ],
 
           // Financial metrics grid
           Row(
@@ -163,7 +219,7 @@ class _EarningsPageState extends State<EarningsPage> {
               Expanded(
                 child: _metricCard(
                   title: 'Available',
-                  amount: '₹${earnings.availableInr}',
+                  amount: formatInr(earnings.availableInr),
                   color: AppColors.teal,
                   subtitle: 'Ready to cash-out',
                 ),
@@ -171,8 +227,8 @@ class _EarningsPageState extends State<EarningsPage> {
               const SizedBox(width: 12),
               Expanded(
                 child: _metricCard(
-                  title: 'Pending (48h)',
-                  amount: '₹${earnings.pendingInr}',
+                  title: 'Pending ($disputeWindowText)',
+                  amount: formatInr(earnings.pendingInr),
                   color: AppColors.amber,
                   subtitle: 'Dispute window',
                 ),
@@ -182,9 +238,11 @@ class _EarningsPageState extends State<EarningsPage> {
           const SizedBox(height: 12),
           _metricCard(
             title: 'Total Paid Out to Date',
-            amount: '₹${earnings.paidOutInr}',
+            amount: formatInr(earnings.paidOutInr),
             color: AppColors.deepIndigo,
-            subtitle: 'Successfully transferred to bank account',
+            subtitle: _testMode
+                ? 'Test-mode payout, no real transfer'
+                : 'Successfully transferred to bank account',
           ),
           const SizedBox(height: 16),
 
@@ -257,18 +315,22 @@ class _EarningsPageState extends State<EarningsPage> {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  earnings.plainRatingBandShare,
-                  style: const TextStyle(fontSize: 13, color: AppColors.slate),
+                  nextBandNotes,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: AppColors.textDark,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
                 const Divider(height: 20),
-                const Row(
+                Row(
                   children: [
-                    Icon(Icons.shield_outlined, size: 16, color: AppColors.slate),
-                    SizedBox(width: 8),
+                    const Icon(Icons.shield_outlined, size: 16, color: AppColors.slate),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        '48-Hour Dispute Window Guarantee',
-                        style: TextStyle(
+                        '$disputeWindowText Dispute Window Guarantee',
+                        style: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                           color: AppColors.textDark,
@@ -279,7 +341,7 @@ class _EarningsPageState extends State<EarningsPage> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  earnings.plainDisputeNotice,
+                  'Funds are held for $disputeWindowText following session completion to allow student dispute resolution, then automatically move to available balance.',
                   style: const TextStyle(fontSize: 12, color: AppColors.slate),
                 ),
               ],
@@ -364,6 +426,8 @@ class _EarningsPageState extends State<EarningsPage> {
   }
 
   Widget _sponsoredSeatTile(SponsoredSeatModel seat) {
+    final isClaiming = _claimingSeatId == seat.id;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
@@ -413,21 +477,53 @@ class _EarningsPageState extends State<EarningsPage> {
               ],
             ),
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppColors.teal.withOpacity(0.1),
-              borderRadius: AppRadii.badge,
-            ),
-            child: Text(
-              seat.status.toUpperCase(),
-              style: const TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-                color: AppColors.teal,
+          if (seat.canClaim) ...[
+            SizedBox(
+              height: 34,
+              child: ElevatedButton(
+                onPressed: isClaiming ? null : () => _claimSeat(seat),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.teal,
+                  foregroundColor: AppColors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  shape: RoundedRectangleBorder(borderRadius: AppRadii.badge),
+                ),
+                child: isClaiming
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.white,
+                        ),
+                      )
+                    : const Text(
+                        'Claim',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
               ),
             ),
-          ),
+          ] else ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.teal.withOpacity(0.1),
+                borderRadius: AppRadii.badge,
+              ),
+              child: Text(
+                seat.status.toUpperCase(),
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.teal,
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );

@@ -9,6 +9,7 @@ from app.core.db import get_db
 from app.core.errors import AppError
 from app.core.security import decode_token
 from app.modules.sessions.models import MentorshipRequest, CallSession, ThreadMessage, DeviceToken
+from app.modules.ratings.models import SessionRating, RequestQualityRating
 from app.modules.sessions.schemas import (
     RequestCreate,
     RequestResponse,
@@ -18,11 +19,71 @@ from app.modules.sessions.schemas import (
     MessageResponse,
     SessionResponse,
     DeviceTokenCreate,
-    DeviceTokenResponse
+    DeviceTokenResponse,
+    CounterpartSummary
 )
 from app.modules.sessions.service import SessionsService
 
 router = APIRouter(tags=["sessions"])
+
+async def build_request_response(db: AsyncSession, req: MentorshipRequest, current_user_id: uuid.UUID) -> RequestResponse:
+    if current_user_id == req.student_id:
+        counterpart = await SessionsService.build_counterpart_summary(db, req.giver_id, "Giver")
+    else:
+        counterpart = await SessionsService.build_counterpart_summary(db, req.student_id, "Student")
+
+    giver_earnings_text = SessionsService.get_giver_earnings_text(req.is_cross_college)
+    return RequestResponse(
+        id=str(req.id),
+        student_id=str(req.student_id),
+        giver_id=str(req.giver_id),
+        kind=req.kind,
+        intent_text=req.intent_text,
+        slot_start=req.slot_start,
+        status=req.status,
+        priority=req.priority,
+        plan_name=req.plan_name,
+        is_cross_college=req.is_cross_college,
+        created_at=req.created_at,
+        counterpart=counterpart,
+        giver_earnings_text=giver_earnings_text
+    )
+
+async def build_session_response(db: AsyncSession, s: CallSession, current_user_id: uuid.UUID) -> SessionResponse:
+    if current_user_id == s.student_id:
+        counterpart = await SessionsService.build_counterpart_summary(db, s.giver_id, "Giver")
+    else:
+        counterpart = await SessionsService.build_counterpart_summary(db, s.student_id, "Student")
+
+    # Get topic from associated request
+    req_stmt = select(MentorshipRequest.intent_text).where(MentorshipRequest.id == s.request_id)
+    topic_res = await db.execute(req_stmt)
+    topic = topic_res.scalar_one_or_none()
+
+    # Get ratings
+    rating_stmt = select(SessionRating.stars).where(SessionRating.session_id == s.id)
+    rating_stars = (await db.execute(rating_stmt)).scalar_one_or_none()
+
+    rq_stmt = select(RequestQualityRating.id).where(RequestQualityRating.session_id == s.id)
+    rq_id = (await db.execute(rq_stmt)).scalar_one_or_none()
+
+    return SessionResponse(
+        id=str(s.id),
+        request_id=str(s.request_id),
+        student_id=str(s.student_id),
+        giver_id=str(s.giver_id),
+        scheduled_at=s.scheduled_at,
+        duration_minutes=s.duration_minutes,
+        room_url=s.room_url,
+        status=s.status,
+        student_joined_at=s.student_joined_at,
+        giver_joined_at=s.giver_joined_at,
+        no_show_party=s.no_show_party,
+        counterpart=counterpart,
+        topic=topic,
+        student_rating_stars=rating_stars,
+        giver_rated_quality=(rq_id is not None)
+    )
 
 async def get_current_user_id(authorization: Optional[str] = Header(None)) -> str:
     if not authorization or not authorization.startswith("Bearer "):
@@ -50,19 +111,7 @@ async def create_request(
         slot_start=data.slot_start,
         idempotency_key=idempotency_key
     )
-    return RequestResponse(
-        id=str(req.id),
-        student_id=str(req.student_id),
-        giver_id=str(req.giver_id),
-        kind=req.kind,
-        intent_text=req.intent_text,
-        slot_start=req.slot_start,
-        status=req.status,
-        priority=req.priority,
-        plan_name=req.plan_name,
-        is_cross_college=req.is_cross_college,
-        created_at=req.created_at
-    )
+    return await build_request_response(db, req, uuid.UUID(user_id))
 
 @router.get("/requests", response_model=List[RequestResponse], summary="List mentorship requests")
 async def list_requests(
@@ -86,21 +135,7 @@ async def list_requests(
     query = query.order_by(desc(MentorshipRequest.priority), desc(MentorshipRequest.created_at)).limit(50)
     res = await db.execute(query)
     items = res.scalars().all()
-    return [
-        RequestResponse(
-            id=str(r.id),
-            student_id=str(r.student_id),
-            giver_id=str(r.giver_id),
-            kind=r.kind,
-            intent_text=r.intent_text,
-            slot_start=r.slot_start,
-            status=r.status,
-            priority=r.priority,
-            plan_name=r.plan_name,
-            is_cross_college=r.is_cross_college,
-            created_at=r.created_at
-        ) for r in items
-    ]
+    return [await build_request_response(db, r, uid) for r in items]
 
 @router.get("/requests/{id}", response_model=RequestResponse, summary="Get request details")
 async def get_request(
@@ -112,19 +147,7 @@ async def get_request(
     req = (await db.execute(stmt)).scalar_one_or_none()
     if not req:
         raise AppError(code="request_not_found", message="Request not found", status_code=404)
-    return RequestResponse(
-        id=str(req.id),
-        student_id=str(req.student_id),
-        giver_id=str(req.giver_id),
-        kind=req.kind,
-        intent_text=req.intent_text,
-        slot_start=req.slot_start,
-        status=req.status,
-        priority=req.priority,
-        plan_name=req.plan_name,
-        is_cross_college=req.is_cross_college,
-        created_at=req.created_at
-    )
+    return await build_request_response(db, req, uuid.UUID(user_id))
 
 @router.post("/requests/{id}/accept", response_model=SessionResponse, summary="Accept mentorship request")
 async def accept_request(
@@ -133,19 +156,7 @@ async def accept_request(
     user_id: str = Depends(get_current_user_id)
 ):
     session = await SessionsService.accept_request(db, uuid.UUID(id), uuid.UUID(user_id))
-    return SessionResponse(
-        id=str(session.id),
-        request_id=str(session.request_id),
-        student_id=str(session.student_id),
-        giver_id=str(session.giver_id),
-        scheduled_at=session.scheduled_at,
-        duration_minutes=session.duration_minutes,
-        room_url=session.room_url,
-        status=session.status,
-        student_joined_at=session.student_joined_at,
-        giver_joined_at=session.giver_joined_at,
-        no_show_party=session.no_show_party
-    )
+    return await build_session_response(db, session, uuid.UUID(user_id))
 
 @router.post("/requests/{id}/decline", response_model=RequestResponse, summary="Decline mentorship request")
 async def decline_request(
@@ -155,19 +166,7 @@ async def decline_request(
     user_id: str = Depends(get_current_user_id)
 ):
     req = await SessionsService.decline_request(db, uuid.UUID(id), uuid.UUID(user_id), data.reason)
-    return RequestResponse(
-        id=str(req.id),
-        student_id=str(req.student_id),
-        giver_id=str(req.giver_id),
-        kind=req.kind,
-        intent_text=req.intent_text,
-        slot_start=req.slot_start,
-        status=req.status,
-        priority=req.priority,
-        plan_name=req.plan_name,
-        is_cross_college=req.is_cross_college,
-        created_at=req.created_at
-    )
+    return await build_request_response(db, req, uuid.UUID(user_id))
 
 @router.get("/givers/{id}/slots", response_model=List[SlotItem], summary="Get open booking slots for a giver")
 async def get_giver_slots(
@@ -231,19 +230,7 @@ async def join_session(
     user_id: str = Depends(get_current_user_id)
 ):
     session = await SessionsService.join_session(db, uuid.UUID(id), uuid.UUID(user_id))
-    return SessionResponse(
-        id=str(session.id),
-        request_id=str(session.request_id),
-        student_id=str(session.student_id),
-        giver_id=str(session.giver_id),
-        scheduled_at=session.scheduled_at,
-        duration_minutes=session.duration_minutes,
-        room_url=session.room_url,
-        status=session.status,
-        student_joined_at=session.student_joined_at,
-        giver_joined_at=session.giver_joined_at,
-        no_show_party=session.no_show_party
-    )
+    return await build_session_response(db, session, uuid.UUID(user_id))
 
 @router.post("/sessions/{id}/leave", response_model=SessionResponse, summary="Leave session call")
 async def leave_session(
@@ -252,19 +239,7 @@ async def leave_session(
     user_id: str = Depends(get_current_user_id)
 ):
     session = await SessionsService.leave_session(db, uuid.UUID(id), uuid.UUID(user_id))
-    return SessionResponse(
-        id=str(session.id),
-        request_id=str(session.request_id),
-        student_id=str(session.student_id),
-        giver_id=str(session.giver_id),
-        scheduled_at=session.scheduled_at,
-        duration_minutes=session.duration_minutes,
-        room_url=session.room_url,
-        status=session.status,
-        student_joined_at=session.student_joined_at,
-        giver_joined_at=session.giver_joined_at,
-        no_show_party=session.no_show_party
-    )
+    return await build_session_response(db, session, uuid.UUID(user_id))
 
 @router.get("/sessions/{id}", response_model=SessionResponse, summary="Get session details")
 async def get_session(
@@ -276,19 +251,7 @@ async def get_session(
     s = (await db.execute(stmt)).scalar_one_or_none()
     if not s:
         raise AppError(code="session_not_found", message="Session not found", status_code=404)
-    return SessionResponse(
-        id=str(s.id),
-        request_id=str(s.request_id),
-        student_id=str(s.student_id),
-        giver_id=str(s.giver_id),
-        scheduled_at=s.scheduled_at,
-        duration_minutes=s.duration_minutes,
-        room_url=s.room_url,
-        status=s.status,
-        student_joined_at=s.student_joined_at,
-        giver_joined_at=s.giver_joined_at,
-        no_show_party=s.no_show_party
-    )
+    return await build_session_response(db, s, uuid.UUID(user_id))
 
 @router.get("/me/sessions", response_model=List[SessionResponse], summary="List my sessions")
 async def list_my_sessions(
@@ -298,21 +261,7 @@ async def list_my_sessions(
     uid = uuid.UUID(user_id)
     stmt = select(CallSession).where(or_(CallSession.student_id == uid, CallSession.giver_id == uid)).order_by(desc(CallSession.scheduled_at))
     items = (await db.execute(stmt)).scalars().all()
-    return [
-        SessionResponse(
-            id=str(s.id),
-            request_id=str(s.request_id),
-            student_id=str(s.student_id),
-            giver_id=str(s.giver_id),
-            scheduled_at=s.scheduled_at,
-            duration_minutes=s.duration_minutes,
-            room_url=s.room_url,
-            status=s.status,
-            student_joined_at=s.student_joined_at,
-            giver_joined_at=s.giver_joined_at,
-            no_show_party=s.no_show_party
-        ) for s in items
-    ]
+    return [await build_session_response(db, s, uid) for s in items]
 
 @router.post("/notifications/devices", response_model=DeviceTokenResponse, summary="Register device for push notifications")
 async def register_device(

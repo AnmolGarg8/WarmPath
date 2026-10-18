@@ -35,6 +35,7 @@ sqlite3.register_converter("UUID", lambda b: uuid.UUID(b.decode("utf-8")))
 
 SQLiteTypeCompiler.visit_ARRAY = lambda self, type_, **kw: "TEXT"
 SQLiteTypeCompiler.visit_JSONB = lambda self, type_, **kw: "TEXT"
+SQLiteTypeCompiler.visit_UUID = lambda self, type_, **kw: "TEXT"
 
 TEST_DB_URL = "sqlite+aiosqlite:///:memory:"
 MOCK_WEBHOOK_SECRET = "test_webhook_secret_key_12345"

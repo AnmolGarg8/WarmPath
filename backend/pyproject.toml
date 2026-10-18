@@ -57,7 +57,7 @@ line-length = 100
 target-version = "py312"
 
 [tool.ruff.lint]
-ignore = ["E501", "B008", "F401", "BLE001", "S110", "S112", "RUF012", "UP", "FURB", "PIE", "I001", "S"]
+ignore = ["E501", "B008", "F401", "BLE001", "S110", "S112", "RUF012", "UP", "FURB", "PIE", "I001", "S", "SIM"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

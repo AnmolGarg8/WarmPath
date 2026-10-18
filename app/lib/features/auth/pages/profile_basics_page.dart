@@ -53,7 +53,7 @@ class _ProfileBasicsPageState extends ConsumerState<ProfileBasicsPage> {
           );
 
       if (mounted) {
-        context.go('/profile');
+        context.go('/discover');
       }
     } on AppException catch (e) {
       setState(() => _errorMessage = e.message);

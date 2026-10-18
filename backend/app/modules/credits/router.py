@@ -15,18 +15,19 @@ Endpoints:
 import uuid
 from typing import Optional
 from fastapi import APIRouter, Depends, Header, Query
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.db import get_db
+from app.core.db import User, get_db
 from app.core.errors import AppError
 from app.core.security import decode_token
-from app.modules.credits.models import Plan, SponsoredSeat
+from app.modules.credits.models import CreditLot, Plan, SponsoredSeat
 from app.modules.credits.schemas import (
     AdminSponsoredSeatRequest,
     AdminSponsoredSeatResponse,
     CashoutRequest,
     CashoutResponse,
+    ClaimSponsoredSeatResponse,
     DonateCreditsRequest,
     DonateCreditsResponse,
     EarningsResponse,
@@ -158,26 +159,75 @@ async def get_sponsored_seats(
     except ValueError:
         u_uid = uuid.uuid4()
 
-    res = await db.execute(select(SponsoredSeat).where(SponsoredSeat.student_id == u_uid))
+    user = await db.get(User, u_uid)
+    user_inst_id = user.institution_id if user else None
+
+    # Query seats allocated to student OR available seats for student's institution / scholarship pool
+    stmt = select(SponsoredSeat).where(
+        (SponsoredSeat.student_id == u_uid)
+        | (
+            SponsoredSeat.student_id.is_(None)
+            & (
+                (SponsoredSeat.institution_id == user_inst_id)
+                | (SponsoredSeat.institution_id.is_(None))
+            )
+            & (SponsoredSeat.status == "available")
+        )
+    )
+    res = await db.execute(stmt)
     seats = res.scalars().all()
-    eligible = len(seats) > 0
-    seat_type = seats[0].plan_tier if eligible else None
-    return SponsoredSeatsEligibilityResponse(
-        eligible=eligible,
-        seat_type=seat_type,
-        seats=[
+
+    # Look up unconsumed credit lots for student to report real remaining credits
+    paid_acc = await CreditsService.get_or_create_account(db, u_uid, "user_paid")
+    lots_stmt = select(func.coalesce(func.sum(CreditLot.credits_remaining), 0)).where(
+        CreditLot.account_id == paid_acc.id,
+        CreditLot.credits_remaining > 0,
+    )
+    lots_sum = (await db.execute(lots_stmt)).scalar() or 0
+
+    seat_dtos = []
+    for s in seats:
+        is_mine = (s.student_id == u_uid)
+        rem_credits = int(lots_sum) if is_mine else s.credits_remaining
+        seat_dtos.append(
             SponsoredSeatInfo(
                 id=str(s.id),
                 institution_id=s.institution_id,
-                student_id=str(s.student_id),
+                student_id=str(s.student_id) if s.student_id else None,
                 plan_tier=s.plan_tier,
                 sponsor_name=s.sponsor_name,
                 funded_by=s.funded_by,
+                status=s.status if is_mine else "available",
+                credits_granted=s.credits_granted,
+                credits_remaining=rem_credits,
+                can_claim=(not is_mine and s.status == "available"),
                 created_at=s.created_at,
             )
-            for s in seats
-        ],
+        )
+
+    eligible = len(seat_dtos) > 0
+    seat_type = seat_dtos[0].plan_tier if eligible else None
+    return SponsoredSeatsEligibilityResponse(
+        eligible=eligible,
+        seat_type=seat_type,
+        seats=seat_dtos,
     )
+
+
+@router.post("/sponsored-seats/{id}/claim", response_model=ClaimSponsoredSeatResponse, summary="Claim an available sponsored seat")
+async def post_sponsored_seats_claim(
+    id: str,
+    user_id: str = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+):
+    """Claim an available sponsored seat for the authenticated student."""
+    async with db.begin():
+        res = await CreditsService.claim_sponsored_seat(
+            session=db,
+            user_id=user_id,
+            seat_id=id,
+        )
+    return ClaimSponsoredSeatResponse(**res)
 
 
 @router.post("/admin/sponsored-seats", response_model=AdminSponsoredSeatResponse, summary="Allocate sponsored seats for institution")

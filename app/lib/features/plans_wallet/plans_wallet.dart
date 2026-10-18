@@ -31,3 +31,5 @@ export 'pages/wallet_page.dart';
 export 'pages/earnings_page.dart';
 export 'plans_wallet_page.dart';
 export 'routes.dart';
+export 'utils/money_formatter.dart';
+

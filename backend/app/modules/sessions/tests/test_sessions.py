@@ -114,3 +114,96 @@ async def test_create_request_fails_when_safety_blocks_intent():
                 slot_start=None
             )
         assert exc_info.value.code == "intent_blocked"
+
+def test_giver_earnings_text():
+    assert SessionsService.get_giver_earnings_text(True) == "You earn Rs 175 if completed"
+    assert SessionsService.get_giver_earnings_text(False) == "Free campus session, you earn 1 affinity credit"
+
+@pytest.mark.asyncio
+async def test_join_session_enforces_join_window_before():
+    mock_session = AsyncMock()
+    session_id = uuid.uuid4()
+    student_id = uuid.uuid4()
+    giver_id = uuid.uuid4()
+
+    # Session scheduled 1 hour in future (outside 10 min window)
+    now = datetime.now(timezone.utc)
+    future_time = now + timedelta(hours=1)
+    call = CallSession(
+        id=session_id,
+        request_id=uuid.uuid4(),
+        student_id=student_id,
+        giver_id=giver_id,
+        scheduled_at=future_time,
+        duration_minutes=20,
+        room_url="https://meet.jit.si/test",
+        status="scheduled"
+    )
+
+    mock_execute = MagicMock()
+    mock_execute.scalar_one_or_none.return_value = call
+    mock_session.execute = AsyncMock(return_value=mock_execute)
+
+    with pytest.raises(AppError) as exc_info:
+        await SessionsService.join_session(mock_session, session_id, student_id)
+    assert exc_info.value.code == "session_not_open"
+    assert "Opens 10 minutes before the start" in exc_info.value.message or "Session opens 10 minutes" in exc_info.value.message
+
+@pytest.mark.asyncio
+async def test_join_session_enforces_join_window_ended():
+    mock_session = AsyncMock()
+    session_id = uuid.uuid4()
+    student_id = uuid.uuid4()
+    giver_id = uuid.uuid4()
+
+    # Session scheduled 2 hours in past (already ended)
+    now = datetime.now(timezone.utc)
+    past_time = now - timedelta(hours=2)
+    call = CallSession(
+        id=session_id,
+        request_id=uuid.uuid4(),
+        student_id=student_id,
+        giver_id=giver_id,
+        scheduled_at=past_time,
+        duration_minutes=20,
+        room_url="https://meet.jit.si/test",
+        status="scheduled"
+    )
+
+    mock_execute = MagicMock()
+    mock_execute.scalar_one_or_none.return_value = call
+    mock_session.execute = AsyncMock(return_value=mock_execute)
+
+    with pytest.raises(AppError) as exc_info:
+        await SessionsService.join_session(mock_session, session_id, student_id)
+    assert exc_info.value.code == "session_not_open"
+    assert "already ended" in exc_info.value.message
+
+@pytest.mark.asyncio
+async def test_join_session_allows_join_within_window():
+    mock_session = AsyncMock()
+    session_id = uuid.uuid4()
+    student_id = uuid.uuid4()
+    giver_id = uuid.uuid4()
+
+    # Session scheduled 5 mins from now (within 10 min window)
+    now = datetime.now(timezone.utc)
+    imminent_time = now + timedelta(minutes=5)
+    call = CallSession(
+        id=session_id,
+        request_id=uuid.uuid4(),
+        student_id=student_id,
+        giver_id=giver_id,
+        scheduled_at=imminent_time,
+        duration_minutes=20,
+        room_url="https://meet.jit.si/test",
+        status="scheduled"
+    )
+
+    mock_execute = MagicMock()
+    mock_execute.scalar_one_or_none.return_value = call
+    mock_session.execute = AsyncMock(return_value=mock_execute)
+
+    result = await SessionsService.join_session(mock_session, session_id, student_id)
+    assert result.status == "in_progress"
+    assert result.student_joined_at is not None

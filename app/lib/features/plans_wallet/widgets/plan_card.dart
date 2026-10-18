@@ -8,10 +8,12 @@ import '../../../core/theme/tokens.dart';
 import '../../../core/widgets/w_card.dart';
 import '../../../core/widgets/w_button.dart';
 import '../models/plan_model.dart';
+import '../utils/money_formatter.dart';
 
 class PlanCard extends StatelessWidget {
   final PlanModel plan;
   final bool isCurrentPlan;
+  final int currentPlanPriority;
   final bool isSubscribing;
   final VoidCallback? onSubscribe;
 
@@ -19,6 +21,7 @@ class PlanCard extends StatelessWidget {
     super.key,
     required this.plan,
     this.isCurrentPlan = false,
+    this.currentPlanPriority = 0,
     this.isSubscribing = false,
     this.onSubscribe,
   });
@@ -37,9 +40,20 @@ class PlanCard extends StatelessWidget {
     }
   }
 
+  String _ctaLabel() {
+    if (isCurrentPlan) {
+      return 'Current plan';
+    }
+    if (plan.priority > currentPlanPriority) {
+      return 'Upgrade';
+    }
+    return 'Downgrade';
+  }
+
   @override
   Widget build(BuildContext context) {
     final accent = _accentColor();
+    final ctaLabel = _ctaLabel();
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -117,7 +131,7 @@ class PlanCard extends StatelessWidget {
               textBaseline: TextBaseline.alphabetic,
               children: [
                 Text(
-                  plan.isFree ? '₹0' : '₹${plan.priceInr}',
+                  plan.isFree ? 'Rs 0' : formatInr(plan.priceInr),
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.w900,
@@ -137,7 +151,7 @@ class PlanCard extends StatelessWidget {
             ),
             const SizedBox(height: 14),
 
-            // Key Highlights: Credits, Reach, Booking Horizon, Priority
+            // Key Highlights: Credits, Reach, Booking Horizon, Priority, Refund Policy
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -151,8 +165,16 @@ class PlanCard extends StatelessWidget {
                     title: 'Monthly Allowance',
                     value: plan.creditsPerMonth > 0
                         ? '${plan.creditsPerMonth} Cross-College Credit${plan.creditsPerMonth > 1 ? 's' : ''}'
-                        : 'Unlimited Campus Connects',
+                        : 'Own-college alumni: free, within each mentor\'s capacity and your daily limit',
                   ),
+                  if (plan.creditsPerMonth > 0) ...[
+                    const Divider(height: 14, thickness: 0.5),
+                    _infoRow(
+                      icon: Icons.currency_rupee,
+                      title: 'Credit Value',
+                      value: '${formatInr(plan.creditValueInr)} per session',
+                    ),
+                  ],
                   const Divider(height: 14, thickness: 0.5),
                   _infoRow(
                     icon: Icons.hub_outlined,
@@ -171,31 +193,11 @@ class PlanCard extends StatelessWidget {
                     title: 'Queue Priority',
                     value: plan.plainPriority,
                   ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 14),
-
-            // Honest line about own college
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              decoration: BoxDecoration(
-                color: AppColors.teal.withOpacity(0.08),
-                borderRadius: AppRadii.badge,
-              ),
-              child: const Row(
-                children: [
-                  Icon(Icons.check_circle_outline, size: 16, color: AppColors.teal),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Honest guarantee: Own-college alumni access is 100% free on every plan.',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.teal,
-                      ),
-                    ),
+                  const Divider(height: 14, thickness: 0.5),
+                  _infoRow(
+                    icon: Icons.replay,
+                    title: 'Auto Refund',
+                    value: 'Credit returned if no reply in 72 hours',
                   ),
                 ],
               ),
@@ -227,17 +229,13 @@ class PlanCard extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-            // Action button
+            // Action button: "Current plan" (disabled), "Upgrade", or "Downgrade"
             SizedBox(
               width: double.infinity,
               child: WButton(
-                label: isCurrentPlan
-                    ? 'Active Plan'
-                    : plan.isFree
-                        ? 'Select Campus'
-                        : 'Subscribe for ₹${plan.priceInr}/mo',
+                label: ctaLabel,
                 backgroundColor: isCurrentPlan
-                    ? AppColors.slate.withOpacity(0.4)
+                    ? AppColors.slate.withOpacity(0.3)
                     : accent,
                 isLoading: isSubscribing,
                 onPressed: (isCurrentPlan || isSubscribing) ? null : onSubscribe,
