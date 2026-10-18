@@ -8,7 +8,7 @@ import math
 import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, List
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from httpx import ASGITransport, AsyncClient
@@ -254,11 +254,21 @@ def test_deterministic_why_lines_explainability():
     assert any("Online now" in line for line in why_lines)
 
 
-# --- Unit Tests: Hard Gates (Never Weights) ---
+def create_mock_session():
+    mock_session = MagicMock()
+    mock_session.execute = AsyncMock()
+    mock_session.commit = AsyncMock()
+    mock_session.flush = AsyncMock()
+    mock_session.rollback = AsyncMock()
+    mock_session.add = MagicMock()
+    mock_res = MagicMock()
+    mock_session.execute.return_value = mock_res
+    return mock_session
+
 
 @pytest.mark.asyncio
 async def test_hard_gates_exclude_unverified_and_restricted_givers():
-    mock_session = AsyncMock()
+    mock_session = create_mock_session()
 
     student_id = uuid.uuid4()
     giver_unverified_id = uuid.uuid4()
@@ -302,7 +312,7 @@ async def test_hard_gates_exclude_unverified_and_restricted_givers():
 
 @pytest.mark.asyncio
 async def test_hard_gates_exclude_blocked_and_zero_capacity_givers():
-    mock_session = AsyncMock()
+    mock_session = create_mock_session()
 
     student_id = uuid.uuid4()
     giver_blocked_id = uuid.uuid4()
@@ -343,7 +353,7 @@ async def test_hard_gates_exclude_blocked_and_zero_capacity_givers():
 
 @pytest.mark.asyncio
 async def test_exposure_cap_excludes_flooded_givers():
-    mock_session = AsyncMock()
+    mock_session = create_mock_session()
     student_id = uuid.uuid4()
     flooded_giver_id = uuid.uuid4()
     normal_giver_id = uuid.uuid4()
@@ -379,7 +389,7 @@ async def test_exposure_cap_excludes_flooded_givers():
 
 @pytest.mark.asyncio
 async def test_locked_cross_college_results_when_plan_required():
-    mock_session = AsyncMock()
+    mock_session = create_mock_session()
     student_id = uuid.uuid4()
     cross_giver_id = uuid.uuid4()
 

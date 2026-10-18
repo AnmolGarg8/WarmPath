@@ -21,11 +21,11 @@ class ScamWarningBanner extends StatelessWidget {
 
     final isSevere = action == 'block' || action == 'review';
     final bgColor = isSevere
-        ? Colors.red.withValues(alpha: 0.12)
-        : AppColors.amber.withValues(alpha: 0.14);
+        ? Colors.red.withOpacity(0.12)
+        : AppColors.amber.withOpacity(0.14);
     final borderColor = isSevere
-        ? Colors.red.withValues(alpha: 0.4)
-        : AppColors.amber.withValues(alpha: 0.4);
+        ? Colors.red.withOpacity(0.4)
+        : AppColors.amber.withOpacity(0.4);
     final iconColor = isSevere ? Colors.red : AppColors.amber;
     final textColor = isSevere ? const Color(0xFF991B1B) : const Color(0xFF92400E);
 
@@ -60,7 +60,7 @@ class ScamWarningBanner extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   message,
-                  style: TextStyle(fontSize: 12, color: textColor.withValues(alpha: 0.9)),
+                  style: TextStyle(fontSize: 12, color: textColor.withOpacity(0.9)),
                 ),
               ],
             ),

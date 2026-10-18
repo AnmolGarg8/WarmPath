@@ -180,9 +180,9 @@ class _VerificationPageState extends ConsumerState<VerificationPage> {
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: AppColors.teal.withValues(alpha: 0.12),
+                  color: AppColors.teal.withOpacity(0.12),
                   borderRadius: AppRadii.card,
-                  border: Border.all(color: AppColors.teal.withValues(alpha: 0.4)),
+                  border: Border.all(color: AppColors.teal.withOpacity(0.4)),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -353,9 +353,9 @@ class _VerificationPageState extends ConsumerState<VerificationPage> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Colors.red.withValues(alpha: 0.08),
+                          color: Colors.red.withOpacity(0.08),
                           borderRadius: AppRadii.card,
-                          border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+                          border: Border.all(color: Colors.red.withOpacity(0.3)),
                         ),
                         child: Text(
                           _formError!,

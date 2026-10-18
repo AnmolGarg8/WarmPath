@@ -21,7 +21,7 @@ class DemoBanner extends ConsumerWidget {
             color: AppColors.amber,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.08),
+                color: Colors.black.withOpacity(0.08),
                 offset: const Offset(0, 2),
                 blurRadius: 4,
               ),
@@ -70,9 +70,9 @@ class TestModeBanner extends ConsumerWidget {
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
           decoration: BoxDecoration(
-            color: AppColors.teal.withValues(alpha: 0.12),
+            color: AppColors.teal.withOpacity(0.12),
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: AppColors.teal.withValues(alpha: 0.4)),
+            border: Border.all(color: AppColors.teal.withOpacity(0.4)),
           ),
           child: const Row(
             mainAxisSize: MainAxisSize.min,
@@ -116,9 +116,9 @@ class BandThresholdNotice extends ConsumerWidget {
           margin: const EdgeInsets.symmetric(vertical: 8),
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: AppColors.amber.withValues(alpha: 0.12),
+            color: AppColors.amber.withOpacity(0.12),
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: AppColors.amber.withValues(alpha: 0.4)),
+            border: Border.all(color: AppColors.amber.withOpacity(0.4)),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,

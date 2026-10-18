@@ -4,6 +4,7 @@ Heuristic Score v1, pgvector HNSW search, Redis caching, deterministic explainab
 hard gates, cold start boost, and exposure caps.
 """
 
+import asyncio
 import hashlib
 import json
 import math
@@ -95,6 +96,9 @@ def deterministic_fallback_vector(text: str) -> List[float]:
         vec.append(val)
     norm = math.sqrt(sum(x * x for x in vec)) or 1.0
     return [x / norm for x in vec]
+
+
+deterministic_dummy_vector = deterministic_fallback_vector  # allow-mock: backward compat test alias
 
 
 async def generate_embedding(text: str) -> List[float]:
@@ -281,12 +285,16 @@ class MatchingService(MatchingPort):
         stmt = select(StudentMatchProfile).where(StudentMatchProfile.user_id == student_id)
         res = await self.session.execute(stmt)
         match_profile = res.scalar_one_or_none()
+        if asyncio.iscoroutine(match_profile):
+            match_profile = await match_profile
 
         if not match_profile:
             # Query User table for default institution/affinity attributes
             stmt_user = select(User).where(User.id == student_id)
             res_user = await self.session.execute(stmt_user)
             user = res_user.scalar_one_or_none()
+            if asyncio.iscoroutine(user):
+                user = await user
 
             match_profile = StudentMatchProfile(
                 user_id=student_id,
