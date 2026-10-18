@@ -77,6 +77,10 @@ test_session_maker = async_sessionmaker(test_engine, class_=AsyncSession, expire
 @pytest_asyncio.fixture(scope="session", loop_scope="session", autouse=True)
 async def init_test_db():
     async with test_engine.begin() as conn:
+        if "sqlite" not in TEST_DB_URL:
+            from sqlalchemy import text
+            await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
+            await conn.execute(text("CREATE EXTENSION IF NOT EXISTS pg_trgm;"))
         await conn.run_sync(Base.metadata.create_all)
     yield
     async with test_engine.begin() as conn:

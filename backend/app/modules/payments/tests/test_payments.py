@@ -20,7 +20,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.core.db import IdempotencyKey, OutboxEvent
+from app.core.db import IdempotencyKey, OutboxEvent, User
 from app.core.errors import AppError
 from app.modules.payments.client import RazorpayClientWrapper
 from app.modules.payments.models import (
@@ -510,6 +510,26 @@ async def test_cashout_simulation_and_admin_approval(
     3. Admin approval sets status to 'paid' and publishes payout.disbursed.
     """
     giver_uid = uuid.UUID(GIVER_ID)
+
+    # Ensure giver is verified
+    u = await db_session.get(User, giver_uid)
+    if not u:
+        u = User(
+            id=giver_uid,
+            email="giver@test.com",
+            full_name="Giver User",
+            trust_level="verified",
+            roles=["alumnus"],
+        )
+        db_session.add(u)
+        await db_session.commit()
+    elif u.trust_level != "verified":
+        u.trust_level = "verified"
+        await db_session.commit()
+
+    from app.core.ports import ports
+    from unittest.mock import AsyncMock
+    ports.trust.get_level = AsyncMock(return_value="verified")
 
     # 1. Attempt cashout with 0 available earnings -> 400
     res_fail = await client.post(

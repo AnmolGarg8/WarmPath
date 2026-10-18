@@ -191,7 +191,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                 children: [
                   CircleAvatar(
                     radius: 32,
-                    backgroundColor: AppColors.deepIndigo.withValues(alpha: 0.12),
+                    backgroundColor: AppColors.deepIndigo.withOpacity(0.12),
                     child: Text(
                       displayName.isNotEmpty ? displayName[0].toUpperCase() : 'U',
                       style: const TextStyle(

@@ -15,9 +15,9 @@ class TestModeBanner extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
-        color: AppColors.amber.withValues(alpha: 0.15),
+        color: AppColors.amber.withOpacity(0.15),
         borderRadius: AppRadii.badge,
-        border: Border.all(color: AppColors.amber.withValues(alpha: 0.4)),
+        border: Border.all(color: AppColors.amber.withOpacity(0.4)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
