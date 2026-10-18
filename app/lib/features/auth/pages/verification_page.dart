@@ -230,7 +230,7 @@ class _VerificationPageState extends ConsumerState<VerificationPage> {
                     ),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<String>(
-                      initialValue: _selectedKind,
+                      value: _selectedKind,
                       decoration: const InputDecoration(
                         filled: true,
                         fillColor: AppColors.surface,
