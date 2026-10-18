@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../../../core/api/dio_client.dart';
 import '../models/discover_models.dart';
 import '../services/discover_service.dart';
 
@@ -45,7 +46,11 @@ class PaginationController extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       isLoading = false;
-      error = e.toString();
+      if (e is AppException) {
+        error = '${e.code}: ${e.message}';
+      } else {
+        error = e.toString();
+      }
       notifyListeners();
     }
   }
@@ -72,7 +77,11 @@ class PaginationController extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       isLoadingMore = false;
-      error = e.toString();
+      if (e is AppException) {
+        error = '${e.code}: ${e.message}';
+      } else {
+        error = e.toString();
+      }
       notifyListeners();
     }
   }

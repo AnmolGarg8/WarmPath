@@ -124,7 +124,7 @@ async def get_me_giver_profile(
 )
 async def get_recommendations(
     request: Request,
-    scope: str = Query("own_college", regex="^(own_college|cross_college|experts)$"),
+    scope: str = Query("own_college", pattern="^(own_college|cross_college|experts)$"),
     limit: int = Query(10, ge=1, le=50),
     cursor: Optional[str] = Query(None),
     filter_domain: Optional[str] = Query(None),

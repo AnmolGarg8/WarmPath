@@ -13,8 +13,10 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from httpx import ASGITransport, AsyncClient
 
+from app.core.db import User
 from app.core.errors import AppError
 from app.core.ports import ports
+from app.core.security import create_access_token
 from app.main import app
 from app.modules.matching.models import GiverProfile, StudentMatchProfile
 from app.modules.matching.schemas import GiverProfileCreateUpdate, ScoreComponents
@@ -30,6 +32,8 @@ from app.modules.matching.service import (
     MatchingService,
     cosine_similarity,
     deterministic_dummy_vector,
+    is_giver_locked_for_student,
+    resolve_verification_badges,
 )
 
 
@@ -73,15 +77,16 @@ class MockRatingsPort:
 
 
 class MockCreditsPort:
-    def __init__(self, can_access_allowed: bool = True, reason: str = "ok"):
+    def __init__(self, can_access_allowed: bool = True, reason: str = "ok", plan: str = "Standard"):
         self.can_access_allowed = can_access_allowed
         self.reason = reason
+        self.plan = plan
 
     async def can_access(self, student_id: str, giver_id: str) -> Dict[str, Any]:
         return {
             "allowed": self.can_access_allowed,
             "reason": self.reason,
-            "plan": "Standard",
+            "plan": self.plan,
             "cost": 1,
         }
 
@@ -411,7 +416,7 @@ async def test_locked_cross_college_results_when_plan_required():
     ports.trust = MockTrustPort()
     ports.presence = MockPresencePort()
     ports.ratings = MockRatingsPort()
-    ports.credits = MockCreditsPort(can_access_allowed=False, reason="plan_required")
+    ports.credits = MockCreditsPort(can_access_allowed=False, reason="plan_required", plan="campus")
 
     resp = await service.get_recommendations(student_id=student_id, scope="cross_college")
 
@@ -425,6 +430,124 @@ async def test_locked_cross_college_results_when_plan_required():
     assert "Subscribe" in item.giver.bio
 
 
+# --- Unit Tests: Gating Matrix, Badges, and Rating Rules ---
+
+def test_resolve_verification_badges():
+    # Faculty
+    u_fac = User(roles=["faculty"], badges=[])
+    assert resolve_verification_badges(u_fac) == ["Verified Faculty"]
+
+    # Recruiter / Employer
+    u_rec = User(roles=["recruiter"], badges=[])
+    assert resolve_verification_badges(u_rec) == ["Verified Employer"]
+
+    # Expert
+    u_exp = User(roles=["expert"], badges=[])
+    assert resolve_verification_badges(u_exp) == ["Verified Expert"]
+
+    # Alumnus
+    u_alum = User(roles=["alumnus"], badges=[])
+    assert resolve_verification_badges(u_alum) == ["Verified Alumnus"]
+
+    # Explicit badges on user take precedence
+    u_custom = User(roles=["student"], badges=["Verified Employer"])
+    assert resolve_verification_badges(u_custom) == ["Verified Employer"]
+
+    # User with no recognized role/badge returns empty list, never defaults to Verified Alumnus
+    u_none = User(roles=["student"], badges=[])
+    assert resolve_verification_badges(u_none) == []
+    assert resolve_verification_badges(None) == []
+
+
+def test_is_giver_locked_for_student_gating_matrix():
+    # 1. Own college is always unlocked
+    locked, reason = is_giver_locked_for_student(
+        student_plan="campus", scope="own_college", giver_roles=["alumnus"], giver_band="Rising"
+    )
+    assert locked is False
+    assert reason is None
+
+    # 2. Campus (free) user gets locked=True for cross-college and experts
+    locked, reason = is_giver_locked_for_student(
+        student_plan="campus", scope="cross_college", giver_roles=["alumnus"], giver_band="Rising"
+    )
+    assert locked is True
+    assert reason == "plan_required"
+
+    locked, reason = is_giver_locked_for_student(
+        student_plan="campus", scope="experts", giver_roles=["expert"], giver_band="Top Rated"
+    )
+    assert locked is True
+    assert reason == "plan_required"
+
+    # 3. Standard user sees only Rising givers unlocked; Trusted, Top Rated, and Experts locked
+    locked_rising, _ = is_giver_locked_for_student(
+        student_plan="standard", scope="cross_college", giver_roles=["alumnus"], giver_band="Rising"
+    )
+    assert locked_rising is False
+
+    locked_trusted, _ = is_giver_locked_for_student(
+        student_plan="standard", scope="cross_college", giver_roles=["alumnus"], giver_band="Trusted"
+    )
+    assert locked_trusted is True
+
+    locked_top, _ = is_giver_locked_for_student(
+        student_plan="standard", scope="cross_college", giver_roles=["alumnus"], giver_band="Top Rated"
+    )
+    assert locked_top is True
+
+    locked_expert, _ = is_giver_locked_for_student(
+        student_plan="standard", scope="experts", giver_roles=["expert"], giver_band="Rising"
+    )
+    assert locked_expert is True
+
+    # 4. High sees Rising and Trusted unlocked; Top Rated and Experts locked
+    locked_high_rising, _ = is_giver_locked_for_student(
+        student_plan="high", scope="cross_college", giver_roles=["alumnus"], giver_band="Rising"
+    )
+    assert locked_high_rising is False
+
+    locked_high_trusted, _ = is_giver_locked_for_student(
+        student_plan="high", scope="cross_college", giver_roles=["alumnus"], giver_band="Trusted"
+    )
+    assert locked_high_trusted is False
+
+    locked_high_top, _ = is_giver_locked_for_student(
+        student_plan="high", scope="cross_college", giver_roles=["alumnus"], giver_band="Top Rated"
+    )
+    assert locked_high_top is True
+
+    # 5. Premium sees all unlocked
+    locked_prem_top, _ = is_giver_locked_for_student(
+        student_plan="premium", scope="cross_college", giver_roles=["alumnus"], giver_band="Top Rated"
+    )
+    assert locked_prem_top is False
+
+    locked_prem_expert, _ = is_giver_locked_for_student(
+        student_plan="premium", scope="experts", giver_roles=["expert"], giver_band="Top Rated"
+    )
+    assert locked_prem_expert is False
+
+
+def test_rating_rule_fewer_than_five_sessions_sanitizes_top_rated():
+    # If sessions < 5, band is sanitized and why-line never shows Top Rated
+    service = MatchingService(session=MagicMock())
+    student = StudentMatchProfile(user_id=uuid.uuid4(), skills=[], domains=[])
+    giver = GiverProfile(user_id=uuid.uuid4(), skills=[], domains=[], offers=[])
+    scores = ScoreComponents(
+        expertise_fit=0.8, intent_fit=0.8, affinity=0.5, availability=0.8,
+        rating=0.8, response_odds=0.8, total_score=0.8
+    )
+
+    # Giver claims Top Rated but has only 3 rated sessions
+    band_info = {"band": "Top Rated", "smoothed_avg": 4.9, "n": 3, "completion_rate": 1.0}
+    pres = {"online": True, "capacity_left": 3}
+
+    why_lines = service.generate_why_lines(student, giver, scores, pres, band_info)
+    # Must NOT claim Top Rated with smoothed rating
+    assert not any("Top Rated" in line for line in why_lines)
+
+
 # --- Integration HTTP Router Tests ---
 
 @pytest.mark.asyncio
@@ -433,11 +556,12 @@ async def test_get_recommendations_unverified_student_forbidden():
     unverified_student_id = str(uuid.uuid4())
 
     ports.trust = MockTrustPort(levels={unverified_student_id: "new"})
+    token = create_access_token(unverified_student_id)
 
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         res = await client.get(
             "/recommendations",
-            headers={"X-User-Id": unverified_student_id},
+            headers={"Authorization": f"Bearer {token}", "X-User-Id": unverified_student_id},
         )
         assert res.status_code == 403
         data = res.json()
@@ -451,6 +575,7 @@ async def test_put_me_giver_profile_without_giver_role_forbidden():
 
     # Trust level is new and user has only student role
     ports.trust = MockTrustPort(levels={student_only_id: "new"})
+    token = create_access_token(student_only_id)
 
     payload = {
         "offers": ["resume_review"],
@@ -462,7 +587,7 @@ async def test_put_me_giver_profile_without_giver_role_forbidden():
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         res = await client.put(
             "/me/giver-profile",
-            headers={"X-User-Id": student_only_id},
+            headers={"Authorization": f"Bearer {token}", "X-User-Id": student_only_id},
             json=payload,
         )
         assert res.status_code == 403
@@ -478,6 +603,7 @@ async def test_get_giver_public_card_masks_contact_details():
     ports.trust = MockTrustPort()
     ports.presence = MockPresencePort()
     ports.ratings = MockRatingsPort()
+    token = create_access_token(str(student_id))
 
     with patch("app.modules.matching.service.MatchingService.get_giver_profile") as mock_get_profile:
         mock_get_profile.return_value = GiverProfile(
@@ -495,7 +621,7 @@ async def test_get_giver_public_card_masks_contact_details():
         async with AsyncClient(transport=transport, base_url="http://test") as client:
             res = await client.get(
                 f"/givers/{giver_id}",
-                headers={"X-User-Id": str(student_id)},
+                headers={"Authorization": f"Bearer {token}", "X-User-Id": str(student_id)},
             )
             assert res.status_code == 200
             data = res.json()
