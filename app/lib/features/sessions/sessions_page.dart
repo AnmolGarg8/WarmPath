@@ -133,15 +133,23 @@ class _SessionsPageState extends ConsumerState<SessionsPage> {
         foregroundColor: AppColors.textDark,
         elevation: 0,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.mark_chat_unread_outlined, color: AppColors.teal),
-            tooltip: 'Mentorship Inbox',
-            onPressed: () => context.push('/inbox').then((_) => _loadSessions()),
+          Semantics(
+            label: 'Mentorship Inbox',
+            button: true,
+            child: IconButton(
+              icon: const Icon(Icons.mark_chat_unread_outlined, color: AppColors.teal),
+              tooltip: 'Mentorship Inbox',
+              onPressed: () => context.push('/inbox').then((_) => _loadSessions()),
+            ),
           ),
-          IconButton(
-            icon: const Icon(Icons.schedule_outlined, color: AppColors.primaryAction),
-            tooltip: 'Availability & Capacity',
-            onPressed: () => context.push('/availability').then((_) => _loadSessions()),
+          Semantics(
+            label: 'Availability & Capacity',
+            button: true,
+            child: IconButton(
+              icon: const Icon(Icons.schedule_outlined, color: AppColors.primaryAction),
+              tooltip: 'Availability & Capacity',
+              onPressed: () => context.push('/availability').then((_) => _loadSessions()),
+            ),
           ),
         ],
       ),
