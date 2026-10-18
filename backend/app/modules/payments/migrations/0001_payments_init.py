@@ -42,7 +42,7 @@ def upgrade() -> None:
         sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("event_id", sa.String(length=100), nullable=False),
         sa.Column("event_type", sa.String(length=100), nullable=False),
-        sa.Column("payload", postgresql.JSONB(as_json=True), nullable=False),
+        sa.Column("payload", postgresql.JSONB(), nullable=False),
         sa.Column("received_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("processed_at", sa.DateTime(timezone=True), nullable=True),
         sa.PrimaryKeyConstraint("id"),
