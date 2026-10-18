@@ -99,141 +99,144 @@ class DemoScaffold extends ConsumerWidget {
 
             // 2. Top App Bar with Chapter Selector, Clock, and Exit
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: const BoxDecoration(
                 color: Colors.white,
                 border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
               ),
-              child: Row(
-                children: [
-                  // Chapter Menu Picker
-                  PopupMenuButton<int>(
-                    tooltip: 'Jump to Chapter',
-                    onSelected: (idx) => controller.jumpToChapter(idx),
-                    itemBuilder: (context) {
-                      return List.generate(demoChaptersRegistry.length, (i) {
-                        final ch = demoChaptersRegistry[i];
-                        final isSelected = i == state.chapterIndex;
-                        return PopupMenuItem<int>(
-                          value: i,
-                          child: Row(
-                            children: [
-                              Icon(
-                                isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
-                                size: 16,
-                                color: isSelected ? const Color(0xFF1E3A8A) : Colors.grey,
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  'Ch ${i + 1}: ${ch.title}',
-                                  style: TextStyle(
-                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                    fontSize: 13,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    // Chapter Menu Picker
+                    PopupMenuButton<int>(
+                      tooltip: 'Jump to Chapter',
+                      onSelected: (idx) => controller.jumpToChapter(idx),
+                      itemBuilder: (context) {
+                        return List.generate(demoChaptersRegistry.length, (i) {
+                          final ch = demoChaptersRegistry[i];
+                          final isSelected = i == state.chapterIndex;
+                          return PopupMenuItem<int>(
+                            value: i,
+                            child: Row(
+                              children: [
+                                Icon(
+                                  isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+                                  size: 16,
+                                  color: isSelected ? const Color(0xFF1E3A8A) : Colors.grey,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'Ch ${i + 1}: ${ch.title}',
+                                    style: TextStyle(
+                                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                      fontSize: 13,
+                                    ),
                                   ),
                                 ),
+                              ],
+                            ),
+                          );
+                        });
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEFF6FF),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: const Color(0xFFBFDBFE)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.menu_book_rounded, size: 16, color: Color(0xFF1E3A8A)),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Ch ${state.chapterIndex + 1}/${demoChaptersRegistry.length}',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF1E3A8A),
                               ),
-                            ],
-                          ),
-                        );
-                      });
-                    },
-                    child: Container(
+                            ),
+                            const Icon(Icons.arrow_drop_down, size: 18, color: Color(0xFF1E3A8A)),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(width: 10),
+
+                    // Virtual Clock Badge
+                    Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEFF6FF),
+                        color: const Color(0xFFF1F5F9),
                         borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: const Color(0xFFBFDBFE)),
+                        border: Border.all(color: const Color(0xFFCBD5E1)),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.menu_book_rounded, size: 16, color: Color(0xFF1E3A8A)),
+                          const Icon(Icons.access_time_filled, size: 14, color: Color(0xFF475569)),
                           const SizedBox(width: 6),
                           Text(
-                            'Ch ${state.chapterIndex + 1}/${demoChaptersRegistry.length}',
+                            state.virtualClock.format(),
                             style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF1E3A8A),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF334155),
                             ),
                           ),
-                          const Icon(Icons.arrow_drop_down, size: 18, color: Color(0xFF1E3A8A)),
                         ],
                       ),
                     ),
-                  ),
 
-                  const SizedBox(width: 12),
+                    const SizedBox(width: 10),
 
-                  // Virtual Clock Badge
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF1F5F9),
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: const Color(0xFFCBD5E1)),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.access_time_filled, size: 14, color: Color(0xFF475569)),
-                        const SizedBox(width: 6),
-                        Text(
-                          state.virtualClock.format(),
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF334155),
+                    // Fast-Forward 48 Hours Button (for Escrow & Dispute Window)
+                    OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                        side: const BorderSide(color: Color(0xFF0F766E)),
+                        foregroundColor: const Color(0xFF0F766E),
+                      ),
+                      icon: const Icon(Icons.fast_forward_rounded, size: 14),
+                      label: const Text(
+                        '+48h Dispute',
+                        style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold),
+                      ),
+                      onPressed: () {
+                        controller.fastForward48Hours();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'Fast-forwarded 48 hours to: ${state.virtualClock.format()}. Escrow dispute window expired.',
+                            ),
+                            duration: const Duration(seconds: 2),
                           ),
-                        ),
-                      ],
+                        );
+                      },
                     ),
-                  ),
 
-                  const Spacer(),
+                    const SizedBox(width: 6),
 
-                  // Fast-Forward 48 Hours Button (for Escrow & Dispute Window)
-                  OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                      side: const BorderSide(color: Color(0xFF0F766E)),
-                      foregroundColor: const Color(0xFF0F766E),
+                    // Reset Walkthrough Button
+                    IconButton(
+                      icon: const Icon(Icons.refresh_rounded, size: 20, color: Color(0xFF64748B)),
+                      tooltip: 'Reset Demo',
+                      onPressed: () => _showResetConfirmation(context, ref),
                     ),
-                    icon: const Icon(Icons.fast_forward_rounded, size: 14),
-                    label: const Text(
-                      '+48h Dispute',
-                      style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold),
+
+                    // Exit to App Button
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded, size: 22, color: Color(0xFF64748B)),
+                      tooltip: 'Exit Demo',
+                      onPressed: () => _showExitConfirmation(context),
                     ),
-                    onPressed: () {
-                      controller.fastForward48Hours();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            'Fast-forwarded 48 hours to: ${state.virtualClock.format()}. Escrow dispute window expired.',
-                          ),
-                          duration: const Duration(seconds: 2),
-                        ),
-                      );
-                    },
-                  ),
-
-                  const SizedBox(width: 8),
-
-                  // Reset Walkthrough Button
-                  IconButton(
-                    icon: const Icon(Icons.refresh_rounded, size: 20, color: Color(0xFF64748B)),
-                    tooltip: 'Reset Demo',
-                    onPressed: () => _showResetConfirmation(context, ref),
-                  ),
-
-                  // Exit to App Button
-                  IconButton(
-                    icon: const Icon(Icons.close_rounded, size: 22, color: Color(0xFF64748B)),
-                    tooltip: 'Exit Demo',
-                    onPressed: () => _showExitConfirmation(context),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
 

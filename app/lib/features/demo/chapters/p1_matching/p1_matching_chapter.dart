@@ -247,9 +247,12 @@ class _ResumeSkillsStepWidget extends StatelessWidget {
                       children: [
                         Icon(Icons.description_outlined, size: 18, color: Color(0xFF1E3A8A)),
                         SizedBox(width: 8),
-                        Text(
-                          'Uploaded Document: Riya_Resume_2026.pdf (Sample)',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                        Expanded(
+                          child: Text(
+                            'Uploaded Document: Riya_Resume_2026.pdf (Sample)',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                       ],
                     ),
@@ -421,9 +424,12 @@ class _RankedRecommendationsStepWidget extends StatelessWidget {
                             children: [
                               Row(
                                 children: [
-                                  Text(
-                                    persona.name,
-                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                                  Flexible(
+                                    child: Text(
+                                      persona.name,
+                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
                                   ),
                                   const SizedBox(width: 6),
                                   if (persona.isOnline)
