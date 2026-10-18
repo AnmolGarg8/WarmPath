@@ -260,7 +260,7 @@ class _ConnectPageState extends ConsumerState<ConnectPage> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Booking horizon: \${widget.studentPlan == "Premium" ? "30 days" : widget.studentPlan == "High" ? "14 days" : "3 days"}',
+                    'Booking horizon: ${widget.studentPlan == "Premium" ? "30 days" : widget.studentPlan == "High" ? "14 days" : "3 days"}',
                     style: const TextStyle(fontSize: 12, color: AppColors.slate),
                   ),
                   const SizedBox(height: 12),

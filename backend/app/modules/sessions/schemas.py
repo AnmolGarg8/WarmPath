@@ -8,6 +8,15 @@ class RequestCreate(BaseModel):
     intent_text: str = Field(..., min_length=5, max_length=2000)
     slot_start: Optional[datetime] = None
 
+class CounterpartSummary(BaseModel):
+    id: str
+    display_name: str
+    headline: Optional[str] = None
+    avatar_url: Optional[str] = None
+    role: Optional[str] = None  # "Giver" or "Student"
+    badges: List[str] = []
+    band: Optional[str] = None
+
 class RequestResponse(BaseModel):
     id: str
     student_id: str
@@ -20,6 +29,8 @@ class RequestResponse(BaseModel):
     plan_name: Optional[str] = None
     is_cross_college: bool
     created_at: datetime
+    counterpart: Optional[CounterpartSummary] = None
+    giver_earnings_text: Optional[str] = None
 
 class DeclineRequest(BaseModel):
     reason: Optional[str] = None
@@ -53,6 +64,10 @@ class SessionResponse(BaseModel):
     student_joined_at: Optional[datetime] = None
     giver_joined_at: Optional[datetime] = None
     no_show_party: Optional[str] = None
+    counterpart: Optional[CounterpartSummary] = None
+    topic: Optional[str] = None
+    student_rating_stars: Optional[int] = None
+    giver_rated_quality: Optional[bool] = False
 
 class DeviceTokenCreate(BaseModel):
     fcm_token: str

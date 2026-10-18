@@ -50,7 +50,7 @@ class _DisputeDialogState extends State<DisputeDialog> {
       setState(() => _isSubmitting = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Dispute submission failed: \$e')),
+          SnackBar(content: Text('Dispute submission failed: $e')),
         );
       }
     }

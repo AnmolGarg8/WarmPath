@@ -1,3 +1,35 @@
+class CounterpartSummary {
+  final String id;
+  final String displayName;
+  final String? headline;
+  final String? avatarUrl;
+  final String? role; // 'Giver' or 'Student'
+  final List<String> badges;
+  final String? band; // 'Rising', 'Trusted', 'Top Rated'
+
+  const CounterpartSummary({
+    required this.id,
+    required this.displayName,
+    this.headline,
+    this.avatarUrl,
+    this.role,
+    this.badges = const [],
+    this.band,
+  });
+
+  factory CounterpartSummary.fromJson(Map<String, dynamic> json) {
+    return CounterpartSummary(
+      id: json['id']?.toString() ?? '',
+      displayName: json['display_name']?.toString() ?? 'WarmPath Member',
+      headline: json['headline']?.toString(),
+      avatarUrl: json['avatar_url']?.toString(),
+      role: json['role']?.toString(),
+      badges: (json['badges'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? const [],
+      band: json['band']?.toString(),
+    );
+  }
+}
+
 class MentorshipRequest {
   final String id;
   final String studentId;
@@ -10,6 +42,8 @@ class MentorshipRequest {
   final String? planName;
   final bool isCrossCollege;
   final DateTime createdAt;
+  final CounterpartSummary? counterpart;
+  final String? giverEarningsText;
 
   const MentorshipRequest({
     required this.id,
@@ -23,6 +57,8 @@ class MentorshipRequest {
     this.planName,
     this.isCrossCollege = false,
     required this.createdAt,
+    this.counterpart,
+    this.giverEarningsText,
   });
 
   factory MentorshipRequest.fromJson(Map<String, dynamic> json) {
@@ -40,6 +76,8 @@ class MentorshipRequest {
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'].toString()) ?? DateTime.now()
           : DateTime.now(),
+      counterpart: json['counterpart'] != null ? CounterpartSummary.fromJson(json['counterpart'] as Map<String, dynamic>) : null,
+      giverEarningsText: json['giver_earnings_text']?.toString(),
     );
   }
 }
@@ -56,6 +94,10 @@ class CallSession {
   final DateTime? studentJoinedAt;
   final DateTime? giverJoinedAt;
   final String? noShowParty;
+  final CounterpartSummary? counterpart;
+  final String? topic;
+  final int? studentRatingStars;
+  final bool giverRatedQuality;
 
   const CallSession({
     required this.id,
@@ -69,6 +111,10 @@ class CallSession {
     this.studentJoinedAt,
     this.giverJoinedAt,
     this.noShowParty,
+    this.counterpart,
+    this.topic,
+    this.studentRatingStars,
+    this.giverRatedQuality = false,
   });
 
   factory CallSession.fromJson(Map<String, dynamic> json) {
@@ -86,6 +132,10 @@ class CallSession {
       studentJoinedAt: json['student_joined_at'] != null ? DateTime.tryParse(json['student_joined_at'].toString()) : null,
       giverJoinedAt: json['giver_joined_at'] != null ? DateTime.tryParse(json['giver_joined_at'].toString()) : null,
       noShowParty: json['no_show_party']?.toString(),
+      counterpart: json['counterpart'] != null ? CounterpartSummary.fromJson(json['counterpart'] as Map<String, dynamic>) : null,
+      topic: json['topic']?.toString(),
+      studentRatingStars: json['student_rating_stars'] as int?,
+      giverRatedQuality: json['giver_rated_quality'] as bool? ?? false,
     );
   }
 }

@@ -204,6 +204,22 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SessionResponse'
+        '400':
+          description: Session not open (outside join window or already ended)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: session_not_open
+                      message:
+                        type: string
+                        example: Session opens 10 minutes before the start
   /sessions/{id}/leave:
     post:
       summary: Leave session call
@@ -329,6 +345,33 @@ components:
         created_at:
           type: string
           format: date-time
+        counterpart:
+          $ref: '#/components/schemas/CounterpartSummary'
+        giver_earnings_text:
+          type: string
+    CounterpartSummary:
+      type: object
+      required:
+        - id
+        - display_name
+      properties:
+        id:
+          type: string
+        display_name:
+          type: string
+        headline:
+          type: string
+        avatar_url:
+          type: string
+        role:
+          type: string
+          enum: [Giver, Student]
+        badges:
+          type: array
+          items:
+            type: string
+        band:
+          type: string
     DeclineRequest:
       type: object
       properties:
@@ -420,6 +463,14 @@ components:
           format: date-time
         no_show_party:
           type: string
+        counterpart:
+          $ref: '#/components/schemas/CounterpartSummary'
+        topic:
+          type: string
+        student_rating_stars:
+          type: integer
+        giver_rated_quality:
+          type: boolean
     DeviceTokenCreate:
       type: object
       required:

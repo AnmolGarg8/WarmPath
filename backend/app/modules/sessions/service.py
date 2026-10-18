@@ -7,11 +7,13 @@ from sqlalchemy import select, update, and_, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.core.db import User
 from app.core.errors import AppError
 from app.core.ports import ports
 from app.core.redis import get_redis
 from app.core.events import event_bus, RequestCreatedPayload, RequestAcceptedPayload, RequestDeclinedPayload, SessionStartedPayload, SessionCompletedPayload, SessionNoShowPayload
 from app.modules.sessions.models import MentorshipRequest, CallSession, ThreadMessage, DeviceToken
+from app.modules.sessions.schemas import CounterpartSummary
 
 def mask_contact_info(text: str) -> str:
     # Mask email addresses
@@ -297,21 +299,83 @@ class SessionsService:
         return msg
 
     @staticmethod
+    def get_giver_earnings_text(is_cross_college: bool) -> str:
+        if is_cross_college:
+            return "You earn Rs 175 if completed"
+        return "Free campus session, you earn 1 affinity credit"
+
+    @staticmethod
+    async def build_counterpart_summary(
+        session: AsyncSession,
+        other_user_id: uuid.UUID,
+        role: str
+    ) -> CounterpartSummary:
+        stmt = select(User).where(User.id == other_user_id)
+        user = (await session.execute(stmt)).scalar_one_or_none()
+        if not user:
+            return CounterpartSummary(
+                id=str(other_user_id),
+                display_name="User",
+                role=role,
+                badges=[],
+                band="Rising" if role == "Giver" else None
+            )
+
+        band = None
+        if role == "Giver":
+            try:
+                band_res = await ports.ratings.get_band(str(other_user_id))
+                band = band_res.get("band", "Rising")
+            except Exception:
+                band = "Rising"
+
+        display_name = user.display_name or user.full_name or "WarmPath Member"
+        return CounterpartSummary(
+            id=str(user.id),
+            display_name=display_name,
+            headline=user.headline,
+            avatar_url=user.avatar_url,
+            role=role,
+            badges=list(user.badges or []),
+            band=band
+        )
+
+    @staticmethod
     async def join_session(session: AsyncSession, session_id: uuid.UUID, user_id: uuid.UUID) -> CallSession:
         stmt = select(CallSession).where(CallSession.id == session_id).with_for_update()
         call = (await session.execute(stmt)).scalar_one_or_none()
         if not call:
             raise AppError(code="session_not_found", message="Session not found", status_code=404)
 
+        if user_id != call.student_id and user_id != call.giver_id:
+            raise AppError(code="unauthorized", message="User not in this session", status_code=403)
+
+        join_window_minutes = getattr(settings, "JOIN_WINDOW_MINUTES", 10)
         now = datetime.now(timezone.utc)
+        sched = call.scheduled_at if call.scheduled_at.tzinfo else call.scheduled_at.replace(tzinfo=timezone.utc)
+        opens_at = sched - timedelta(minutes=join_window_minutes)
+        ends_at = sched + timedelta(minutes=call.duration_minutes)
+
+        if now < opens_at:
+            raise AppError(
+                code="session_not_open",
+                message=f"Session opens {join_window_minutes} minutes before the start",
+                status_code=400
+            )
+
+        if now > ends_at or call.status in ("completed", "cancelled", "no_show"):
+            raise AppError(
+                code="session_not_open",
+                message="Session has already ended",
+                status_code=400
+            )
+
         if user_id == call.student_id:
             if not call.student_joined_at:
                 call.student_joined_at = now
         elif user_id == call.giver_id:
             if not call.giver_joined_at:
                 call.giver_joined_at = now
-        else:
-            raise AppError(code="unauthorized", message="User not in this session", status_code=403)
 
         if call.status == "scheduled":
             call.status = "in_progress"

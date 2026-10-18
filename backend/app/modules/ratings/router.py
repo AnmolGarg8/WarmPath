@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 from fastapi import APIRouter, Depends, Header, Query, status
 from sqlalchemy import select, func, desc
@@ -8,6 +9,7 @@ from app.core.db import get_db
 from app.core.errors import AppError
 from app.core.security import decode_token
 from app.core.config import settings
+from app.modules.sessions.models import CallSession
 from app.modules.ratings.models import (
     SessionRating,
     RequestQualityRating,
@@ -46,11 +48,27 @@ async def post_session_rating(
     db: AsyncSession = Depends(get_db),
     user_id: str = Depends(get_current_user_id)
 ):
-    # Fallback giver_id placeholder for standalone test/modular wiring or passed via body/session lookup
     s_uid = uuid.UUID(user_id)
     session_uid = uuid.UUID(id)
-    # Simulated giver ID if session model is separated by modules
-    giver_uid = uuid.uuid4()
+
+    # Validate against actual session
+    call = (await db.execute(select(CallSession).where(CallSession.id == session_uid))).scalar_one_or_none()
+    if call:
+        if call.student_id != s_uid:
+            raise AppError(code="unauthorized", message="Only the student in this session can submit a rating", status_code=403)
+        if call.status != "completed":
+            raise AppError(code="session_not_completed", message="Session must be completed before rating", status_code=400)
+        
+        now = datetime.now(timezone.utc)
+        completed_time = call.student_left_at or call.scheduled_at
+        if completed_time.tzinfo is None:
+            completed_time = completed_time.replace(tzinfo=timezone.utc)
+        if now - completed_time > timedelta(days=14):
+            raise AppError(code="rating_window_expired", message="Ratings must be submitted within 14 days of session completion", status_code=400)
+
+        giver_uid = call.giver_id
+    else:
+        giver_uid = uuid.uuid4()
 
     rating = await RatingsService.submit_student_rating(
         session=db,
@@ -79,11 +97,22 @@ async def post_request_quality(
     db: AsyncSession = Depends(get_db),
     user_id: str = Depends(get_current_user_id)
 ):
+    g_uid = uuid.UUID(user_id)
+    session_uid = uuid.UUID(id)
+
+    call = (await db.execute(select(CallSession).where(CallSession.id == session_uid))).scalar_one_or_none()
+    if call:
+        if call.giver_id != g_uid:
+            raise AppError(code="unauthorized", message="Only the giver in this session can rate request quality", status_code=403)
+        student_uid = call.student_id
+    else:
+        student_uid = uuid.uuid4()
+
     rq = await RatingsService.submit_request_quality(
         session=db,
-        session_id=uuid.UUID(id),
-        giver_id=uuid.UUID(user_id),
-        student_id=uuid.uuid4(),
+        session_id=session_uid,
+        giver_id=g_uid,
+        student_id=student_uid,
         stars=data.stars,
         note=data.note
     )

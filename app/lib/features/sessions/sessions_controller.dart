@@ -1,10 +1,9 @@
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/api/websocket_service.dart';
 import 'sessions_api_service.dart';
 import 'session_models.dart';
 
-final sessionsApiServiceProvider = Provider<SessionsApiService>((ref) {
-  return SessionsApiService();
-});
 
 class RequestsState {
   final bool isLoading;
@@ -36,9 +35,32 @@ class RequestsState {
 
 class RequestsNotifier extends StateNotifier<RequestsState> {
   final SessionsApiService _api;
+  StreamSubscription? _wsSubscription;
 
   RequestsNotifier(this._api) : super(const RequestsState()) {
     loadRequests();
+    _initRealtime();
+  }
+
+  void _initRealtime() {
+    try {
+      _wsSubscription = WebSocketService().stream.listen((event) {
+        final type = event['type']?.toString();
+        if (type == 'new_request' ||
+            type == 'request_accepted' ||
+            type == 'request_declined' ||
+            type == 'session_started' ||
+            type == 'session_completed') {
+          loadRequests();
+        }
+      });
+    } catch (_) {}
+  }
+
+  @override
+  void dispose() {
+    _wsSubscription?.cancel();
+    super.dispose();
   }
 
   Future<void> loadRequests() async {
